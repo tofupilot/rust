@@ -1,4 +1,4 @@
-# TofuPilot Rust SDK
+# TofuPilot Rust Client
 
 Rust client for the [TofuPilot](https://tofupilot.com) REST API. Async, typed, with retries and request lifecycle hooks.
 
@@ -8,7 +8,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tofupilot = "2"
+tofupilot = "0.1"
 tokio = { version = "1", features = ["full"] }
 ```
 

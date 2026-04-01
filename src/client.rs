@@ -3,9 +3,9 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
+use reqwest::header::{HeaderValue, AUTHORIZATION, USER_AGENT};
 
-use crate::config::{ClientConfig, RequestConfig};
+use crate::config::ClientConfig;
 use crate::error::{Error, Result};
 use crate::hooks::HookContext;
 use crate::procedures::ProceduresClient;
@@ -41,7 +41,7 @@ use crate::user::UserClient;
 #[derive(Debug, Clone)]
 pub struct TofuPilot {
     pub(crate) http: reqwest::Client,
-    pub(crate) default_headers: HeaderMap,
+    pub(crate) http_external: reqwest::Client,
     pub(crate) config: ClientConfig,
 }
 
@@ -53,7 +53,7 @@ impl TofuPilot {
 
     /// Create a new client with full configuration.
     pub fn with_config(config: ClientConfig) -> Self {
-        let mut headers = HeaderMap::new();
+        let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             AUTHORIZATION,
             HeaderValue::from_str(&format!("Bearer {}", config.api_key))
@@ -67,12 +67,17 @@ impl TofuPilot {
         );
 
         let http = reqwest::Client::builder()
-            .default_headers(headers.clone())
+            .default_headers(headers)
             .timeout(config.timeout)
             .build()
             .expect("failed to build HTTP client");
 
-        Self { http, default_headers: headers, config }
+        let http_external = reqwest::Client::builder()
+            .use_rustls_tls()
+            .build()
+            .expect("failed to build external HTTP client");
+
+        Self { http, http_external, config }
     }
 
     /// Access the Procedures API.
@@ -130,26 +135,11 @@ impl TofuPilot {
         &self,
         request: reqwest::RequestBuilder,
         operation_id: &str,
-        req_config: Option<&RequestConfig>,
+        base_url: &str,
     ) -> Result<reqwest::Response> {
-        let base_url = req_config
-            .and_then(|c| c.server_url.as_deref())
-            .unwrap_or(&self.config.base_url);
-
         let hook_ctx = HookContext {
             operation_id: Arc::from(operation_id),
             base_url: Arc::from(base_url),
-        };
-
-        // Build per-request client once if timeout override is set
-        let effective_client = if let Some(timeout) = req_config.and_then(|c| c.timeout) {
-            reqwest::Client::builder()
-                .default_headers(self.default_headers.clone())
-                .timeout(timeout)
-                .build()
-                .unwrap_or_else(|_| self.http.clone())
-        } else {
-            self.http.clone()
         };
 
         let mut last_error: Option<Error> = None;
@@ -173,7 +163,7 @@ impl TofuPilot {
             // Run before-request hooks
             let built = self.config.hooks.run_before(&hook_ctx, built).await;
 
-            let result = effective_client.execute(built).await;
+            let result = self.http.execute(built).await;
 
             match result {
                 Ok(response) => {

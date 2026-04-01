@@ -7,20 +7,15 @@ use serde::{Deserialize, Serialize};
 /// - `NullableField::Absent` — field is omitted from the request
 /// - `NullableField::Null` — field is explicitly set to `null`
 /// - `NullableField::Value(T)` — field has a value
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum NullableField<T> {
     /// Field is not included in the serialized output.
+    #[default]
     Absent,
     /// Field is explicitly set to null.
     Null,
     /// Field has a value.
     Value(T),
-}
-
-impl<T> Default for NullableField<T> {
-    fn default() -> Self {
-        NullableField::Absent
-    }
 }
 
 impl<T: Serialize> Serialize for NullableField<T> {
@@ -29,9 +24,9 @@ impl<T: Serialize> Serialize for NullableField<T> {
         S: serde::Serializer,
     {
         match self {
-            NullableField::Absent => Err(serde::ser::Error::custom(
-                "NullableField::Absent should be skipped via skip_serializing_if",
-            )),
+            // Absent fields should be skipped by #[serde(skip_serializing_if = "nullable_is_absent")].
+            // If we reach here, serialize as none as a safe fallback.
+            NullableField::Absent => serializer.serialize_none(),
             NullableField::Null => serializer.serialize_none(),
             NullableField::Value(v) => v.serialize(serializer),
         }
@@ -572,10 +567,10 @@ impl ProcedureListCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<ProcedureListCreatedByUser, String> {
         Ok(ProcedureListCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email
-                .ok_or_else(|| format!("missing required field: email"))?,
+                .ok_or_else(|| "missing required field: email".to_string())?,
         })
     }
 }
@@ -701,13 +696,13 @@ impl ProcedureListDataBuilder {
     pub fn build(self) -> std::result::Result<ProcedureListData, String> {
         Ok(ProcedureListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             created_at: self.created_at
-                .ok_or_else(|| format!("missing required field: created_at"))?,
+                .ok_or_else(|| "missing required field: created_at".to_string())?,
             created_by_user: self.created_by_user
-                .ok_or_else(|| format!("missing required field: created_by_user"))?,
+                .ok_or_else(|| "missing required field: created_by_user".to_string())?,
             runs: self.runs.unwrap_or_default(),
             linked_repository: self.linked_repository,
         })
@@ -758,7 +753,7 @@ impl ProcedureListMetaBuilder {
     pub fn build(self) -> std::result::Result<ProcedureListMeta, String> {
         Ok(ProcedureListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -828,7 +823,7 @@ impl ProcedureGetCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<ProcedureGetCreatedByUser, String> {
         Ok(ProcedureGetCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email,
         })
@@ -907,11 +902,11 @@ impl ProcedureGetRecentRunsBuilder {
     pub fn build(self) -> std::result::Result<ProcedureGetRecentRuns, String> {
         Ok(ProcedureGetRecentRuns {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             unit: self.unit,
         })
     }
@@ -1032,7 +1027,7 @@ impl ProcedureGetVersionCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<ProcedureGetVersionCreatedByUser, String> {
         Ok(ProcedureGetVersionCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -1457,7 +1452,7 @@ impl RunCreateAggregationsBuilder {
     pub fn build(self) -> std::result::Result<RunCreateAggregations, String> {
         Ok(RunCreateAggregations {
             r#type: self.r#type
-                .ok_or_else(|| format!("missing required field: type"))?,
+                .ok_or_else(|| "missing required field: type".to_string())?,
             outcome: self.outcome,
             value: self.value,
             unit: self.unit,
@@ -1926,7 +1921,7 @@ impl RunCreateYAxisAggregationsBuilder {
     pub fn build(self) -> std::result::Result<RunCreateYAxisAggregations, String> {
         Ok(RunCreateYAxisAggregations {
             r#type: self.r#type
-                .ok_or_else(|| format!("missing required field: type"))?,
+                .ok_or_else(|| "missing required field: type".to_string())?,
             outcome: self.outcome,
             value: self.value,
             unit: self.unit,
@@ -2395,7 +2390,7 @@ impl RunCreateMeasurementsAggregationsBuilder {
     pub fn build(self) -> std::result::Result<RunCreateMeasurementsAggregations, String> {
         Ok(RunCreateMeasurementsAggregations {
             r#type: self.r#type
-                .ok_or_else(|| format!("missing required field: type"))?,
+                .ok_or_else(|| "missing required field: type".to_string())?,
             outcome: self.outcome,
             value: self.value,
             unit: self.unit,
@@ -2590,9 +2585,9 @@ impl RunCreateMeasurementsBuilder {
     pub fn build(self) -> std::result::Result<RunCreateMeasurements, String> {
         Ok(RunCreateMeasurements {
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             x_axis: self.x_axis,
             y_axis: self.y_axis,
             measured_value: self.measured_value,
@@ -2713,13 +2708,13 @@ impl RunCreatePhasesBuilder {
     pub fn build(self) -> std::result::Result<RunCreatePhases, String> {
         Ok(RunCreatePhases {
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             ended_at: self.ended_at
-                .ok_or_else(|| format!("missing required field: ended_at"))?,
+                .ok_or_else(|| "missing required field: ended_at".to_string())?,
             docstring: self.docstring,
             measurements: self.measurements,
             retry_count: self.retry_count,
@@ -2928,17 +2923,17 @@ impl RunCreateRequestBuilder {
     pub fn build(self) -> std::result::Result<RunCreateRequest, String> {
         Ok(RunCreateRequest {
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             procedure_id: self.procedure_id
-                .ok_or_else(|| format!("missing required field: procedure_id"))?,
+                .ok_or_else(|| "missing required field: procedure_id".to_string())?,
             procedure_version: self.procedure_version,
             operated_by: self.operated_by,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             ended_at: self.ended_at
-                .ok_or_else(|| format!("missing required field: ended_at"))?,
+                .ok_or_else(|| "missing required field: ended_at".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part_number: self.part_number,
             revision_number: self.revision_number,
             batch_number: self.batch_number,
@@ -3280,7 +3275,7 @@ impl RunListCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<RunListCreatedByUser, String> {
         Ok(RunListCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email,
         })
@@ -3345,7 +3340,7 @@ impl RunListOperatedByBuilder {
     pub fn build(self) -> std::result::Result<RunListOperatedBy, String> {
         Ok(RunListOperatedBy {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email,
         })
@@ -3416,9 +3411,9 @@ impl RunListProcedureBuilder {
     pub fn build(self) -> std::result::Result<RunListProcedure, String> {
         Ok(RunListProcedure {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             version: self.version,
         })
     }
@@ -3527,11 +3522,11 @@ impl RunListUnitBuilder {
     pub fn build(self) -> std::result::Result<RunListUnit, String> {
         Ok(RunListUnit {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part: self.part
-                .ok_or_else(|| format!("missing required field: part"))?,
+                .ok_or_else(|| "missing required field: part".to_string())?,
             batch: self.batch,
         })
     }
@@ -3718,25 +3713,25 @@ impl RunListDataBuilder {
     pub fn build(self) -> std::result::Result<RunListData, String> {
         Ok(RunListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             created_at: self.created_at
-                .ok_or_else(|| format!("missing required field: created_at"))?,
+                .ok_or_else(|| "missing required field: created_at".to_string())?,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             ended_at: self.ended_at
-                .ok_or_else(|| format!("missing required field: ended_at"))?,
+                .ok_or_else(|| "missing required field: ended_at".to_string())?,
             duration: self.duration
-                .ok_or_else(|| format!("missing required field: duration"))?,
+                .ok_or_else(|| "missing required field: duration".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             docstring: self.docstring,
             created_by_user: self.created_by_user,
             created_by_station: self.created_by_station,
             operated_by: self.operated_by,
             procedure: self.procedure
-                .ok_or_else(|| format!("missing required field: procedure"))?,
+                .ok_or_else(|| "missing required field: procedure".to_string())?,
             unit: self.unit
-                .ok_or_else(|| format!("missing required field: unit"))?,
+                .ok_or_else(|| "missing required field: unit".to_string())?,
         })
     }
 }
@@ -3785,7 +3780,7 @@ impl RunListMetaBuilder {
     pub fn build(self) -> std::result::Result<RunListMeta, String> {
         Ok(RunListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -3900,7 +3895,7 @@ impl RunGetCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<RunGetCreatedByUser, String> {
         Ok(RunGetCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email,
         })
@@ -3948,7 +3943,7 @@ impl RunGetCreatedByStationBuilder {
     pub fn build(self) -> std::result::Result<RunGetCreatedByStation, String> {
         Ok(RunGetCreatedByStation {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -4004,7 +3999,7 @@ impl RunGetOperatedByBuilder {
     pub fn build(self) -> std::result::Result<RunGetOperatedBy, String> {
         Ok(RunGetOperatedBy {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
             email: self.email,
         })
@@ -4075,9 +4070,9 @@ impl RunGetProcedureBuilder {
     pub fn build(self) -> std::result::Result<RunGetProcedure, String> {
         Ok(RunGetProcedure {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             version: self.version,
         })
     }
@@ -4186,11 +4181,11 @@ impl RunGetUnitBuilder {
     pub fn build(self) -> std::result::Result<RunGetUnit, String> {
         Ok(RunGetUnit {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part: self.part
-                .ok_or_else(|| format!("missing required field: part"))?,
+                .ok_or_else(|| "missing required field: part".to_string())?,
             batch: self.batch,
         })
     }
@@ -4310,17 +4305,17 @@ impl RunGetValidatorsBuilder {
     pub fn build(self) -> std::result::Result<RunGetValidators, String> {
         Ok(RunGetValidators {
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             operator: self.operator,
             expected_value: self.expected_value,
             expression: self.expression
-                .ok_or_else(|| format!("missing required field: expression"))?,
+                .ok_or_else(|| "missing required field: expression".to_string())?,
             is_decisive: self.is_decisive,
             is_expression_only: self.is_expression_only
-                .ok_or_else(|| format!("missing required field: is_expression_only"))?,
+                .ok_or_else(|| "missing required field: is_expression_only".to_string())?,
             analytics_expression: self.analytics_expression,
             has_custom_expression: self.has_custom_expression
-                .ok_or_else(|| format!("missing required field: has_custom_expression"))?,
+                .ok_or_else(|| "missing required field: has_custom_expression".to_string())?,
         })
     }
 }
@@ -4439,17 +4434,17 @@ impl RunGetAggregationsValidatorsBuilder {
     pub fn build(self) -> std::result::Result<RunGetAggregationsValidators, String> {
         Ok(RunGetAggregationsValidators {
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             operator: self.operator,
             expected_value: self.expected_value,
             expression: self.expression
-                .ok_or_else(|| format!("missing required field: expression"))?,
+                .ok_or_else(|| "missing required field: expression".to_string())?,
             is_decisive: self.is_decisive,
             is_expression_only: self.is_expression_only
-                .ok_or_else(|| format!("missing required field: is_expression_only"))?,
+                .ok_or_else(|| "missing required field: is_expression_only".to_string())?,
             analytics_expression: self.analytics_expression,
             has_custom_expression: self.has_custom_expression
-                .ok_or_else(|| format!("missing required field: has_custom_expression"))?,
+                .ok_or_else(|| "missing required field: has_custom_expression".to_string())?,
         })
     }
 }
@@ -4559,9 +4554,9 @@ impl RunGetAggregationsBuilder {
     pub fn build(self) -> std::result::Result<RunGetAggregations, String> {
         Ok(RunGetAggregations {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             r#type: self.r#type
-                .ok_or_else(|| format!("missing required field: type"))?,
+                .ok_or_else(|| "missing required field: type".to_string())?,
             outcome: self.outcome,
             value: self.value,
             unit: self.unit,
@@ -4684,17 +4679,17 @@ impl RunGetDataSeriesValidatorsBuilder {
     pub fn build(self) -> std::result::Result<RunGetDataSeriesValidators, String> {
         Ok(RunGetDataSeriesValidators {
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             operator: self.operator,
             expected_value: self.expected_value,
             expression: self.expression
-                .ok_or_else(|| format!("missing required field: expression"))?,
+                .ok_or_else(|| "missing required field: expression".to_string())?,
             is_decisive: self.is_decisive,
             is_expression_only: self.is_expression_only
-                .ok_or_else(|| format!("missing required field: is_expression_only"))?,
+                .ok_or_else(|| "missing required field: is_expression_only".to_string())?,
             analytics_expression: self.analytics_expression,
             has_custom_expression: self.has_custom_expression
-                .ok_or_else(|| format!("missing required field: has_custom_expression"))?,
+                .ok_or_else(|| "missing required field: has_custom_expression".to_string())?,
         })
     }
 }
@@ -4813,17 +4808,17 @@ impl RunGetDataSeriesAggregationsValidatorsBuilder {
     pub fn build(self) -> std::result::Result<RunGetDataSeriesAggregationsValidators, String> {
         Ok(RunGetDataSeriesAggregationsValidators {
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             operator: self.operator,
             expected_value: self.expected_value,
             expression: self.expression
-                .ok_or_else(|| format!("missing required field: expression"))?,
+                .ok_or_else(|| "missing required field: expression".to_string())?,
             is_decisive: self.is_decisive,
             is_expression_only: self.is_expression_only
-                .ok_or_else(|| format!("missing required field: is_expression_only"))?,
+                .ok_or_else(|| "missing required field: is_expression_only".to_string())?,
             analytics_expression: self.analytics_expression,
             has_custom_expression: self.has_custom_expression
-                .ok_or_else(|| format!("missing required field: has_custom_expression"))?,
+                .ok_or_else(|| "missing required field: has_custom_expression".to_string())?,
         })
     }
 }
@@ -4933,9 +4928,9 @@ impl RunGetDataSeriesAggregationsBuilder {
     pub fn build(self) -> std::result::Result<RunGetDataSeriesAggregations, String> {
         Ok(RunGetDataSeriesAggregations {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             r#type: self.r#type
-                .ok_or_else(|| format!("missing required field: type"))?,
+                .ok_or_else(|| "missing required field: type".to_string())?,
             outcome: self.outcome,
             value: self.value,
             unit: self.unit,
@@ -5140,11 +5135,11 @@ impl RunGetMeasurementsBuilder {
     pub fn build(self) -> std::result::Result<RunGetMeasurements, String> {
         Ok(RunGetMeasurements {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             units: self.units,
             validators: self.validators,
             aggregations: self.aggregations,
@@ -5282,19 +5277,19 @@ impl RunGetPhasesBuilder {
     pub fn build(self) -> std::result::Result<RunGetPhases, String> {
         Ok(RunGetPhases {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             ended_at: self.ended_at
-                .ok_or_else(|| format!("missing required field: ended_at"))?,
+                .ok_or_else(|| "missing required field: ended_at".to_string())?,
             duration: self.duration
-                .ok_or_else(|| format!("missing required field: duration"))?,
+                .ok_or_else(|| "missing required field: duration".to_string())?,
             retry_count: self.retry_count
-                .ok_or_else(|| format!("missing required field: retry_count"))?,
+                .ok_or_else(|| "missing required field: retry_count".to_string())?,
             docstring: self.docstring,
             measurements: self.measurements.unwrap_or_default(),
         })
@@ -5397,13 +5392,13 @@ impl RunGetAttachmentsBuilder {
     pub fn build(self) -> std::result::Result<RunGetAttachments, String> {
         Ok(RunGetAttachments {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             size: self.size,
             content_type: self.content_type,
             is_report: self.is_report
-                .ok_or_else(|| format!("missing required field: is_report"))?,
+                .ok_or_else(|| "missing required field: is_report".to_string())?,
             download_url: self.download_url,
         })
     }
@@ -5485,11 +5480,11 @@ impl RunGetSubUnitsBuilder {
     pub fn build(self) -> std::result::Result<RunGetSubUnits, String> {
         Ok(RunGetSubUnits {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part_number: self.part_number
-                .ok_or_else(|| format!("missing required field: part_number"))?,
+                .ok_or_else(|| "missing required field: part_number".to_string())?,
             part_name: self.part_name,
         })
     }
@@ -5977,7 +5972,7 @@ impl UnitListCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<UnitListCreatedByUser, String> {
         Ok(UnitListCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -6123,11 +6118,11 @@ impl UnitListLastRunBuilder {
     pub fn build(self) -> std::result::Result<UnitListLastRun, String> {
         Ok(UnitListLastRun {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             outcome: self.outcome
-                .ok_or_else(|| format!("missing required field: outcome"))?,
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
             started_at: self.started_at
-                .ok_or_else(|| format!("missing required field: started_at"))?,
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
             ended_at: self.ended_at,
             procedure: self.procedure,
         })
@@ -6301,18 +6296,18 @@ impl UnitListDataBuilder {
     pub fn build(self) -> std::result::Result<UnitListData, String> {
         Ok(UnitListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             created_at: self.created_at
-                .ok_or_else(|| format!("missing required field: created_at"))?,
+                .ok_or_else(|| "missing required field: created_at".to_string())?,
             created_by_user: self.created_by_user,
             created_by_station: self.created_by_station,
             batch: self.batch,
             parent: self.parent,
             children: self.children.unwrap_or_default(),
             part: self.part
-                .ok_or_else(|| format!("missing required field: part"))?,
+                .ok_or_else(|| "missing required field: part".to_string())?,
             last_run: self.last_run,
         })
     }
@@ -6362,7 +6357,7 @@ impl UnitListMetaBuilder {
     pub fn build(self) -> std::result::Result<UnitListMeta, String> {
         Ok(UnitListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -6468,7 +6463,7 @@ impl UnitGetCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<UnitGetCreatedByUser, String> {
         Ok(UnitGetCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -6586,11 +6581,11 @@ impl UnitGetParentPartBuilder {
     pub fn build(self) -> std::result::Result<UnitGetParentPart, String> {
         Ok(UnitGetParentPart {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             number: self.number
-                .ok_or_else(|| format!("missing required field: number"))?,
+                .ok_or_else(|| "missing required field: number".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             revision: self.revision,
         })
     }
@@ -6651,9 +6646,9 @@ impl UnitGetParentBuilder {
     pub fn build(self) -> std::result::Result<UnitGetParent, String> {
         Ok(UnitGetParent {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part: self.part,
         })
     }
@@ -6733,11 +6728,11 @@ impl UnitGetChildrenPartBuilder {
     pub fn build(self) -> std::result::Result<UnitGetChildrenPart, String> {
         Ok(UnitGetChildrenPart {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             number: self.number
-                .ok_or_else(|| format!("missing required field: number"))?,
+                .ok_or_else(|| "missing required field: number".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             revision: self.revision,
         })
     }
@@ -6798,9 +6793,9 @@ impl UnitGetChildrenBuilder {
     pub fn build(self) -> std::result::Result<UnitGetChildren, String> {
         Ok(UnitGetChildren {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
-                .ok_or_else(|| format!("missing required field: serial_number"))?,
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
             part: self.part,
         })
     }
@@ -6912,9 +6907,9 @@ impl UnitGetAttachmentsBuilder {
     pub fn build(self) -> std::result::Result<UnitGetAttachments, String> {
         Ok(UnitGetAttachments {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             size: self.size,
             content_type: self.content_type,
             download_url: self.download_url,
@@ -7156,7 +7151,7 @@ impl PartCreateRequestBuilder {
     pub fn build(self) -> std::result::Result<PartCreateRequest, String> {
         Ok(PartCreateRequest {
             number: self.number
-                .ok_or_else(|| format!("missing required field: number"))?,
+                .ok_or_else(|| "missing required field: number".to_string())?,
             name: self.name,
             revision_number: self.revision_number,
         })
@@ -7348,13 +7343,13 @@ impl PartListDataBuilder {
     pub fn build(self) -> std::result::Result<PartListData, String> {
         Ok(PartListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             number: self.number
-                .ok_or_else(|| format!("missing required field: number"))?,
+                .ok_or_else(|| "missing required field: number".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             created_at: self.created_at
-                .ok_or_else(|| format!("missing required field: created_at"))?,
+                .ok_or_else(|| "missing required field: created_at".to_string())?,
             revisions: self.revisions.unwrap_or_default(),
         })
     }
@@ -7405,7 +7400,7 @@ impl PartListMetaBuilder {
     pub fn build(self) -> std::result::Result<PartListMeta, String> {
         Ok(PartListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -7468,7 +7463,7 @@ impl PartGetCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<PartGetCreatedByUser, String> {
         Ok(PartGetCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -7653,7 +7648,7 @@ impl PartGetRevisionCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<PartGetRevisionCreatedByUser, String> {
         Ok(PartGetRevisionCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -7857,7 +7852,7 @@ impl BatchGetCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<BatchGetCreatedByUser, String> {
         Ok(BatchGetCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -8142,7 +8137,7 @@ impl BatchListCreatedByUserBuilder {
     pub fn build(self) -> std::result::Result<BatchListCreatedByUser, String> {
         Ok(BatchListCreatedByUser {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
         })
     }
@@ -8257,15 +8252,15 @@ impl BatchListDataBuilder {
     pub fn build(self) -> std::result::Result<BatchListData, String> {
         Ok(BatchListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             number: self.number
-                .ok_or_else(|| format!("missing required field: number"))?,
+                .ok_or_else(|| "missing required field: number".to_string())?,
             created_at: self.created_at
-                .ok_or_else(|| format!("missing required field: created_at"))?,
+                .ok_or_else(|| "missing required field: created_at".to_string())?,
             created_by_user: self.created_by_user,
             created_by_station: self.created_by_station,
             unit_count: self.unit_count
-                .ok_or_else(|| format!("missing required field: unit_count"))?,
+                .ok_or_else(|| "missing required field: unit_count".to_string())?,
         })
     }
 }
@@ -8315,7 +8310,7 @@ impl BatchListMetaBuilder {
     pub fn build(self) -> std::result::Result<BatchListMeta, String> {
         Ok(BatchListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -8388,7 +8383,7 @@ impl StationCreateRequestBuilder {
     pub fn build(self) -> std::result::Result<StationCreateRequest, String> {
         Ok(StationCreateRequest {
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             procedure_id: self.procedure_id,
         })
     }
@@ -8523,10 +8518,10 @@ impl StationListProceduresBuilder {
     pub fn build(self) -> std::result::Result<StationListProcedures, String> {
         Ok(StationListProcedures {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             identifier: self.identifier,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
         })
     }
 }
@@ -8617,12 +8612,12 @@ impl StationListDataBuilder {
     pub fn build(self) -> std::result::Result<StationListData, String> {
         Ok(StationListData {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             procedures: self.procedures.unwrap_or_default(),
             procedures_count: self.procedures_count
-                .ok_or_else(|| format!("missing required field: procedures_count"))?,
+                .ok_or_else(|| "missing required field: procedures_count".to_string())?,
             team: self.team,
         })
     }
@@ -8673,7 +8668,7 @@ impl StationListMetaBuilder {
     pub fn build(self) -> std::result::Result<StationListMeta, String> {
         Ok(StationListMeta {
             has_more: self.has_more
-                .ok_or_else(|| format!("missing required field: has_more"))?,
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
             next_cursor: self.next_cursor,
         })
     }
@@ -8744,9 +8739,9 @@ impl StationGetCurrentCommitBuilder {
     pub fn build(self) -> std::result::Result<StationGetCurrentCommit, String> {
         Ok(StationGetCurrentCommit {
             sha: self.sha
-                .ok_or_else(|| format!("missing required field: sha"))?,
+                .ok_or_else(|| "missing required field: sha".to_string())?,
             message: self.message
-                .ok_or_else(|| format!("missing required field: message"))?,
+                .ok_or_else(|| "missing required field: message".to_string())?,
             branch: self.branch,
         })
     }
@@ -8818,11 +8813,11 @@ impl StationGetCurrentRepositoryBuilder {
     pub fn build(self) -> std::result::Result<StationGetCurrentRepository, String> {
         Ok(StationGetCurrentRepository {
             owner: self.owner
-                .ok_or_else(|| format!("missing required field: owner"))?,
+                .ok_or_else(|| "missing required field: owner".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             provider: self.provider
-                .ok_or_else(|| format!("missing required field: provider"))?,
+                .ok_or_else(|| "missing required field: provider".to_string())?,
             gitlab_project_id: self.gitlab_project_id,
         })
     }
@@ -8878,7 +8873,7 @@ impl StationGetCurrentDeploymentBuilder {
     pub fn build(self) -> std::result::Result<StationGetCurrentDeployment, String> {
         Ok(StationGetCurrentDeployment {
             deployed_at: self.deployed_at
-                .ok_or_else(|| format!("missing required field: deployed_at"))?,
+                .ok_or_else(|| "missing required field: deployed_at".to_string())?,
             commit: self.commit,
             repository: self.repository,
         })
@@ -8969,12 +8964,12 @@ impl StationGetCurrentProceduresBuilder {
     pub fn build(self) -> std::result::Result<StationGetCurrentProcedures, String> {
         Ok(StationGetCurrentProcedures {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             identifier: self.identifier,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             runs_count: self.runs_count
-                .ok_or_else(|| format!("missing required field: runs_count"))?,
+                .ok_or_else(|| "missing required field: runs_count".to_string())?,
             deployment: self.deployment,
         })
     }
@@ -9070,9 +9065,9 @@ impl StationGetCommitBuilder {
     pub fn build(self) -> std::result::Result<StationGetCommit, String> {
         Ok(StationGetCommit {
             sha: self.sha
-                .ok_or_else(|| format!("missing required field: sha"))?,
+                .ok_or_else(|| "missing required field: sha".to_string())?,
             message: self.message
-                .ok_or_else(|| format!("missing required field: message"))?,
+                .ok_or_else(|| "missing required field: message".to_string())?,
             branch: self.branch,
         })
     }
@@ -9144,11 +9139,11 @@ impl StationGetRepositoryBuilder {
     pub fn build(self) -> std::result::Result<StationGetRepository, String> {
         Ok(StationGetRepository {
             owner: self.owner
-                .ok_or_else(|| format!("missing required field: owner"))?,
+                .ok_or_else(|| "missing required field: owner".to_string())?,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             provider: self.provider
-                .ok_or_else(|| format!("missing required field: provider"))?,
+                .ok_or_else(|| "missing required field: provider".to_string())?,
             gitlab_project_id: self.gitlab_project_id,
         })
     }
@@ -9204,7 +9199,7 @@ impl StationGetDeploymentBuilder {
     pub fn build(self) -> std::result::Result<StationGetDeployment, String> {
         Ok(StationGetDeployment {
             deployed_at: self.deployed_at
-                .ok_or_else(|| format!("missing required field: deployed_at"))?,
+                .ok_or_else(|| "missing required field: deployed_at".to_string())?,
             commit: self.commit,
             repository: self.repository,
         })
@@ -9295,12 +9290,12 @@ impl StationGetProceduresBuilder {
     pub fn build(self) -> std::result::Result<StationGetProcedures, String> {
         Ok(StationGetProcedures {
             id: self.id
-                .ok_or_else(|| format!("missing required field: id"))?,
+                .ok_or_else(|| "missing required field: id".to_string())?,
             identifier: self.identifier,
             name: self.name
-                .ok_or_else(|| format!("missing required field: name"))?,
+                .ok_or_else(|| "missing required field: name".to_string())?,
             runs_count: self.runs_count
-                .ok_or_else(|| format!("missing required field: runs_count"))?,
+                .ok_or_else(|| "missing required field: runs_count".to_string())?,
             deployment: self.deployment,
         })
     }

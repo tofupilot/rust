@@ -57,12 +57,3 @@ impl ClientConfig {
         self
     }
 }
-
-/// Per-request configuration overrides.
-#[derive(Debug, Clone, Default)]
-pub struct RequestConfig {
-    /// Override the base URL for this request only.
-    pub server_url: Option<String>,
-    /// Override the timeout for this request only.
-    pub timeout: Option<Duration>,
-}

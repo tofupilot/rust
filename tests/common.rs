@@ -9,7 +9,7 @@ static CLIENT: OnceLock<TofuPilot> = OnceLock::new();
 static PROCEDURE_ID: OnceLock<String> = OnceLock::new();
 
 pub fn uid() -> String {
-    uuid::Uuid::new_v4().to_string()[..8].to_string()
+    uuid::Uuid::new_v4().to_string()
 }
 
 pub fn client() -> &'static TofuPilot {

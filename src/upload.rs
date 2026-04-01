@@ -127,7 +127,7 @@ impl<'a> AttachmentsClient<'a> {
 
         // Step 2: PUT to pre-signed URL with Content-Type
         let mime = content_type_for(file_name);
-        let put_response = reqwest::Client::new()
+        let put_response = self.client.http_external
             .put(&init.upload_url)
             .header(CONTENT_TYPE, mime)
             .body(bytes)
@@ -184,7 +184,7 @@ impl<'a> AttachmentsClient<'a> {
             return Err(Error::Validation("download URL cannot be empty".to_string()));
         }
 
-        let response = reqwest::Client::new().get(url).send().await?;
+        let response = self.client.http_external.get(url).send().await?;
 
         if !response.status().is_success() {
             let status = response.status().as_u16();
