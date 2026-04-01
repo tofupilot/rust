@@ -8,7 +8,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tofupilot = "0.1"
+tofupilot = "2"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -42,18 +42,18 @@ async fn main() -> tofupilot::Result<()> {
 
 | Resource | Methods | Docs |
 | --- | --- | --- |
-| **Runs** | list, create, get, update, delete | [docs/sdks/runs](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/runs/README.md) |
-| **Procedures** | list, create, get, update, delete | [docs/sdks/procedures](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/procedures/README.md) |
-| **Units** | list, create, get, update, delete, add_child, remove_child | [docs/sdks/units](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/units/README.md) |
-| **Parts** | list, create, get, update, delete | [docs/sdks/parts](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/parts/README.md) |
-| **Batches** | list, create, get, update, delete | [docs/sdks/batches](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/batches/README.md) |
-| **Stations** | list, create, get, get_current, update, remove | [docs/sdks/stations](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/stations/README.md) |
-| **Revisions** | create, get, update, delete | [docs/sdks/revisions](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/revisions/README.md) |
-| **Versions** | create, get, delete | [docs/sdks/versions](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/versions/README.md) |
-| **Attachments** | initialize, finalize, delete | [docs/sdks/attachments](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/attachments/README.md) |
-| **User** | list | [docs/sdks/user](https://github.com/tofupilot/tofupilot-rust/blob/main/docs/sdks/user/README.md) |
+| **Runs** | list, create, get, update, delete | [docs/sdks/runs](https://github.com/tofupilot/rust/blob/main/docs/sdks/runs/README.md) |
+| **Procedures** | list, create, get, update, delete | [docs/sdks/procedures](https://github.com/tofupilot/rust/blob/main/docs/sdks/procedures/README.md) |
+| **Units** | list, create, get, update, delete, add_child, remove_child | [docs/sdks/units](https://github.com/tofupilot/rust/blob/main/docs/sdks/units/README.md) |
+| **Parts** | list, create, get, update, delete | [docs/sdks/parts](https://github.com/tofupilot/rust/blob/main/docs/sdks/parts/README.md) |
+| **Batches** | list, create, get, update, delete | [docs/sdks/batches](https://github.com/tofupilot/rust/blob/main/docs/sdks/batches/README.md) |
+| **Stations** | list, create, get, get_current, update, remove | [docs/sdks/stations](https://github.com/tofupilot/rust/blob/main/docs/sdks/stations/README.md) |
+| **Revisions** | create, get, update, delete | [docs/sdks/revisions](https://github.com/tofupilot/rust/blob/main/docs/sdks/revisions/README.md) |
+| **Versions** | create, get, delete | [docs/sdks/versions](https://github.com/tofupilot/rust/blob/main/docs/sdks/versions/README.md) |
+| **Attachments** | initialize, finalize, delete | [docs/sdks/attachments](https://github.com/tofupilot/rust/blob/main/docs/sdks/attachments/README.md) |
+| **User** | list | [docs/sdks/user](https://github.com/tofupilot/rust/blob/main/docs/sdks/user/README.md) |
 
-All model types are documented in [docs/models/](https://github.com/tofupilot/tofupilot-rust/tree/main/docs/models).
+All model types are documented in [docs/models/](https://github.com/tofupilot/rust/tree/main/docs/models).
 
 ## Builder Pattern
 

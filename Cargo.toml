@@ -1,12 +1,12 @@
 [package]
 name = "tofupilot"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2021"
 rust-version = "1.75"
 description = "TofuPilot APIv2: TofuPilot REST API for managing runs, units, procedures, and more."
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/tofupilot/tofupilot-rust"
+repository = "https://github.com/tofupilot/rust"
 keywords = ["tofupilot", "test", "manufacturing", "api", "sdk"]
 categories = ["api-bindings"]
 
