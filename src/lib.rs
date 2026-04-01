@@ -19,7 +19,7 @@ pub mod stations;
 pub mod user;
 pub mod upload;
 
-pub use client::TofuPilotClient;
+pub use client::TofuPilot;
 pub use config::ClientConfig;
 pub use error::{Error, Result};
 pub use hooks::{Hook, Hooks};

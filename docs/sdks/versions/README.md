@@ -15,11 +15,11 @@ Retrieve a single procedure version by its tag, including version metadata and c
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.versions().get()
         .procedure_id("550e8400-e29b-41d4-a716-446655440000")
@@ -59,11 +59,11 @@ Permanently delete a procedure version by its tag. This removes the version reco
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.versions().delete()
         .procedure_id("550e8400-e29b-41d4-a716-446655440000")
@@ -104,11 +104,11 @@ Create a new version for an existing test procedure. Versions let you track proc
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.versions().create()
         .procedure_id("550e8400-e29b-41d4-a716-446655440000")

@@ -16,11 +16,11 @@ Retrieve a single part revision by its part number and revision number, includin
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.revisions().get()
         .part_number("PCB-V1.2")
@@ -60,11 +60,11 @@ Permanently delete a part revision by its part number and revision number. This 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.revisions().delete()
         .part_number("PCB-V1.2")
@@ -104,11 +104,11 @@ Update a part revision's number or image. Identifies the revision by part number
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.revisions().update()
         .part_number("PCB-V1.2")
@@ -151,11 +151,11 @@ Create a new part revision for an existing part. Revision numbers are matched ca
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.revisions().create()
         .part_number("PCB-V1.2")

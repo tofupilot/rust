@@ -17,12 +17,12 @@ Retrieve a paginated list of parts and components in your organization. Filter a
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.parts().list()
         .send()
@@ -63,11 +63,11 @@ Create a new part. Optionally create with a revision. Part numbers are matched c
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.parts().create()
         .number("PART-001")
@@ -107,11 +107,11 @@ Retrieve a single part by its number, including all revisions, metadata, and lin
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.parts().get()
         .number("PART-001")
@@ -149,11 +149,11 @@ Permanently delete a part and all its revisions. This removes all associated dat
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.parts().delete()
         .number("PART-001")
@@ -191,11 +191,11 @@ Update a part's number or name. Identifies the part by its current number in the
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.parts().update()
         .number("PART-001")

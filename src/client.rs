@@ -27,11 +27,11 @@ use crate::user::UserClient;
 /// # Example
 ///
 /// ```no_run
-/// use tofupilot::TofuPilotClient;
+/// use tofupilot::TofuPilot;
 ///
 /// #[tokio::main]
 /// async fn main() -> tofupilot::Result<()> {
-///     let client = TofuPilotClient::new("your-api-key");
+///     let client = TofuPilot::new("your-api-key");
 ///
 ///     let procedures = client.procedures().list().send().await?;
 ///     println!("{:?}", procedures);
@@ -39,13 +39,13 @@ use crate::user::UserClient;
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct TofuPilotClient {
+pub struct TofuPilot {
     pub(crate) http: reqwest::Client,
     pub(crate) default_headers: HeaderMap,
     pub(crate) config: ClientConfig,
 }
 
-impl TofuPilotClient {
+impl TofuPilot {
     /// Create a new client with the given API key.
     pub fn new(api_key: impl Into<String>) -> Self {
         Self::with_config(ClientConfig::new(api_key))

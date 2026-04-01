@@ -19,12 +19,12 @@ Retrieve a paginated list of units with filtering by serial number, part number,
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().list()
         .send()
@@ -81,11 +81,11 @@ Create a new unit with a serial number and link it to a part revision. Units rep
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().create()
         .serial_number("SN-001234")
@@ -128,11 +128,11 @@ Permanently delete units by serial number. This action will remove all nested el
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().delete()
         .serial_numbers(vec!["SN-001234".into()])
@@ -170,11 +170,11 @@ Retrieve a single unit by its serial number. Returns comprehensive unit data inc
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().get()
         .serial_number("SN-001234")
@@ -213,11 +213,11 @@ Update unit properties including serial number, part revision, batch assignment,
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().update()
         .serial_number("SN-001234")
@@ -261,11 +261,11 @@ Add a sub-unit to a parent unit to track component assemblies and multi-level ha
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().add_child()
         .serial_number("SN-001234")
@@ -306,11 +306,11 @@ Remove a sub-unit relationship from a parent unit by serial number. Only unlinks
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.units().remove_child()
         .serial_number("SN-001234")

@@ -15,11 +15,11 @@ Get a temporary pre-signed URL to upload a file. Returns the upload ID and URL. 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.attachments().initialize()
         .name("My Test Procedure")
@@ -55,16 +55,16 @@ async fn main() -> tofupilot::Result<()> {
 
 ## delete
 
-Permanently delete attachments by their IDs and unlink them from any associated runs or units.
+Permanently delete attachments by their IDs and unlink them from any associated runs or units. Removes files from storage and clears all references.
 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.attachments().delete()
         .ids(vec!["550e8400-e29b-41d4-a716-446655440000".into()])
@@ -98,16 +98,16 @@ async fn main() -> tofupilot::Result<()> {
 
 ## finalize
 
-Finalize a file upload after uploading to the pre-signed URL. Validates the file and records its metadata. Link the attachment to a run or unit using Update Run or Update Unit.
+Finalize a file upload after uploading to the pre-signed URL. Validates the file and records its metadata.
 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.attachments().finalize()
         .id("550e8400-e29b-41d4-a716-446655440000")

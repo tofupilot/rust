@@ -17,12 +17,12 @@ Retrieve a paginated list of test runs with filtering by unit, procedure, date r
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.runs().list()
         .send()
@@ -82,12 +82,12 @@ Create a new test run, linking it to a procedure and unit. Existing entities are
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.runs().create()
         .outcome(Outcome::default())
@@ -145,11 +145,11 @@ Permanently delete test runs by their IDs. Removes all associated phases, measur
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.runs().delete()
         .ids(vec!["550e8400-e29b-41d4-a716-446655440000".into()])
@@ -187,11 +187,11 @@ Retrieve a single test run by its ID. Returns comprehensive run data including m
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.runs().get()
         .id("550e8400-e29b-41d4-a716-446655440000")
@@ -230,11 +230,11 @@ Update a test run, including linking file attachments. Files must be uploaded vi
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.runs().update()
         .id("550e8400-e29b-41d4-a716-446655440000")

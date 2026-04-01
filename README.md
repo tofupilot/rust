@@ -15,12 +15,12 @@ tokio = { version = "1", features = ["full"] }
 ## Quick Start
 
 ```rust,no_run
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     // Create a test run
     let run = client.runs().create()
@@ -50,7 +50,7 @@ async fn main() -> tofupilot::Result<()> {
 | **Stations** | list, create, get, get_current, update, remove | [docs/sdks/stations](https://github.com/tofupilot/rust/blob/main/docs/sdks/stations/README.md) |
 | **Revisions** | create, get, update, delete | [docs/sdks/revisions](https://github.com/tofupilot/rust/blob/main/docs/sdks/revisions/README.md) |
 | **Versions** | create, get, delete | [docs/sdks/versions](https://github.com/tofupilot/rust/blob/main/docs/sdks/versions/README.md) |
-| **Attachments** | initialize, finalize, delete | [docs/sdks/attachments](https://github.com/tofupilot/rust/blob/main/docs/sdks/attachments/README.md) |
+| **Attachments** | initialize, finalize, delete, upload_file, upload_bytes, download_file | [docs/sdks/attachments](https://github.com/tofupilot/rust/blob/main/docs/sdks/attachments/README.md) |
 | **User** | list | [docs/sdks/user](https://github.com/tofupilot/rust/blob/main/docs/sdks/user/README.md) |
 
 All model types are documented in [docs/models/](https://github.com/tofupilot/rust/tree/main/docs/models).
@@ -81,11 +81,11 @@ The SDK provides high-level helpers that handle the three-step upload flow (init
 
 ```rust,ignore
 // Upload from disk
-let upload = client.upload_file("report.pdf").await?;
+let upload = client.attachments().upload_file("report.pdf").await?;
 
 // Or upload raw bytes
 let csv = b"header\nrow1\nrow2";
-let upload = client.upload_bytes("data.csv", csv.to_vec()).await?;
+let upload = client.attachments().upload_bytes("data.csv", csv.to_vec()).await?;
 
 // Link to a run
 client.runs().update()
@@ -95,7 +95,7 @@ client.runs().update()
     .await?;
 
 // Download a file
-client.download_file(&upload.url, "local-report.pdf").await?;
+client.attachments().download_file(&upload.url, "local-report.pdf").await?;
 ```
 
 ## Phases & Measurements
@@ -161,7 +161,7 @@ The client automatically retries on 429 (rate limit) and 5xx errors with exponen
 use tofupilot::config::ClientConfig;
 use std::time::Duration;
 
-let client = TofuPilotClient::with_config(
+let client = TofuPilot::with_config(
     ClientConfig::new("your-api-key")
         .base_url("https://your-instance.tofupilot.app/api")
         .timeout(Duration::from_secs(60))
@@ -186,7 +186,7 @@ let hooks = Hooks::new()
         async move { eprintln!("{msg}"); }
     });
 
-let client = TofuPilotClient::with_config(
+let client = TofuPilot::with_config(
     ClientConfig::new("your-api-key").hooks(hooks),
 );
 ```
@@ -220,7 +220,7 @@ client.runs().create()
 Point the client at your own TofuPilot instance:
 
 ```rust,ignore
-let client = TofuPilotClient::with_config(
+let client = TofuPilot::with_config(
     ClientConfig::new("your-api-key")
         .base_url("https://your-instance.example.com/api"),
 );

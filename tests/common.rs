@@ -1,25 +1,25 @@
 #![allow(dead_code)]
 
 use std::sync::OnceLock;
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 use tofupilot::config::ClientConfig;
 use tofupilot::types::*;
 
-static CLIENT: OnceLock<TofuPilotClient> = OnceLock::new();
+static CLIENT: OnceLock<TofuPilot> = OnceLock::new();
 static PROCEDURE_ID: OnceLock<String> = OnceLock::new();
 
 pub fn uid() -> String {
     uuid::Uuid::new_v4().to_string()[..8].to_string()
 }
 
-pub fn client() -> &'static TofuPilotClient {
+pub fn client() -> &'static TofuPilot {
     CLIENT.get_or_init(|| {
         let api_key = std::env::var("TOFUPILOT_API_KEY_USER")
             .expect("TOFUPILOT_API_KEY_USER must be set");
         let url = std::env::var("TOFUPILOT_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
 
-        TofuPilotClient::with_config(
+        TofuPilot::with_config(
             ClientConfig::new(api_key)
                 .base_url(format!("{}/api", url)),
         )

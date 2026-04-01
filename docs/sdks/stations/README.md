@@ -18,11 +18,11 @@ Retrieve a paginated list of test stations in your organization. Search by stati
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().list()
         .send()
@@ -61,11 +61,11 @@ Create a new test station in TofuPilot to register production equipment and link
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().create()
         .name("My Test Procedure")
@@ -105,11 +105,11 @@ Retrieve detailed information about the currently authenticated station includin
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().get_current()
         .send()
@@ -145,11 +145,11 @@ Retrieve detailed station information including linked procedures, connection st
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().get()
         .id("550e8400-e29b-41d4-a716-446655440000")
@@ -187,11 +187,11 @@ Remove a test station. Deletes permanently if unused, or archives with preserved
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().remove()
         .id("550e8400-e29b-41d4-a716-446655440000")
@@ -230,11 +230,11 @@ Update station name and/or image. The station ID is specified in the URL path. T
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.stations().update()
         .id("550e8400-e29b-41d4-a716-446655440000")

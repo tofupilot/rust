@@ -69,7 +69,7 @@ async fn upload_file_helper() {
     let path = dir.join("upload-test.txt");
     tokio::fs::write(&path, "upload helper test content").await.unwrap();
 
-    let upload = client().upload_file(&path).await.unwrap();
+    let upload = client().attachments().upload_file(&path).await.unwrap();
 
     assert!(!upload.id.is_empty());
     assert!(!upload.url.is_empty());
@@ -81,6 +81,7 @@ async fn upload_file_helper() {
 #[tokio::test]
 async fn upload_bytes_helper() {
     let upload = client()
+        .attachments()
         .upload_bytes("data.csv", b"col_a,col_b\n1,2\n3,4".to_vec())
         .await
         .unwrap();
@@ -95,6 +96,7 @@ async fn upload_and_download_roundtrip() {
 
     // Upload
     let upload = client()
+        .attachments()
         .upload_bytes("roundtrip.txt", original.as_bytes().to_vec())
         .await
         .unwrap();
@@ -105,6 +107,7 @@ async fn upload_and_download_roundtrip() {
     let dest = dir.join("downloaded.txt");
 
     client()
+        .attachments()
         .download_file(&upload.url, &dest)
         .await
         .unwrap();
@@ -118,12 +121,12 @@ async fn upload_and_download_roundtrip() {
 
 #[tokio::test]
 async fn upload_nonexistent_file_returns_io_error() {
-    let result = client().upload_file("/nonexistent/file.txt").await;
+    let result = client().attachments().upload_file("/nonexistent/file.txt").await;
     assert!(matches!(result, Err(tofupilot::Error::Io(_))));
 }
 
 #[tokio::test]
 async fn download_empty_url_returns_validation_error() {
-    let result = client().download_file("", "/tmp/test.txt").await;
+    let result = client().attachments().download_file("", "/tmp/test.txt").await;
     assert!(matches!(result, Err(tofupilot::Error::Validation(_))));
 }

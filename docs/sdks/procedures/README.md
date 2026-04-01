@@ -17,11 +17,11 @@ Retrieve procedures with optional filtering and search. Returns all procedure da
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.procedures().list()
         .send()
@@ -62,11 +62,11 @@ Create a new test procedure that can be used to organize and track test runs. Th
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.procedures().create()
         .name("My Test Procedure")
@@ -103,11 +103,11 @@ Retrieve a single procedure by ID, including recent test runs, linked stations, 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.procedures().get()
         .id("550e8400-e29b-41d4-a716-446655440000")
@@ -145,11 +145,11 @@ Permanently delete a procedure, removing all associated runs, phases, measuremen
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.procedures().delete()
         .id("550e8400-e29b-41d4-a716-446655440000")
@@ -188,11 +188,11 @@ Update a test procedure's name or configuration. The procedure is identified by 
 ### Example Usage
 
 ```rust
-use tofupilot::TofuPilotClient;
+use tofupilot::TofuPilot;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilotClient::new("your-api-key");
+    let client = TofuPilot::new("your-api-key");
 
     let result = client.procedures().update()
         .id("550e8400-e29b-41d4-a716-446655440000")

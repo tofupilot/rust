@@ -1,13 +1,13 @@
 //! High-level file upload and download helpers.
 //!
 //! These wrap the low-level attachment initialize → PUT → finalize flow
-//! into single method calls.
+//! into single method calls on [`AttachmentsClient`].
 
 use std::path::Path;
 
 use reqwest::header::CONTENT_TYPE;
 
-use crate::client::TofuPilotClient;
+use crate::attachments::AttachmentsClient;
 use crate::error::{Error, Result};
 
 /// Result of a completed file upload, containing the upload ID for linking
@@ -39,7 +39,7 @@ fn content_type_for(filename: &str) -> &'static str {
     }
 }
 
-impl TofuPilotClient {
+impl<'a> AttachmentsClient<'a> {
     /// Upload a file from disk in one call.
     ///
     /// Performs the full three-step upload flow:
@@ -53,14 +53,14 @@ impl TofuPilotClient {
     /// # Example
     ///
     /// ```no_run
-    /// use tofupilot::TofuPilotClient;
+    /// use tofupilot::TofuPilot;
     ///
     /// #[tokio::main]
     /// async fn main() -> tofupilot::Result<()> {
-    ///     let client = TofuPilotClient::new("your-api-key");
+    ///     let client = TofuPilot::new("your-api-key");
     ///
     ///     // Upload a file
-    ///     let upload = client.upload_file("report.pdf").await?;
+    ///     let upload = client.attachments().upload_file("report.pdf").await?;
     ///     println!("Uploaded {}, download: {}", upload.id, upload.url);
     ///
     ///     // Link it to a run
@@ -99,14 +99,14 @@ impl TofuPilotClient {
     /// # Example
     ///
     /// ```no_run
-    /// use tofupilot::TofuPilotClient;
+    /// use tofupilot::TofuPilot;
     ///
     /// #[tokio::main]
     /// async fn main() -> tofupilot::Result<()> {
-    ///     let client = TofuPilotClient::new("your-api-key");
+    ///     let client = TofuPilot::new("your-api-key");
     ///
     ///     let csv = b"col_a,col_b\n1,2\n3,4";
-    ///     let upload = client.upload_bytes("data.csv", csv.to_vec()).await?;
+    ///     let upload = client.attachments().upload_bytes("data.csv", csv.to_vec()).await?;
     ///     println!("Uploaded {}", upload.id);
     ///     Ok(())
     /// }
@@ -120,7 +120,6 @@ impl TofuPilotClient {
 
         // Step 1: Initialize
         let init = self
-            .attachments()
             .initialize()
             .name(file_name)
             .send()
@@ -146,7 +145,6 @@ impl TofuPilotClient {
 
         // Step 3: Finalize
         let finalized = self
-            .attachments()
             .finalize()
             .id(&init.id)
             .send()
@@ -163,13 +161,13 @@ impl TofuPilotClient {
     /// # Example
     ///
     /// ```no_run
-    /// use tofupilot::TofuPilotClient;
+    /// use tofupilot::TofuPilot;
     ///
     /// #[tokio::main]
     /// async fn main() -> tofupilot::Result<()> {
-    ///     let client = TofuPilotClient::new("your-api-key");
+    ///     let client = TofuPilot::new("your-api-key");
     ///
-    ///     client.download_file(
+    ///     client.attachments().download_file(
     ///         "https://storage.example.com/signed-url",
     ///         "local-report.pdf",
     ///     ).await?;
