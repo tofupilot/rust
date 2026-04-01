@@ -2425,7 +2425,7 @@ pub struct RunCreateMeasurements {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub upper_limit: Option<f64>,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub validators: NullableField<serde_json::Value>,
+    pub validators: NullableField<Vec<RunCreateMeasurementsValidators>>,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub aggregations: NullableField<Vec<RunCreateMeasurementsAggregations>>,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -2450,7 +2450,7 @@ pub struct RunCreateMeasurementsBuilder {
     units: NullableField<serde_json::Value>,
     lower_limit: Option<f64>,
     upper_limit: Option<f64>,
-    validators: NullableField<serde_json::Value>,
+    validators: NullableField<Vec<RunCreateMeasurementsValidators>>,
     aggregations: NullableField<Vec<RunCreateMeasurementsAggregations>>,
     docstring: NullableField<String>,
 }
@@ -2545,7 +2545,7 @@ impl RunCreateMeasurementsBuilder {
     }
 
     /// Set the `validators` field.
-    pub fn validators(mut self, value: impl Into<serde_json::Value>) -> Self {
+    pub fn validators(mut self, value: impl Into<Vec<RunCreateMeasurementsValidators>>) -> Self {
         self.validators = NullableField::Value(value.into());
         self
     }

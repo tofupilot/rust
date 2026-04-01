@@ -13,6 +13,6 @@
 | `units` | `NullableField<serde_json::Value>` | :heavy_minus_sign: | [LEGACY for multi-dim] Units of measurement. For structured multi-dimensional, use units within x_axis/y_axis instead. |
 | `lower_limit` | `Option<f64>` | :heavy_minus_sign: | Use validators with operator ">=" instead. Will be converted to a validator automatically. |
 | `upper_limit` | `Option<f64>` | :heavy_minus_sign: | Use validators with operator "<=" instead. Will be converted to a validator automatically. |
-| `validators` | `NullableField<serde_json::Value>` | :heavy_minus_sign: | N/A |
+| `validators` | `NullableField<Vec<RunCreateMeasurementsValidators>>` | :heavy_minus_sign: | N/A |
 | `aggregations` | `NullableField<Vec<RunCreateMeasurementsAggregations>>` | :heavy_minus_sign: | N/A |
 | `docstring` | `NullableField<String>` | :heavy_minus_sign: | N/A |
