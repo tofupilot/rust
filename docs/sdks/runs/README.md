@@ -1,0 +1,268 @@
+# Runs
+
+## Overview
+
+### Available Operations
+
+* [list](#list) - List and filter runs
+* [create](#create) - Create run
+* [delete](#delete) - Delete runs
+* [get](#get) - Get run
+* [update](#update) - Update run
+
+## list
+
+Retrieve a paginated list of test runs with filtering by unit, procedure, date range, outcome, and station.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilotClient;
+use tofupilot::types::*;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilotClient::new("your-api-key");
+
+    let result = client.runs().list()
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `outcomes` | `Option<Vec<Outcome>>` | :heavy_minus_sign: | N/A |
+| `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `procedure_versions` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `part_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `revision_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `batch_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `duration_min` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `duration_max` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `started_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `started_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `ended_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `ended_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_by_user_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `created_by_station_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `operated_by_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `limit` | `Option<i64>` | :heavy_minus_sign: | Maximum number of runs to return per page. |
+| `cursor` | `Option<f64>` | :heavy_minus_sign: | N/A |
+| `sort_by` | `Option<RunListSortBy>` | :heavy_minus_sign: | Field to sort results by. |
+| `sort_order` | `Option<ListSortOrder>` | :heavy_minus_sign: | Sort order direction. |
+
+### Response
+
+**[`RunListResponse`](../../models/runlistresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## create
+
+Create a new test run, linking it to a procedure and unit. Existing entities are reused automatically.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilotClient;
+use tofupilot::types::*;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilotClient::new("your-api-key");
+
+    let result = client.runs().create()
+        .outcome(Outcome::default())
+        .procedure_id("550e8400-e29b-41d4-a716-446655440000")
+        .started_at(chrono::Utc::now())
+        .ended_at(chrono::Utc::now())
+        .serial_number("SN-001234")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `outcome` | `Outcome` | :heavy_check_mark: | Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption. |
+| `procedure_id` | `String` | :heavy_check_mark: | Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page. |
+| `procedure_version` | `NullableField<String>` | :heavy_minus_sign: | N/A |
+| `operated_by` | `Option<String>` | :heavy_minus_sign: | Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test. |
+| `started_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run began execution. This timestamp will be used to track when the test execution started and for historical analysis of test runs. A separate created_at timestamp is stored internally server side to track upload date. |
+| `ended_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run finished execution. |
+| `serial_number` | `String` | :heavy_check_mark: | Unique serial number of the unit under test. Matched case-insensitively. If no unit with this serial number exists, one will be created. |
+| `part_number` | `Option<String>` | :heavy_minus_sign: | Component part number for the unit. Matched case-insensitively. This field is required if the part number cannot be extracted from the serial number (as set in the settings). This field takes precedence over extraction from serial number. A component with the provided or extracted part number will be created if one does not exist. |
+| `revision_number` | `Option<String>` | :heavy_minus_sign: | Hardware revision identifier for the unit. Matched case-insensitively. If none exist, a revision with this number will be created. If no revision is specified, the unit will be linked to the default revision of the part number. |
+| `batch_number` | `Option<String>` | :heavy_minus_sign: | Production batch identifier for grouping units manufactured together. Matched case-insensitively. If none exist, a batch with this batch number will be created. If no batch number is specified, the unit will not be linked to any batch. |
+| `sub_units` | `Option<Vec<String>>` | :heavy_minus_sign: | Array of sub-unit serial numbers that are part of this main unit. Matched case-insensitively. Each sub-unit must already exist and will be linked as a sub-component of the main unit under test. If no sub-units are specified, the unit will be created without sub-unit relationships. |
+| `docstring` | `Option<String>` | :heavy_minus_sign: | Additional notes or documentation about this test run. |
+| `phases` | `Option<Vec<RunCreatePhases>>` | :heavy_minus_sign: | Array of test phases with measurements and results. Each phase represents a distinct stage of the test execution with timing information, outcome status, and optional measurements. If no phases are specified, the run will be created without phase-level organization of test data. |
+| `logs` | `Option<Vec<RunCreateLogs>>` | :heavy_minus_sign: | Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries. |
+
+### Response
+
+**[`RunCreateResponse`](../../models/runcreateresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::Forbidden` | 403 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::UnprocessableContent` | 422 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## delete
+
+Permanently delete test runs by their IDs. Removes all associated phases, measurements, and attachments.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilotClient;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilotClient::new("your-api-key");
+
+    let result = client.runs().delete()
+        .ids(vec!["550e8400-e29b-41d4-a716-446655440000".into()])
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ids` | `Vec<String>` | :heavy_check_mark: | Run IDs to delete. |
+
+### Response
+
+**[`RunDeleteResponse`](../../models/rundeleteresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## get
+
+Retrieve a single test run by its ID. Returns comprehensive run data including metadata, phases, measurements, and logs.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilotClient;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilotClient::new("your-api-key");
+
+    let result = client.runs().get()
+        .id("550e8400-e29b-41d4-a716-446655440000")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `String` | :heavy_check_mark: | ID of the run to retrieve. |
+
+### Response
+
+**[`RunGetResponse`](../../models/rungetresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## update
+
+Update a test run, including linking file attachments. Files must be uploaded via Initialize upload and Finalize upload before linking.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilotClient;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilotClient::new("your-api-key");
+
+    let result = client.runs().update()
+        .id("550e8400-e29b-41d4-a716-446655440000")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `String` | :heavy_check_mark: | Unique identifier of the run to update. |
+| `attachments` | `Option<Vec<String>>` | :heavy_minus_sign: | Array of upload IDs to attach to the run. |
+
+### Response
+
+**[`RunUpdateResponse`](../../models/runupdateresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
