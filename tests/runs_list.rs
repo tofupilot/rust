@@ -256,3 +256,195 @@ async fn list_runs_empty_result() {
         .unwrap();
     assert!(result.data.is_empty());
 }
+
+#[tokio::test]
+async fn list_runs_filter_by_duration_range() {
+    let uid_val = uid();
+    let part = format!("PART-DUR-{uid_val}");
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    // Create a run with ~2 minute duration
+    client().runs().create()
+        .serial_number(format!("SN-DUR-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now - chrono::Duration::minutes(3))
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .duration_min("PT1M")
+        .duration_max("PT5M")
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_runs_filter_by_ended_at() {
+    let uid_val = uid();
+    let part = format!("PART-END-{uid_val}");
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    client().runs().create()
+        .serial_number(format!("SN-END-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now - chrono::Duration::minutes(3))
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .ended_after(now - chrono::Duration::minutes(10))
+        .ended_before(now + chrono::Duration::minutes(5))
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_runs_filter_by_created_at() {
+    let uid_val = uid();
+    let part = format!("PART-CRT-{uid_val}");
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    client().runs().create()
+        .serial_number(format!("SN-CRT-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .created_after(now - chrono::Duration::minutes(10))
+        .created_before(now + chrono::Duration::minutes(5))
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_runs_filter_by_revision_numbers() {
+    let uid_val = uid();
+    let part = format!("PART-REV-{uid_val}");
+    let rev = format!("REV-{uid_val}");
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    client().parts().create()
+        .number(&part)
+        .name(format!("Part {uid_val}"))
+        .send()
+        .await
+        .unwrap();
+
+    client().revisions().create()
+        .part_number(&part)
+        .number(&rev)
+        .send()
+        .await
+        .unwrap();
+
+    client().runs().create()
+        .serial_number(format!("SN-REV-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .revision_number(&rev)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .revision_numbers(vec![rev])
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_runs_filter_by_procedure_versions() {
+    let uid_val = uid();
+    let part = format!("PART-PV-{uid_val}");
+    let version = format!("1.0.{}", &uid_val[..4]);
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    client().runs().create()
+        .serial_number(format!("SN-PV-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .procedure_version(&version)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .procedure_versions(vec![version])
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_runs_filter_by_batch_numbers() {
+    let uid_val = uid();
+    let part = format!("PART-BN-{uid_val}");
+    let batch = format!("BATCH-{uid_val}");
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    client().runs().create()
+        .serial_number(format!("SN-BN-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part)
+        .batch_number(&batch)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().runs().list()
+        .part_numbers(vec![part])
+        .batch_numbers(vec![batch])
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}

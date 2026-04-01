@@ -320,3 +320,138 @@ async fn create_unit_duplicate_serial_returns_conflict() {
         .await;
     assert!(matches!(result, Err(tofupilot::Error::Conflict(_))));
 }
+
+#[tokio::test]
+async fn list_units_filter_by_revision_numbers() {
+    let uid_val = uid();
+    let part_number = format!("PART-RV-{uid_val}");
+    let rev_number = format!("REV-RV-{uid_val}");
+
+    client().parts().create()
+        .number(&part_number)
+        .name(format!("Part {uid_val}"))
+        .send()
+        .await
+        .unwrap();
+
+    client().revisions().create()
+        .part_number(&part_number)
+        .number(&rev_number)
+        .send()
+        .await
+        .unwrap();
+
+    client().units().create()
+        .serial_number(format!("SN-RV-{uid_val}"))
+        .part_number(&part_number)
+        .revision_number(&rev_number)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().units().list()
+        .part_numbers(vec![part_number.clone()])
+        .revision_numbers(vec![rev_number])
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+    assert!(result.data.iter().all(|u| u.part.number == part_number));
+}
+
+#[tokio::test]
+async fn list_units_filter_by_batch_numbers() {
+    let uid_val = uid();
+    let part_number = format!("PART-BN-{uid_val}");
+    let rev_number = format!("REV-BN-{uid_val}");
+    let batch_number = format!("BATCH-{uid_val}");
+    let proc_id = procedure_id().await;
+
+    client().parts().create()
+        .number(&part_number)
+        .name(format!("Part {uid_val}"))
+        .send()
+        .await
+        .unwrap();
+
+    client().revisions().create()
+        .part_number(&part_number)
+        .number(&rev_number)
+        .send()
+        .await
+        .unwrap();
+
+    // Create a run with batch_number to auto-create the batch and link the unit
+    let now = chrono::Utc::now();
+    client().runs().create()
+        .serial_number(format!("SN-BN-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(&part_number)
+        .revision_number(&rev_number)
+        .batch_number(&batch_number)
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(tofupilot::types::Outcome::Pass)
+        .send()
+        .await
+        .unwrap();
+
+    let result = client().units().list()
+        .part_numbers(vec![part_number])
+        .batch_numbers(vec![batch_number])
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_units_filter_by_created_at() {
+    let now = chrono::Utc::now();
+    let (part_number, _) = create_part_and_unit("CA").await;
+
+    let result = client().units().list()
+        .part_numbers(vec![part_number])
+        .created_after(now - chrono::Duration::minutes(5))
+        .created_before(now + chrono::Duration::minutes(5))
+        .send()
+        .await
+        .unwrap();
+
+    assert!(!result.data.is_empty());
+}
+
+#[tokio::test]
+async fn list_units_exclude_units_with_parent() {
+    let (_, parent_serial) = create_part_and_unit("EP").await;
+    let (_, child_serial) = create_part_and_unit("EC").await;
+
+    client().units().add_child()
+        .serial_number(&parent_serial)
+        .child_serial_number(&child_serial)
+        .send()
+        .await
+        .unwrap();
+
+    // With exclude - child should not appear
+    let excluded = client().units().list()
+        .serial_numbers(vec![parent_serial.clone(), child_serial.clone()])
+        .exclude_units_with_parent(true)
+        .send()
+        .await
+        .unwrap();
+
+    assert!(excluded.data.iter().all(|u| u.serial_number == parent_serial));
+
+    // Without exclude - both should appear
+    let included = client().units().list()
+        .serial_numbers(vec![parent_serial, child_serial])
+        .exclude_units_with_parent(false)
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(2, included.data.len());
+}
