@@ -35,7 +35,14 @@ impl ClientConfig {
 
     /// Set the base URL.
     pub fn base_url(mut self, url: impl Into<String>) -> Self {
-        self.base_url = url.into();
+        let mut base = url.into();
+        if base.ends_with('/') {
+            base.pop();
+        }
+        if !base.ends_with("/api") {
+            base.push_str("/api");
+        }
+        self.base_url = base;
         self
     }
 
