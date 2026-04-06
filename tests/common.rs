@@ -12,10 +12,30 @@ pub fn uid() -> String {
     uuid::Uuid::new_v4().to_string()
 }
 
+fn load_env() {
+    // Load shared clients/.env.local
+    let manifest = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let env_path = manifest.parent().unwrap().join(".env.local");
+    if let Ok(contents) = std::fs::read_to_string(&env_path) {
+        for line in contents.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('#') { continue; }
+            if let Some(idx) = trimmed.find('=') {
+                let key = &trimmed[..idx];
+                let val = &trimmed[idx + 1..];
+                if std::env::var(key).is_err() {
+                    std::env::set_var(key, val);
+                }
+            }
+        }
+    }
+}
+
 pub fn client() -> &'static TofuPilot {
     CLIENT.get_or_init(|| {
+        load_env();
         let api_key = std::env::var("TOFUPILOT_API_KEY_USER")
-            .expect("TOFUPILOT_API_KEY_USER must be set");
+            .expect("TOFUPILOT_API_KEY_USER must be set — check clients/.env.local");
         let url = std::env::var("TOFUPILOT_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
 
