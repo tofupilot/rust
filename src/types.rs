@@ -167,6 +167,24 @@ impl std::fmt::Display for BatchListSortBy {
     }
 }
 
+/// Git provider
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Provider {
+    #[serde(rename = "github")]
+    Github,
+    #[serde(rename = "gitlab")]
+    Gitlab,
+}
+
+impl std::fmt::Display for Provider {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Github => write!(f, "github"),
+            Self::Gitlab => write!(f, "gitlab"),
+        }
+    }
+}
+
 /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Outcome {
@@ -190,24 +208,6 @@ impl std::fmt::Display for Outcome {
             Self::Error => write!(f, "ERROR"),
             Self::Timeout => write!(f, "TIMEOUT"),
             Self::Aborted => write!(f, "ABORTED"),
-        }
-    }
-}
-
-/// Git provider
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Provider {
-    #[serde(rename = "github")]
-    Github,
-    #[serde(rename = "gitlab")]
-    Gitlab,
-}
-
-impl std::fmt::Display for Provider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Github => write!(f, "github"),
-            Self::Gitlab => write!(f, "gitlab"),
         }
     }
 }
@@ -575,25 +575,6 @@ impl ProcedureListCreatedByUserBuilder {
     }
 }
 
-/// Unit associated with this run.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ProcedureListUnit {
-    /// Unique identifier for the unit.
-    pub id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ProcedureListRuns {
-    /// Unique identifier for the run.
-    pub id: String,
-    /// Result of the test run.
-    pub outcome: Outcome,
-    /// ISO 8601 timestamp when the run was started.
-    pub started_at: chrono::DateTime<chrono::Utc>,
-    /// Unit associated with this run.
-    pub unit: ProcedureListUnit,
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureListLinkedRepository {
     /// Unique identifier for the linked repository.
@@ -616,9 +597,6 @@ pub struct ProcedureListData {
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// User who created the procedure.
     pub created_by_user: ProcedureListCreatedByUser,
-    /// Recent runs for this procedure.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub runs: Vec<ProcedureListRuns>,
     /// Linked repository for this procedure.
     #[serde(rename = "linkedRepository")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -639,7 +617,6 @@ pub struct ProcedureListDataBuilder {
     name: Option<String>,
     created_at: Option<chrono::DateTime<chrono::Utc>>,
     created_by_user: Option<ProcedureListCreatedByUser>,
-    runs: Option<Vec<ProcedureListRuns>>,
     linked_repository: Option<ProcedureListLinkedRepository>,
 }
 
@@ -676,14 +653,6 @@ impl ProcedureListDataBuilder {
         self
     }
 
-    /// Set the `runs` field.
-    ///
-    /// Recent runs for this procedure.
-    pub fn runs(mut self, value: impl Into<Vec<ProcedureListRuns>>) -> Self {
-        self.runs = Some(value.into());
-        self
-    }
-
     /// Set the `linkedRepository` field.
     ///
     /// Linked repository for this procedure.
@@ -703,7 +672,6 @@ impl ProcedureListDataBuilder {
                 .ok_or_else(|| "missing required field: created_at".to_string())?,
             created_by_user: self.created_by_user
                 .ok_or_else(|| "missing required field: created_by_user".to_string())?,
-            runs: self.runs.unwrap_or_default(),
             linked_repository: self.linked_repository,
         })
     }

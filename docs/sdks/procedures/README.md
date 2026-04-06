@@ -12,7 +12,7 @@
 
 ## list
 
-Retrieve procedures with optional filtering and search. Returns all procedure data including creator, recent runs, and FPY (First Pass Yield) statistics.
+Retrieve procedures with optional filtering and search. Returns procedure data including creator and linked repository.
 
 ### Example Usage
 
