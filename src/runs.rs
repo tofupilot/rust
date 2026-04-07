@@ -104,7 +104,7 @@ pub struct ListBuilder<'a> {
     created_by_station_ids: Option<Vec<String>>,
     operated_by_ids: Option<Vec<String>>,
     limit: Option<i64>,
-    cursor: Option<f64>,
+    cursor: Option<i64>,
     sort_by: Option<RunListSortBy>,
     sort_order: Option<ListSortOrder>,
     server_url: Option<String>,
@@ -273,7 +273,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `cursor` query parameter.
-    pub fn cursor(mut self, value: impl Into<f64>) -> Self {
+    pub fn cursor(mut self, value: impl Into<i64>) -> Self {
         self.cursor = Some(value.into());
         self
     }

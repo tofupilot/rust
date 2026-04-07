@@ -9,4 +9,4 @@
 | `timestamp` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the log message was generated. |
 | `message` | `String` | :heavy_check_mark: | Content of the log message. Contains the actual log text describing the event, error, or information being logged. Messages longer than 10,000 characters will be truncated. |
 | `source_file` | `String` | :heavy_check_mark: | Name or path of the source file where the log message originated. Helps identify the code location that generated the log entry. |
-| `line_number` | `f64` | :heavy_check_mark: | Line number in the source file where the log message was generated. Used for debugging and tracing log origins. |
+| `line_number` | `i64` | :heavy_check_mark: | Line number in the source file where the log message was generated. Used for debugging and tracing log origins. |

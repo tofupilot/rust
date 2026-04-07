@@ -2701,7 +2701,7 @@ pub struct RunCreateLogs {
     /// Name or path of the source file where the log message originated. Helps identify the code location that generated the log entry.
     pub source_file: String,
     /// Line number in the source file where the log message was generated. Used for debugging and tracing log origins.
-    pub line_number: f64,
+    pub line_number: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -2966,7 +2966,7 @@ pub struct RunListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cursor: Option<f64>,
+    pub cursor: Option<i64>,
     /// Field to sort results by.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort_by: Option<RunListSortBy>,
@@ -3006,7 +3006,7 @@ pub struct RunListRequestBuilder {
     created_by_station_ids: Option<Vec<String>>,
     operated_by_ids: Option<Vec<String>>,
     limit: Option<i64>,
-    cursor: Option<f64>,
+    cursor: Option<i64>,
     sort_by: Option<RunListSortBy>,
     sort_order: Option<ListSortOrder>,
 }
@@ -3141,7 +3141,7 @@ impl RunListRequestBuilder {
     }
 
     /// Set the `cursor` field.
-    pub fn cursor(mut self, value: impl Into<f64>) -> Self {
+    pub fn cursor(mut self, value: impl Into<i64>) -> Self {
         self.cursor = Some(value.into());
         self
     }
@@ -5379,7 +5379,7 @@ pub struct RunGetLogs {
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub message: String,
     pub source_file: String,
-    pub line_number: f64,
+    pub line_number: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
