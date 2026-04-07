@@ -65,6 +65,16 @@ impl TofuPilot {
                 HeaderValue::from_static("tofupilot-rust")
             }),
         );
+        headers.insert(
+            "x-client-type",
+            HeaderValue::from_static("rust"),
+        );
+        headers.insert(
+            "x-client-version",
+            HeaderValue::from_str(env!("CARGO_PKG_VERSION")).unwrap_or_else(|_| {
+                HeaderValue::from_static("unknown")
+            }),
+        );
 
         let http = reqwest::Client::builder()
             .default_headers(headers)
