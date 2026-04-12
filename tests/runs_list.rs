@@ -113,7 +113,7 @@ async fn list_runs_pagination() {
     assert_eq!(1, page1.data.len());
     assert!(page1.meta.has_more);
 
-    let cursor = *page1.meta.next_cursor.as_ref().unwrap() as f64;
+    let cursor = *page1.meta.next_cursor.as_ref().unwrap();
     let page2 = client().runs().list()
         .part_numbers(vec![part])
         .limit(1)

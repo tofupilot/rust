@@ -130,14 +130,14 @@ async fn create_run_with_logs() {
                 timestamp: now - chrono::Duration::minutes(4),
                 message: "Test started successfully".to_string(),
                 source_file: "test_runner.rs".to_string(),
-                line_number: 42.0,
+                line_number: 42,
             },
             RunCreateLogs {
                 level: Level::Warning,
                 timestamp: now - chrono::Duration::minutes(2),
                 message: "Voltage slightly above nominal".to_string(),
                 source_file: "test_runner.rs".to_string(),
-                line_number: 88.0,
+                line_number: 88,
             },
         ])
         .send()

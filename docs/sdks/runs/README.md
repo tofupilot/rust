@@ -9,6 +9,7 @@
 * [delete](#delete) - Delete runs
 * [get](#get) - Get run
 * [update](#update) - Update run
+* [create_attachment](#create_attachment) - Attach file to run
 
 ## list
 
@@ -256,6 +257,50 @@ async fn main() -> tofupilot::Result<()> {
 ### Response
 
 **[`RunUpdateResponse`](../../models/runupdateresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## create_attachment
+
+Create an attachment linked to a run and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.runs().create_attachment()
+        .id("550e8400-e29b-41d4-a716-446655440000")
+        .name("My Test Procedure")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `String` | :heavy_check_mark: | Unique identifier of the run to attach the file to. |
+| `name` | `String` | :heavy_check_mark: | File name including extension (e.g. "report.pdf"). Used to determine content type and display name. |
+
+### Response
+
+**[`RunCreateAttachmentResponse`](../../models/runcreateattachmentresponse.md)**
 
 ### Errors
 

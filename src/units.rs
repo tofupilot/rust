@@ -72,6 +72,20 @@ impl<'a> UnitsClient<'a> {
         RemoveChildBuilder::new(self.client)
     }
 
+    /// Attach file to unit
+    ///
+    /// Create an attachment linked to a unit and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+    pub fn create_attachment(&self) -> CreateAttachmentBuilder<'a> {
+        CreateAttachmentBuilder::new(self.client)
+    }
+
+    /// Delete unit attachments
+    ///
+    /// Delete attachments from a unit by their IDs. Removes the files from storage and unlinks them from the unit.
+    pub fn delete_attachment(&self) -> DeleteAttachmentBuilder<'a> {
+        DeleteAttachmentBuilder::new(self.client)
+    }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -1150,6 +1164,240 @@ impl<'a> RemoveChildBuilder<'a> {
             base_url,
         ).await?;
         let result: UnitRemoveChildResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CreateAttachmentBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`UnitsClient::create_attachment`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.units().create_attachment()
+///     .name("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateAttachmentBuilder<'a> {
+    client: &'a TofuPilot,
+    serial_number: Option<String>,
+    name: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateAttachmentBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            serial_number: None,
+            name: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `serial_number` path parameter.
+    ///
+    /// Serial number of the unit to attach the file to. Matched case-insensitively.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// File name including extension (e.g. "calibration.pdf"). Used to determine content type and display name.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: UnitCreateAttachmentRequestBody) -> Self {
+        self.name = Some(body.name);
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<UnitCreateAttachmentResponse> {
+        let serial_number = self.serial_number
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: serial_number".to_string(),
+            ))?;
+        let serial_number_encoded = utf8_percent_encode(&serial_number, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/units/{serial_number}/attachments",
+            base_url,
+            serial_number = serial_number_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = UnitCreateAttachmentRequestBody {
+            name: self.name
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: name".to_string(),
+                ))?,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "unit-createAttachment",
+            base_url,
+        ).await?;
+        let result: UnitCreateAttachmentResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// DeleteAttachmentBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`UnitsClient::delete_attachment`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.units().delete_attachment()
+///     .serial_number("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct DeleteAttachmentBuilder<'a> {
+    client: &'a TofuPilot,
+    serial_number: Option<String>,
+    ids: Option<Vec<String>>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> DeleteAttachmentBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            serial_number: None,
+            ids: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `serial_number` path parameter.
+    ///
+    /// Serial number of the unit. Matched case-insensitively.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `ids` query parameter.
+    ///
+    /// Attachment IDs to delete
+    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.ids = Some(value.into());
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<UnitDeleteAttachmentResponse> {
+        let serial_number = self.serial_number
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: serial_number".to_string(),
+            ))?;
+        let serial_number_encoded = utf8_percent_encode(&serial_number, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/units/{serial_number}/attachments",
+            base_url,
+            serial_number = serial_number_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::DELETE,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+        if let Some(ref val) = self.ids {
+            for item in val {
+                request = request.query(&[("ids", item.to_string())]);
+            }
+        }
+
+
+        let response = self.client.execute(
+            request,
+            "unit-deleteAttachment",
+            base_url,
+        ).await?;
+        let result: UnitDeleteAttachmentResponse = response.json().await?;
         Ok(result)
     }
 }

@@ -58,6 +58,13 @@ impl<'a> RunsClient<'a> {
         UpdateBuilder::new(self.client)
     }
 
+    /// Attach file to run
+    ///
+    /// Create an attachment linked to a run and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+    pub fn create_attachment(&self) -> CreateAttachmentBuilder<'a> {
+        CreateAttachmentBuilder::new(self.client)
+    }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -1030,6 +1037,127 @@ impl<'a> UpdateBuilder<'a> {
             base_url,
         ).await?;
         let result: RunUpdateResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// CreateAttachmentBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`RunsClient::create_attachment`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.runs().create_attachment()
+///     .name("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateAttachmentBuilder<'a> {
+    client: &'a TofuPilot,
+    id: Option<String>,
+    name: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateAttachmentBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            id: None,
+            name: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `id` path parameter.
+    ///
+    /// Unique identifier of the run to attach the file to.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// File name including extension (e.g. "report.pdf"). Used to determine content type and display name.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: RunCreateAttachmentRequestBody) -> Self {
+        self.name = Some(body.name);
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<RunCreateAttachmentResponse> {
+        let id = self.id
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: id".to_string(),
+            ))?;
+        let id_encoded = utf8_percent_encode(&id, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/runs/{id}/attachments",
+            base_url,
+            id = id_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = RunCreateAttachmentRequestBody {
+            name: self.name
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: name".to_string(),
+                ))?,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "run-createAttachment",
+            base_url,
+        ).await?;
+        let result: RunCreateAttachmentResponse = response.json().await?;
         Ok(result)
     }
 }

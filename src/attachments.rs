@@ -30,13 +30,6 @@ impl<'a> AttachmentsClient<'a> {
         InitializeBuilder::new(self.client)
     }
 
-    /// Delete attachments
-    ///
-    /// Permanently delete attachments by their IDs and unlink them from any associated runs or units. Removes files from storage and clears all references.
-    pub fn delete(&self) -> DeleteBuilder<'a> {
-        DeleteBuilder::new(self.client)
-    }
-
     /// Finalize upload
     ///
     /// Finalize a file upload after uploading to the pre-signed URL. Validates the file and records its metadata.
@@ -144,99 +137,6 @@ impl<'a> InitializeBuilder<'a> {
             base_url,
         ).await?;
         let result: AttachmentInitializeResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// DeleteBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`AttachmentsClient::delete`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.attachments().delete()
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct DeleteBuilder<'a> {
-    client: &'a TofuPilot,
-    ids: Option<Vec<String>>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> DeleteBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            ids: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `ids` query parameter.
-    ///
-    /// Upload IDs to delete
-    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.ids = Some(value.into());
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<AttachmentDeleteResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/attachments");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::DELETE,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-        if let Some(ref val) = self.ids {
-            for item in val {
-                request = request.query(&[("ids", item.to_string())]);
-            }
-        }
-
-
-        let response = self.client.execute(
-            request,
-            "attachment-delete",
-            base_url,
-        ).await?;
-        let result: AttachmentDeleteResponse = response.json().await?;
         Ok(result)
     }
 }

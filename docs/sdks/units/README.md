@@ -11,6 +11,8 @@
 * [update](#update) - Update unit
 * [add_child](#add_child) - Add sub-unit
 * [remove_child](#remove_child) - Remove sub-unit
+* [create_attachment](#create_attachment) - Attach file to unit
+* [delete_attachment](#delete_attachment) - Delete unit attachments
 
 ## list
 
@@ -339,6 +341,94 @@ async fn main() -> tofupilot::Result<()> {
 | Error Type | Status Code | Content Type |
 | --- | --- | --- |
 | `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## create_attachment
+
+Create an attachment linked to a unit and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.units().create_attachment()
+        .serial_number("SN-001234")
+        .name("My Test Procedure")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `serial_number` | `String` | :heavy_check_mark: | Serial number of the unit to attach the file to. Matched case-insensitively. |
+| `name` | `String` | :heavy_check_mark: | File name including extension (e.g. "calibration.pdf"). Used to determine content type and display name. |
+
+### Response
+
+**[`UnitCreateAttachmentResponse`](../../models/unitcreateattachmentresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## delete_attachment
+
+Delete attachments from a unit by their IDs. Removes the files from storage and unlinks them from the unit.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.units().delete_attachment()
+        .serial_number("SN-001234")
+        .ids(vec!["550e8400-e29b-41d4-a716-446655440000".into()])
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `serial_number` | `String` | :heavy_check_mark: | Serial number of the unit. Matched case-insensitively. |
+| `ids` | `Vec<String>` | :heavy_check_mark: | Attachment IDs to delete |
+
+### Response
+
+**[`UnitDeleteAttachmentResponse`](../../models/unitdeleteattachmentresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
 | `Error::Unauthorized` | 401 | application/json |
 | `Error::NotFound` | 404 | application/json |
 | `Error::InternalServerError` | 500 | application/json |

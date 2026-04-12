@@ -2,131 +2,55 @@ mod common;
 use common::*;
 
 #[tokio::test]
-async fn initialize_returns_id_and_upload_url() {
-    let result = client()
-        .attachments()
-        .initialize()
-        .name(format!("test-{}.txt", uid()))
-        .send()
-        .await
-        .unwrap();
+async fn run_attachments_create() {
+    let run = create_test_run(&uid()).await;
 
-    assert!(!result.id.is_empty());
-    assert!(!result.upload_url.is_empty());
-}
-
-#[tokio::test]
-async fn full_lifecycle_initialize_upload_finalize() {
-    let c = client();
-
-    // Step 1: Initialize
-    let init = c
-        .attachments()
-        .initialize()
-        .name(format!("lifecycle-{}.txt", uid()))
-        .send()
-        .await
-        .unwrap();
-    assert!(!init.upload_url.is_empty());
-
-    // Step 2: PUT to pre-signed URL
-    let put_response = reqwest::Client::new()
-        .put(&init.upload_url)
-        .header("Content-Type", "text/plain")
-        .body("test content")
-        .send()
-        .await
-        .unwrap();
-    assert!(put_response.status().is_success());
-
-    // Step 3: Finalize
-    let finalized = c
-        .attachments()
-        .finalize()
-        .id(&init.id)
-        .send()
-        .await
-        .unwrap();
-    assert!(!finalized.url.is_empty());
-}
-
-#[tokio::test]
-async fn finalize_nonexistent_returns_not_found() {
-    let result = client()
-        .attachments()
-        .finalize()
-        .id(uuid::Uuid::new_v4().to_string())
-        .send()
-        .await;
-
-    assert!(matches!(result, Err(tofupilot::Error::NotFound(_))));
-}
-
-#[tokio::test]
-async fn upload_file_helper() {
-    let dir = std::env::temp_dir().join(format!("tofupilot-test-{}", uid()));
+    let dir = std::env::temp_dir().join(format!("tofupilot-{}", uid()));
     tokio::fs::create_dir_all(&dir).await.unwrap();
-    let path = dir.join("upload-test.txt");
-    tokio::fs::write(&path, "upload helper test content").await.unwrap();
+    let path = dir.join("test.txt");
+    tokio::fs::write(&path, "attach helper test").await.unwrap();
 
-    let upload = client().attachments().upload_file(&path).await.unwrap();
+    let id = client().runs().attachments().upload(&run.id, &path).await.unwrap();
+    assert!(!id.is_empty());
 
-    assert!(!upload.id.is_empty());
-    assert!(!upload.url.is_empty());
+    let fetched = client().runs().get().id(&run.id).send().await.unwrap();
+    let attachments = fetched.attachments.unwrap_or_default();
+    assert!(attachments.iter().any(|a| a.id == id));
 
-    // Cleanup
     tokio::fs::remove_dir_all(&dir).await.ok();
 }
 
 #[tokio::test]
-async fn upload_bytes_helper() {
-    let upload = client()
-        .attachments()
-        .upload_bytes("data.csv", b"col_a,col_b\n1,2\n3,4".to_vec())
-        .await
-        .unwrap();
-
-    assert!(!upload.id.is_empty());
-    assert!(!upload.url.is_empty());
-}
-
-#[tokio::test]
-async fn upload_and_download_roundtrip() {
-    let original = format!("roundtrip test {}", uid());
-
-    // Upload
-    let upload = client()
-        .attachments()
-        .upload_bytes("roundtrip.txt", original.as_bytes().to_vec())
-        .await
-        .unwrap();
-
-    // Download
-    let dir = std::env::temp_dir().join(format!("tofupilot-dl-{}", uid()));
-    tokio::fs::create_dir_all(&dir).await.unwrap();
-    let dest = dir.join("downloaded.txt");
-
-    client()
-        .attachments()
-        .download_file(&upload.url, &dest)
-        .await
-        .unwrap();
-
-    let downloaded = tokio::fs::read_to_string(&dest).await.unwrap();
-    assert_eq!(original, downloaded);
-
-    // Cleanup
-    tokio::fs::remove_dir_all(&dir).await.ok();
-}
-
-#[tokio::test]
-async fn upload_nonexistent_file_returns_io_error() {
-    let result = client().attachments().upload_file("/nonexistent/file.txt").await;
+async fn run_attachments_create_file_not_found() {
+    let result = client().runs().attachments().upload("fake-id", "/nonexistent/file.txt").await;
     assert!(matches!(result, Err(tofupilot::Error::Io(_))));
 }
 
 #[tokio::test]
-async fn download_empty_url_returns_validation_error() {
-    let result = client().attachments().download_file("", "/tmp/test.txt").await;
-    assert!(matches!(result, Err(tofupilot::Error::Validation(_))));
+async fn unit_attachments_create_and_delete() {
+    let uid_val = uid();
+    let part = format!("PART-DAT-{uid_val}");
+    let serial = format!("SN-DAT-{uid_val}");
+    let rev = format!("REV-DAT-{uid_val}");
+
+    client().parts().create().number(&part).name(format!("Part {uid_val}")).send().await.unwrap();
+    client().revisions().create().part_number(&part).number(&rev).send().await.unwrap();
+    client().units().create().serial_number(&serial).part_number(&part).revision_number(&rev).send().await.unwrap();
+
+    let dir = std::env::temp_dir().join(format!("tofupilot-{uid_val}"));
+    tokio::fs::create_dir_all(&dir).await.unwrap();
+    let path = dir.join("delete-test.txt");
+    tokio::fs::write(&path, "to be deleted").await.unwrap();
+
+    let id = client().units().attachments().upload(&serial, &path).await.unwrap();
+    assert!(!id.is_empty());
+
+    let result = client().units().attachments().delete(&serial, vec![id.clone()]).await.unwrap();
+    assert!(result.ids.iter().any(|i| i == &id));
+
+    let fetched = client().units().get().serial_number(&serial).send().await.unwrap();
+    let attachments = fetched.attachments.unwrap_or_default();
+    assert!(!attachments.iter().any(|a| a.id == id));
+
+    tokio::fs::remove_dir_all(&dir).await.ok();
 }

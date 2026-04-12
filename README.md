@@ -43,14 +43,15 @@ async fn main() -> tofupilot::Result<()> {
 | Resource | Methods | Docs |
 | --- | --- | --- |
 | **Runs** | list, create, get, update, delete | [docs/sdks/runs](https://github.com/tofupilot/rust/blob/main/docs/sdks/runs/README.md) |
+| **Runs.Attachments** | upload, download | - |
 | **Procedures** | list, create, get, update, delete | [docs/sdks/procedures](https://github.com/tofupilot/rust/blob/main/docs/sdks/procedures/README.md) |
 | **Units** | list, create, get, update, delete, add_child, remove_child | [docs/sdks/units](https://github.com/tofupilot/rust/blob/main/docs/sdks/units/README.md) |
+| **Units.Attachments** | upload, download, delete | - |
 | **Parts** | list, create, get, update, delete | [docs/sdks/parts](https://github.com/tofupilot/rust/blob/main/docs/sdks/parts/README.md) |
 | **Batches** | list, create, get, update, delete | [docs/sdks/batches](https://github.com/tofupilot/rust/blob/main/docs/sdks/batches/README.md) |
 | **Stations** | list, create, get, get_current, update, remove | [docs/sdks/stations](https://github.com/tofupilot/rust/blob/main/docs/sdks/stations/README.md) |
 | **Revisions** | create, get, update, delete | [docs/sdks/revisions](https://github.com/tofupilot/rust/blob/main/docs/sdks/revisions/README.md) |
 | **Versions** | create, get, delete | [docs/sdks/versions](https://github.com/tofupilot/rust/blob/main/docs/sdks/versions/README.md) |
-| **Attachments** | initialize, finalize, delete, upload_file, upload_bytes, download_file | [docs/sdks/attachments](https://github.com/tofupilot/rust/blob/main/docs/sdks/attachments/README.md) |
 | **User** | list | [docs/sdks/user](https://github.com/tofupilot/rust/blob/main/docs/sdks/user/README.md) |
 
 All model types are documented in [docs/models/](https://github.com/tofupilot/rust/tree/main/docs/models).
@@ -75,27 +76,22 @@ for run in &runs.data {
 }
 ```
 
-## File Upload
+## File Attachments
 
-The SDK provides high-level helpers that handle the three-step upload flow (initialize → PUT → finalize) in a single call:
+Attach files directly to runs or units:
 
 ```rust,ignore
-// Upload from disk
-let upload = client.attachments().upload_file("report.pdf").await?;
+// Upload a file to a run
+let id = client.runs().attachments().upload(&run.id, "report.pdf").await?;
 
-// Or upload raw bytes
-let csv = b"header\nrow1\nrow2";
-let upload = client.attachments().upload_bytes("data.csv", csv.to_vec()).await?;
+// Upload a file to a unit
+let id = client.units().attachments().upload("SN-0001", "calibration.pdf").await?;
 
-// Link to a run
-client.runs().update()
-    .id(&run.id)
-    .attachments(vec![upload.id])
-    .send()
-    .await?;
+// Download an attachment
+client.runs().attachments().download(&url, "local-report.pdf").await?;
 
-// Download a file
-client.attachments().download_file(&upload.url, "local-report.pdf").await?;
+// Delete a unit attachment
+client.units().attachments().delete("SN-0001", vec![id]).await?;
 ```
 
 ## Phases & Measurements

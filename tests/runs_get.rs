@@ -108,14 +108,14 @@ async fn get_run_includes_logs() {
                 timestamp: now - chrono::Duration::minutes(4),
                 message: "Initializing device".to_string(),
                 source_file: "device.rs".to_string(),
-                line_number: 10.0,
+                line_number: 10,
             },
             RunCreateLogs {
                 level: Level::Error,
                 timestamp: now - chrono::Duration::minutes(1),
                 message: "Recovered from transient fault".to_string(),
                 source_file: "fault_handler.rs".to_string(),
-                line_number: 55.0,
+                line_number: 55,
             },
         ])
         .send()
@@ -131,5 +131,5 @@ async fn get_run_includes_logs() {
     let logs = fetched.logs.expect("logs should be present");
     assert_eq!(2, logs.len());
     assert!(logs.iter().any(|l| l.message == "Initializing device" && l.source_file == "device.rs"));
-    assert!(logs.iter().any(|l| l.message == "Recovered from transient fault" && l.line_number == 55.0));
+    assert!(logs.iter().any(|l| l.message == "Recovered from transient fault" && l.line_number == 55));
 }

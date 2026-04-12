@@ -5554,6 +5554,28 @@ pub struct RunUpdateResponse {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateAttachmentRequestBody {
+    /// File name including extension (e.g. "report.pdf"). Used to determine content type and display name.
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateAttachmentRequest {
+    /// Unique identifier of the run to attach the file to.
+    pub id: String,
+    pub request_body: RunCreateAttachmentRequestBody,
+}
+
+/// Run attachment created successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateAttachmentResponse {
+    /// Unique identifier of the created attachment. Use this to reference the attachment in subsequent API calls.
+    pub id: String,
+    /// Temporary pre-signed URL to upload the file directly to storage. Send a PUT request with the raw file bytes and appropriate Content-Type header. The URL expires after 60 seconds.
+    pub upload_url: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AttachmentInitializeRequest {
     /// File name including extension (e.g. "report.pdf")
     pub name: String,
@@ -5566,51 +5588,6 @@ pub struct AttachmentInitializeResponse {
     pub id: String,
     /// Pre-signed URL to upload the file directly to S3
     pub upload_url: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AttachmentDeleteRequest {
-    /// Upload IDs to delete
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub ids: Vec<String>,
-}
-
-impl AttachmentDeleteRequest {
-    /// Create a builder for this type.
-    pub fn builder() -> AttachmentDeleteRequestBuilder {
-        AttachmentDeleteRequestBuilder::default()
-    }
-}
-
-/// Builder for [`AttachmentDeleteRequest`].
-#[derive(Debug, Default)]
-pub struct AttachmentDeleteRequestBuilder {
-    ids: Option<Vec<String>>,
-}
-
-impl AttachmentDeleteRequestBuilder {
-    /// Set the `ids` field.
-    ///
-    /// Upload IDs to delete
-    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.ids = Some(value.into());
-        self
-    }
-
-    /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<AttachmentDeleteRequest, String> {
-        Ok(AttachmentDeleteRequest {
-            ids: self.ids.unwrap_or_default(),
-        })
-    }
-}
-
-/// Response for successful attachment deletion
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AttachmentDeleteResponse {
-    /// IDs of attachments that were successfully deleted
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub id: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -7061,6 +7038,86 @@ pub struct UnitRemoveChildRequest {
 pub struct UnitRemoveChildResponse {
     /// ID of the child unit that was removed
     pub id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitCreateAttachmentRequestBody {
+    /// File name including extension (e.g. "calibration.pdf"). Used to determine content type and display name.
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitCreateAttachmentRequest {
+    /// Serial number of the unit to attach the file to. Matched case-insensitively.
+    pub serial_number: String,
+    pub request_body: UnitCreateAttachmentRequestBody,
+}
+
+/// Unit attachment created successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitCreateAttachmentResponse {
+    /// Unique identifier of the created attachment. Use this to reference the attachment in subsequent API calls.
+    pub id: String,
+    /// Temporary pre-signed URL to upload the file directly to storage. Send a PUT request with the raw file bytes and appropriate Content-Type header. The URL expires after 60 seconds.
+    pub upload_url: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitDeleteAttachmentRequest {
+    /// Serial number of the unit. Matched case-insensitively.
+    pub serial_number: String,
+    /// Attachment IDs to delete
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ids: Vec<String>,
+}
+
+impl UnitDeleteAttachmentRequest {
+    /// Create a builder for this type.
+    pub fn builder() -> UnitDeleteAttachmentRequestBuilder {
+        UnitDeleteAttachmentRequestBuilder::default()
+    }
+}
+
+/// Builder for [`UnitDeleteAttachmentRequest`].
+#[derive(Debug, Default)]
+pub struct UnitDeleteAttachmentRequestBuilder {
+    serial_number: Option<String>,
+    ids: Option<Vec<String>>,
+}
+
+impl UnitDeleteAttachmentRequestBuilder {
+    /// Set the `serial_number` field.
+    ///
+    /// Serial number of the unit. Matched case-insensitively.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `ids` field.
+    ///
+    /// Attachment IDs to delete
+    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.ids = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<UnitDeleteAttachmentRequest, String> {
+        Ok(UnitDeleteAttachmentRequest {
+            serial_number: self.serial_number
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
+            ids: self.ids.unwrap_or_default(),
+        })
+    }
+}
+
+/// Unit attachments deleted successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitDeleteAttachmentResponse {
+    /// IDs of attachments that were deleted
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

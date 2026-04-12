@@ -5,7 +5,6 @@
 ### Available Operations
 
 * [initialize](#initialize) - Initialize upload
-* [delete](#delete) - Delete attachments
 * [finalize](#finalize) - Finalize upload
 
 ## initialize
@@ -51,49 +50,6 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::NotFound` | 404 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::BadGateway` | 502 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
-
-## delete
-
-Permanently delete attachments by their IDs and unlink them from any associated runs or units. Removes files from storage and clears all references.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.attachments().delete()
-        .ids(vec!["550e8400-e29b-41d4-a716-446655440000".into()])
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `ids` | `Vec<String>` | :heavy_check_mark: | Upload IDs to delete |
-
-### Response
-
-**[`AttachmentDeleteResponse`](../../models/attachmentdeleteresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::BadRequest` | 400 | application/json |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::NotFound` | 404 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
 ## finalize
