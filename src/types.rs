@@ -893,9 +893,6 @@ pub struct ProcedureGetStations {
 pub struct ProcedureGetResponse {
     /// Unique identifier for the procedure.
     pub id: String,
-    /// Optional unique identifier for the procedure.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub identifier: Option<String>,
     /// Procedure name.
     pub name: String,
     /// ISO 8601 timestamp when the procedure was created.
@@ -926,10 +923,105 @@ pub struct ProcedureDeleteResponse {
     pub id: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureUpdateRequestBody {
     /// New name for the procedure.
-    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub production_branch: NullableField<String>,
+    /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auto_push_enabled: Option<bool>,
+    /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub excluded_branch_patterns: Option<Vec<String>>,
+    /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub root_directory: NullableField<String>,
+}
+
+impl ProcedureUpdateRequestBody {
+    /// Create a builder for this type.
+    pub fn builder() -> ProcedureUpdateRequestBodyBuilder {
+        ProcedureUpdateRequestBodyBuilder::default()
+    }
+}
+
+/// Builder for [`ProcedureUpdateRequestBody`].
+#[derive(Debug, Default)]
+pub struct ProcedureUpdateRequestBodyBuilder {
+    name: Option<String>,
+    production_branch: NullableField<String>,
+    auto_push_enabled: Option<bool>,
+    excluded_branch_patterns: Option<Vec<String>>,
+    root_directory: NullableField<String>,
+}
+
+impl ProcedureUpdateRequestBodyBuilder {
+    /// Set the `name` field.
+    ///
+    /// New name for the procedure.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `production_branch` field.
+    ///
+    /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
+    pub fn production_branch(mut self, value: impl Into<String>) -> Self {
+        self.production_branch = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `production_branch` to null.
+    pub fn production_branch_null(mut self) -> Self {
+        self.production_branch = NullableField::Null;
+        self
+    }
+
+    /// Set the `auto_push_enabled` field.
+    ///
+    /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
+    pub fn auto_push_enabled(mut self, value: impl Into<bool>) -> Self {
+        self.auto_push_enabled = Some(value.into());
+        self
+    }
+
+    /// Set the `excluded_branch_patterns` field.
+    ///
+    /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
+    pub fn excluded_branch_patterns(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.excluded_branch_patterns = Some(value.into());
+        self
+    }
+
+    /// Set the `root_directory` field.
+    ///
+    /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
+    pub fn root_directory(mut self, value: impl Into<String>) -> Self {
+        self.root_directory = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `root_directory` to null.
+    pub fn root_directory_null(mut self) -> Self {
+        self.root_directory = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ProcedureUpdateRequestBody, String> {
+        Ok(ProcedureUpdateRequestBody {
+            name: self.name,
+            production_branch: self.production_branch,
+            auto_push_enabled: self.auto_push_enabled,
+            excluded_branch_patterns: self.excluded_branch_patterns,
+            root_directory: self.root_directory,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -1438,6 +1530,9 @@ pub struct RunCreateXAxis {
     /// Unit for this axis.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub units: NullableField<String>,
+    /// Name of this data series.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub name: NullableField<String>,
     /// Description of this data series.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub description: NullableField<String>,
@@ -1461,6 +1556,7 @@ impl RunCreateXAxis {
 pub struct RunCreateXAxisBuilder {
     data: Option<Vec<f64>>,
     units: NullableField<String>,
+    name: NullableField<String>,
     description: NullableField<String>,
     validators: NullableField<Vec<RunCreateValidators>>,
     aggregations: NullableField<Vec<RunCreateAggregations>>,
@@ -1486,6 +1582,20 @@ impl RunCreateXAxisBuilder {
     /// Explicitly set `units` to null.
     pub fn units_null(mut self) -> Self {
         self.units = NullableField::Null;
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Name of this data series.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `name` to null.
+    pub fn name_null(mut self) -> Self {
+        self.name = NullableField::Null;
         self
     }
 
@@ -1536,6 +1646,7 @@ impl RunCreateXAxisBuilder {
         Ok(RunCreateXAxis {
             data: self.data.unwrap_or_default(),
             units: self.units,
+            name: self.name,
             description: self.description,
             validators: self.validators,
             aggregations: self.aggregations,
@@ -1907,6 +2018,9 @@ pub struct RunCreateYAxis {
     /// Unit for this axis.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub units: NullableField<String>,
+    /// Name of this data series.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub name: NullableField<String>,
     /// Description of this data series.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub description: NullableField<String>,
@@ -1930,6 +2044,7 @@ impl RunCreateYAxis {
 pub struct RunCreateYAxisBuilder {
     data: Option<Vec<f64>>,
     units: NullableField<String>,
+    name: NullableField<String>,
     description: NullableField<String>,
     validators: NullableField<Vec<RunCreateYAxisValidators>>,
     aggregations: NullableField<Vec<RunCreateYAxisAggregations>>,
@@ -1955,6 +2070,20 @@ impl RunCreateYAxisBuilder {
     /// Explicitly set `units` to null.
     pub fn units_null(mut self) -> Self {
         self.units = NullableField::Null;
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Name of this data series.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `name` to null.
+    pub fn name_null(mut self) -> Self {
+        self.name = NullableField::Null;
         self
     }
 
@@ -2005,6 +2134,7 @@ impl RunCreateYAxisBuilder {
         Ok(RunCreateYAxis {
             data: self.data.unwrap_or_default(),
             units: self.units,
+            name: self.name,
             description: self.description,
             validators: self.validators,
             aggregations: self.aggregations,
@@ -2711,6 +2841,8 @@ pub struct RunCreateRequest {
     /// Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
     pub procedure_id: String,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub deployment_id: NullableField<String>,
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub procedure_version: NullableField<String>,
     /// Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -2756,6 +2888,7 @@ impl RunCreateRequest {
 pub struct RunCreateRequestBuilder {
     outcome: Option<Outcome>,
     procedure_id: Option<String>,
+    deployment_id: NullableField<String>,
     procedure_version: NullableField<String>,
     operated_by: Option<String>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -2784,6 +2917,18 @@ impl RunCreateRequestBuilder {
     /// Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
     pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
         self.procedure_id = Some(value.into());
+        self
+    }
+
+    /// Set the `deployment_id` field.
+    pub fn deployment_id(mut self, value: impl Into<String>) -> Self {
+        self.deployment_id = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `deployment_id` to null.
+    pub fn deployment_id_null(mut self) -> Self {
+        self.deployment_id = NullableField::Null;
         self
     }
 
@@ -2894,6 +3039,7 @@ impl RunCreateRequestBuilder {
                 .ok_or_else(|| "missing required field: outcome".to_string())?,
             procedure_id: self.procedure_id
                 .ok_or_else(|| "missing required field: procedure_id".to_string())?,
+            deployment_id: self.deployment_id,
             procedure_version: self.procedure_version,
             operated_by: self.operated_by,
             started_at: self.started_at
@@ -4909,12 +5055,22 @@ impl RunGetDataSeriesAggregationsBuilder {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetDataSeries {
+    /// Array of numeric data points for this series.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub data: Vec<f64>,
+    /// Unit for this data series.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub units: Option<String>,
+    /// Name of this data series.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub name: NullableField<String>,
+    /// Description of this data series.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub description: NullableField<String>,
+    /// Validators for this data series.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub validators: NullableField<Vec<RunGetDataSeriesValidators>>,
+    /// Aggregations computed over this data series.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub aggregations: NullableField<Vec<RunGetDataSeriesAggregations>>,
 }
@@ -4931,24 +5087,60 @@ impl RunGetDataSeries {
 pub struct RunGetDataSeriesBuilder {
     data: Option<Vec<f64>>,
     units: Option<String>,
+    name: NullableField<String>,
+    description: NullableField<String>,
     validators: NullableField<Vec<RunGetDataSeriesValidators>>,
     aggregations: NullableField<Vec<RunGetDataSeriesAggregations>>,
 }
 
 impl RunGetDataSeriesBuilder {
     /// Set the `data` field.
+    ///
+    /// Array of numeric data points for this series.
     pub fn data(mut self, value: impl Into<Vec<f64>>) -> Self {
         self.data = Some(value.into());
         self
     }
 
     /// Set the `units` field.
+    ///
+    /// Unit for this data series.
     pub fn units(mut self, value: impl Into<String>) -> Self {
         self.units = Some(value.into());
         self
     }
 
+    /// Set the `name` field.
+    ///
+    /// Name of this data series.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `name` to null.
+    pub fn name_null(mut self) -> Self {
+        self.name = NullableField::Null;
+        self
+    }
+
+    /// Set the `description` field.
+    ///
+    /// Description of this data series.
+    pub fn description(mut self, value: impl Into<String>) -> Self {
+        self.description = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `description` to null.
+    pub fn description_null(mut self) -> Self {
+        self.description = NullableField::Null;
+        self
+    }
+
     /// Set the `validators` field.
+    ///
+    /// Validators for this data series.
     pub fn validators(mut self, value: impl Into<Vec<RunGetDataSeriesValidators>>) -> Self {
         self.validators = NullableField::Value(value.into());
         self
@@ -4961,6 +5153,8 @@ impl RunGetDataSeriesBuilder {
     }
 
     /// Set the `aggregations` field.
+    ///
+    /// Aggregations computed over this data series.
     pub fn aggregations(mut self, value: impl Into<Vec<RunGetDataSeriesAggregations>>) -> Self {
         self.aggregations = NullableField::Value(value.into());
         self
@@ -4977,6 +5171,8 @@ impl RunGetDataSeriesBuilder {
         Ok(RunGetDataSeries {
             data: self.data.unwrap_or_default(),
             units: self.units,
+            name: self.name,
+            description: self.description,
             validators: self.validators,
             aggregations: self.aggregations,
         })
@@ -4991,9 +5187,9 @@ pub struct RunGetMeasurements {
     pub name: String,
     /// Measurement validation result.
     pub outcome: ValidatorsOutcome,
-    /// Units of measurement.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub units: Option<String>,
+    /// Units of measurement. Not present for multi-dimensional measurements (units are per data series).
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub units: NullableField<String>,
     /// Structured validation rules with outcome and expected values.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub validators: Option<Vec<RunGetValidators>>,
@@ -5021,7 +5217,7 @@ pub struct RunGetMeasurementsBuilder {
     id: Option<String>,
     name: Option<String>,
     outcome: Option<ValidatorsOutcome>,
-    units: Option<String>,
+    units: NullableField<String>,
     validators: Option<Vec<RunGetValidators>>,
     aggregations: NullableField<Vec<RunGetAggregations>>,
     measured_value: Option<serde_json::Value>,
@@ -5055,9 +5251,15 @@ impl RunGetMeasurementsBuilder {
 
     /// Set the `units` field.
     ///
-    /// Units of measurement.
+    /// Units of measurement. Not present for multi-dimensional measurements (units are per data series).
     pub fn units(mut self, value: impl Into<String>) -> Self {
-        self.units = Some(value.into());
+        self.units = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `units` to null.
+    pub fn units_null(mut self) -> Self {
+        self.units = NullableField::Null;
         self
     }
 
@@ -8492,63 +8694,8 @@ impl StationListRequestBuilder {
 pub struct StationListProcedures {
     /// Procedure ID
     pub id: String,
-    /// Procedure identifier
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub identifier: Option<String>,
     /// Procedure name
     pub name: String,
-}
-
-impl StationListProcedures {
-    /// Create a builder for this type.
-    pub fn builder() -> StationListProceduresBuilder {
-        StationListProceduresBuilder::default()
-    }
-}
-
-/// Builder for [`StationListProcedures`].
-#[derive(Debug, Default)]
-pub struct StationListProceduresBuilder {
-    id: Option<String>,
-    identifier: Option<String>,
-    name: Option<String>,
-}
-
-impl StationListProceduresBuilder {
-    /// Set the `id` field.
-    ///
-    /// Procedure ID
-    pub fn id(mut self, value: impl Into<String>) -> Self {
-        self.id = Some(value.into());
-        self
-    }
-
-    /// Set the `identifier` field.
-    ///
-    /// Procedure identifier
-    pub fn identifier(mut self, value: impl Into<String>) -> Self {
-        self.identifier = Some(value.into());
-        self
-    }
-
-    /// Set the `name` field.
-    ///
-    /// Procedure name
-    pub fn name(mut self, value: impl Into<String>) -> Self {
-        self.name = Some(value.into());
-        self
-    }
-
-    /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<StationListProcedures, String> {
-        Ok(StationListProcedures {
-            id: self.id
-                .ok_or_else(|| "missing required field: id".to_string())?,
-            identifier: self.identifier,
-            name: self.name
-                .ok_or_else(|| "missing required field: name".to_string())?,
-        })
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -8909,9 +9056,6 @@ impl StationGetCurrentDeploymentBuilder {
 pub struct StationGetCurrentProcedures {
     /// Procedure ID
     pub id: String,
-    /// Procedure identifier
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub identifier: Option<String>,
     /// Procedure name
     pub name: String,
     /// Number of runs created by this station in the last 7 days
@@ -8932,7 +9076,6 @@ impl StationGetCurrentProcedures {
 #[derive(Debug, Default)]
 pub struct StationGetCurrentProceduresBuilder {
     id: Option<String>,
-    identifier: Option<String>,
     name: Option<String>,
     runs_count: Option<f64>,
     deployment: NullableField<StationGetCurrentDeployment>,
@@ -8944,14 +9087,6 @@ impl StationGetCurrentProceduresBuilder {
     /// Procedure ID
     pub fn id(mut self, value: impl Into<String>) -> Self {
         self.id = Some(value.into());
-        self
-    }
-
-    /// Set the `identifier` field.
-    ///
-    /// Procedure identifier
-    pub fn identifier(mut self, value: impl Into<String>) -> Self {
-        self.identifier = Some(value.into());
         self
     }
 
@@ -8990,7 +9125,6 @@ impl StationGetCurrentProceduresBuilder {
         Ok(StationGetCurrentProcedures {
             id: self.id
                 .ok_or_else(|| "missing required field: id".to_string())?,
-            identifier: self.identifier,
             name: self.name
                 .ok_or_else(|| "missing required field: name".to_string())?,
             runs_count: self.runs_count
@@ -9021,9 +9155,6 @@ pub struct StationGetCurrentResponse {
     pub procedures: Vec<StationGetCurrentProcedures>,
     /// Slug of the organization this station belongs to
     pub organization_slug: String,
-    /// Current connection status of the station
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub connection_status: Option<String>,
     /// Team this station is assigned to
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub team: Option<StationGetCurrentTeam>,
@@ -9235,9 +9366,6 @@ impl StationGetDeploymentBuilder {
 pub struct StationGetProcedures {
     /// Procedure ID
     pub id: String,
-    /// Procedure identifier
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub identifier: Option<String>,
     /// Procedure name
     pub name: String,
     /// Number of runs created by this station in the last 7 days
@@ -9258,7 +9386,6 @@ impl StationGetProcedures {
 #[derive(Debug, Default)]
 pub struct StationGetProceduresBuilder {
     id: Option<String>,
-    identifier: Option<String>,
     name: Option<String>,
     runs_count: Option<f64>,
     deployment: NullableField<StationGetDeployment>,
@@ -9270,14 +9397,6 @@ impl StationGetProceduresBuilder {
     /// Procedure ID
     pub fn id(mut self, value: impl Into<String>) -> Self {
         self.id = Some(value.into());
-        self
-    }
-
-    /// Set the `identifier` field.
-    ///
-    /// Procedure identifier
-    pub fn identifier(mut self, value: impl Into<String>) -> Self {
-        self.identifier = Some(value.into());
         self
     }
 
@@ -9316,7 +9435,6 @@ impl StationGetProceduresBuilder {
         Ok(StationGetProcedures {
             id: self.id
                 .ok_or_else(|| "missing required field: id".to_string())?,
-            identifier: self.identifier,
             name: self.name
                 .ok_or_else(|| "missing required field: name".to_string())?,
             runs_count: self.runs_count
@@ -9347,9 +9465,6 @@ pub struct StationGetResponse {
     pub procedures: Vec<StationGetProcedures>,
     /// Slug of the organization this station belongs to
     pub organization_slug: String,
-    /// Current connection status of the station
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub connection_status: Option<String>,
     /// Team this station is assigned to
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub team: Option<StationGetTeam>,

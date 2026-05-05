@@ -467,6 +467,7 @@ pub struct CreateBuilder<'a> {
     client: &'a TofuPilot,
     outcome: Option<Outcome>,
     procedure_id: Option<String>,
+    deployment_id: Option<NullableField<String>>,
     procedure_version: Option<NullableField<String>>,
     operated_by: Option<String>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -489,6 +490,7 @@ impl<'a> CreateBuilder<'a> {
             client,
             outcome: None,
             procedure_id: None,
+            deployment_id: None,
             procedure_version: None,
             operated_by: None,
             started_at: None,
@@ -519,6 +521,18 @@ impl<'a> CreateBuilder<'a> {
     /// Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
     pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
         self.procedure_id = Some(value.into());
+        self
+    }
+
+    /// Set the `deployment_id` field.
+    pub fn deployment_id(mut self, value: impl Into<String>) -> Self {
+        self.deployment_id = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `deployment_id` to null.
+    pub fn deployment_id_null(mut self) -> Self {
+        self.deployment_id = Some(NullableField::Null);
         self
     }
 
@@ -626,6 +640,7 @@ impl<'a> CreateBuilder<'a> {
     pub fn body(mut self, body: RunCreateRequest) -> Self {
         self.outcome = Some(body.outcome);
         self.procedure_id = Some(body.procedure_id);
+        self.deployment_id = Some(body.deployment_id);
         self.procedure_version = Some(body.procedure_version);
         if body.operated_by.is_some() {
             self.operated_by = body.operated_by;
@@ -697,6 +712,7 @@ impl<'a> CreateBuilder<'a> {
                 .ok_or_else(|| Error::Validation(
                     "missing required field: procedure_id".to_string(),
                 ))?,
+            deployment_id: self.deployment_id.unwrap_or(NullableField::Absent),
             procedure_version: self.procedure_version.unwrap_or(NullableField::Absent),
             operated_by: self.operated_by,
             started_at: self.started_at

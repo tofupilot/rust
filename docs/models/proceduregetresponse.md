@@ -7,7 +7,6 @@ Procedure retrieved successfully
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | `String` | :heavy_check_mark: | Unique identifier for the procedure. |
-| `identifier` | `Option<String>` | :heavy_minus_sign: | Optional unique identifier for the procedure. |
 | `name` | `String` | :heavy_check_mark: | Procedure name. |
 | `created_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the procedure was created. |
 | `created_by_user` | `Option<ProcedureGetCreatedByUser>` | :heavy_minus_sign: | User who created this procedure. |

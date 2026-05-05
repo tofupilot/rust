@@ -508,7 +508,6 @@ impl<'a> DeleteBuilder<'a> {
 /// # async fn main() -> tofupilot::Result<()> {
 /// let client = TofuPilot::new("your-api-key");
 /// let response = client.procedures().update()
-///     .name("value")
 ///     .send()
 ///     .await?;
 /// # Ok(())
@@ -519,6 +518,10 @@ pub struct UpdateBuilder<'a> {
     client: &'a TofuPilot,
     id: Option<String>,
     name: Option<String>,
+    production_branch: Option<NullableField<String>>,
+    auto_push_enabled: Option<bool>,
+    excluded_branch_patterns: Option<Vec<String>>,
+    root_directory: Option<NullableField<String>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -529,6 +532,10 @@ impl<'a> UpdateBuilder<'a> {
             client,
             id: None,
             name: None,
+            production_branch: None,
+            auto_push_enabled: None,
+            excluded_branch_patterns: None,
+            root_directory: None,
             server_url: None,
             timeout: None,
         }
@@ -550,9 +557,63 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
+    /// Set the `production_branch` field.
+    ///
+    /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
+    pub fn production_branch(mut self, value: impl Into<String>) -> Self {
+        self.production_branch = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `production_branch` to null.
+    pub fn production_branch_null(mut self) -> Self {
+        self.production_branch = Some(NullableField::Null);
+        self
+    }
+
+    /// Set the `auto_push_enabled` field.
+    ///
+    /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
+    pub fn auto_push_enabled(mut self, value: impl Into<bool>) -> Self {
+        self.auto_push_enabled = Some(value.into());
+        self
+    }
+
+    /// Set the `excluded_branch_patterns` field.
+    ///
+    /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
+    pub fn excluded_branch_patterns(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.excluded_branch_patterns = Some(value.into());
+        self
+    }
+
+    /// Set the `root_directory` field.
+    ///
+    /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
+    pub fn root_directory(mut self, value: impl Into<String>) -> Self {
+        self.root_directory = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `root_directory` to null.
+    pub fn root_directory_null(mut self) -> Self {
+        self.root_directory = Some(NullableField::Null);
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: ProcedureUpdateRequestBody) -> Self {
-        self.name = Some(body.name);
+        if body.name.is_some() {
+            self.name = body.name;
+        }
+        self.production_branch = Some(body.production_branch);
+        if body.auto_push_enabled.is_some() {
+            self.auto_push_enabled = body.auto_push_enabled;
+        }
+        if body.excluded_branch_patterns.is_some() {
+            self.excluded_branch_patterns = body.excluded_branch_patterns;
+        }
+        self.root_directory = Some(body.root_directory);
         self
     }
 
@@ -597,10 +658,11 @@ impl<'a> UpdateBuilder<'a> {
 
 
         let body = ProcedureUpdateRequestBody {
-            name: self.name
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: name".to_string(),
-                ))?,
+            name: self.name,
+            production_branch: self.production_branch.unwrap_or(NullableField::Absent),
+            auto_push_enabled: self.auto_push_enabled,
+            excluded_branch_patterns: self.excluded_branch_patterns,
+            root_directory: self.root_directory.unwrap_or(NullableField::Absent),
         };
         request = request.json(&body);
 

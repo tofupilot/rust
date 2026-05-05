@@ -11,5 +11,4 @@ Station retrieved successfully
 | `api_key` | `Option<String>` | :heavy_minus_sign: | API key prefix for the station (full key only shown on creation) |
 | `procedures` | `Vec<StationGetProcedures>` | :heavy_check_mark: | Procedures linked to this station with recent run counts |
 | `organization_slug` | `String` | :heavy_check_mark: | Slug of the organization this station belongs to |
-| `connection_status` | `Option<String>` | :heavy_minus_sign: | Current connection status of the station |
 | `team` | `Option<StationGetTeam>` | :heavy_minus_sign: | Team this station is assigned to |
