@@ -2716,9 +2716,6 @@ pub struct RunCreatePhases {
     /// Zero-based retry attempt index for this phase. 0 = first attempt, 1 = first retry, etc. When a phase is retried, all attempts are stored with the same name and increasing retry_count.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retry_count: Option<i64>,
-    /// True when the phase was marked as expected-to-fail by the test framework (pytest @pytest.mark.xfail). Lets dashboards distinguish an expected failure from a generic SKIP. Defaults to false; OpenHTF and YAML procedures never set this.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub expected_to_fail: Option<bool>,
 }
 
 impl RunCreatePhases {
@@ -2738,7 +2735,6 @@ pub struct RunCreatePhasesBuilder {
     docstring: NullableField<String>,
     measurements: NullableField<Vec<RunCreateMeasurements>>,
     retry_count: Option<i64>,
-    expected_to_fail: Option<bool>,
 }
 
 impl RunCreatePhasesBuilder {
@@ -2806,14 +2802,6 @@ impl RunCreatePhasesBuilder {
         self
     }
 
-    /// Set the `expected_to_fail` field.
-    ///
-    /// True when the phase was marked as expected-to-fail by the test framework (pytest @pytest.mark.xfail).
-    pub fn expected_to_fail(mut self, value: impl Into<bool>) -> Self {
-        self.expected_to_fail = Some(value.into());
-        self
-    }
-
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunCreatePhases, String> {
         Ok(RunCreatePhases {
@@ -2828,7 +2816,6 @@ impl RunCreatePhasesBuilder {
             docstring: self.docstring,
             measurements: self.measurements,
             retry_count: self.retry_count,
-            expected_to_fail: self.expected_to_fail,
         })
     }
 }
@@ -5348,9 +5335,6 @@ pub struct RunGetPhases {
     pub duration: String,
     /// Zero-based retry attempt index. 0 = first attempt, 1 = first retry, etc.
     pub retry_count: i64,
-    /// True when the phase was marked as expected-to-fail by the test framework (pytest @pytest.mark.xfail).
-    #[serde(default)]
-    pub expected_to_fail: bool,
     /// Phase documentation string.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
@@ -5376,7 +5360,6 @@ pub struct RunGetPhasesBuilder {
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     duration: Option<String>,
     retry_count: Option<i64>,
-    expected_to_fail: Option<bool>,
     docstring: NullableField<String>,
     measurements: Option<Vec<RunGetMeasurements>>,
 }
@@ -5438,14 +5421,6 @@ impl RunGetPhasesBuilder {
         self
     }
 
-    /// Set the `expected_to_fail` field.
-    ///
-    /// True when the phase was marked as expected-to-fail by the test framework (pytest @pytest.mark.xfail).
-    pub fn expected_to_fail(mut self, value: impl Into<bool>) -> Self {
-        self.expected_to_fail = Some(value.into());
-        self
-    }
-
     /// Set the `docstring` field.
     ///
     /// Phase documentation string.
@@ -5485,7 +5460,6 @@ impl RunGetPhasesBuilder {
                 .ok_or_else(|| "missing required field: duration".to_string())?,
             retry_count: self.retry_count
                 .ok_or_else(|| "missing required field: retry_count".to_string())?,
-            expected_to_fail: self.expected_to_fail.unwrap_or(false),
             docstring: self.docstring,
             measurements: self.measurements.unwrap_or_default(),
         })
