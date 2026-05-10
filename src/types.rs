@@ -284,6 +284,23 @@ impl std::fmt::Display for Level {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ListSample {
+    #[serde(rename = "golden")]
+    Golden,
+    #[serde(rename = "failing")]
+    Failing,
+}
+
+impl std::fmt::Display for ListSample {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Golden => write!(f, "golden"),
+            Self::Failing => write!(f, "failing"),
+        }
+    }
+}
+
 /// Sort order direction.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ListSortOrder {
@@ -940,6 +957,9 @@ pub struct ProcedureUpdateRequestBody {
     /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub root_directory: NullableField<String>,
+    /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub entry_point: NullableField<String>,
 }
 
 impl ProcedureUpdateRequestBody {
@@ -957,6 +977,7 @@ pub struct ProcedureUpdateRequestBodyBuilder {
     auto_push_enabled: Option<bool>,
     excluded_branch_patterns: Option<Vec<String>>,
     root_directory: NullableField<String>,
+    entry_point: NullableField<String>,
 }
 
 impl ProcedureUpdateRequestBodyBuilder {
@@ -1012,6 +1033,20 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
+    /// Set the `entry_point` field.
+    ///
+    /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
+    pub fn entry_point(mut self, value: impl Into<String>) -> Self {
+        self.entry_point = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `entry_point` to null.
+    pub fn entry_point_null(mut self) -> Self {
+        self.entry_point = NullableField::Null;
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<ProcedureUpdateRequestBody, String> {
         Ok(ProcedureUpdateRequestBody {
@@ -1020,6 +1055,7 @@ impl ProcedureUpdateRequestBodyBuilder {
             auto_push_enabled: self.auto_push_enabled,
             excluded_branch_patterns: self.excluded_branch_patterns,
             root_directory: self.root_directory,
+            entry_point: self.entry_point,
         })
     }
 }
@@ -2826,9 +2862,9 @@ pub struct RunCreateLogs {
     pub level: Level,
     /// ISO 8601 timestamp when the log message was generated.
     pub timestamp: chrono::DateTime<chrono::Utc>,
-    /// Content of the log message. Contains the actual log text describing the event, error, or information being logged. Messages longer than 10,000 characters will be truncated.
+    /// Content of the log message. Contains the actual log text describing the event, error, or information being logged. Messages longer than 10,000 characters will be truncated; empty messages become "(empty)".
     pub message: String,
-    /// Name or path of the source file where the log message originated. Helps identify the code location that generated the log entry.
+    /// Name or path of the source file where the log message originated. Helps identify the code location that generated the log entry. Paths longer than 200 characters keep the trailing 200 (leading characters are dropped); empty values become "unknown".
     pub source_file: String,
     /// Line number in the source file where the log message was generated. Used for debugging and tracing log origins.
     pub line_number: i64,
@@ -2844,7 +2880,7 @@ pub struct RunCreateRequest {
     pub deployment_id: NullableField<String>,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub procedure_version: NullableField<String>,
-    /// Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test.
+    /// Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub operated_by: Option<String>,
     /// ISO 8601 timestamp when the test run began execution. This timestamp will be used to track when the test execution started and for historical analysis of test runs. A separate created_at timestamp is stored internally server side to track upload date.
@@ -2946,7 +2982,7 @@ impl RunCreateRequestBuilder {
 
     /// Set the `operated_by` field.
     ///
-    /// Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test.
+    /// Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test.
     pub fn operated_by(mut self, value: impl Into<String>) -> Self {
         self.operated_by = Some(value.into());
         self
@@ -3081,6 +3117,8 @@ pub struct RunListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub samples: Option<Vec<ListSample>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub part_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub revision_numbers: Option<Vec<String>>,
@@ -3137,6 +3175,7 @@ pub struct RunListRequestBuilder {
     procedure_ids: Option<Vec<String>>,
     procedure_versions: Option<Vec<String>>,
     serial_numbers: Option<Vec<String>>,
+    samples: Option<Vec<ListSample>>,
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
@@ -3191,6 +3230,12 @@ impl RunListRequestBuilder {
     /// Set the `serial_numbers` field.
     pub fn serial_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
         self.serial_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `samples` field.
+    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+        self.samples = Some(value.into());
         self
     }
 
@@ -3317,6 +3362,7 @@ impl RunListRequestBuilder {
             procedure_ids: self.procedure_ids,
             procedure_versions: self.procedure_versions,
             serial_numbers: self.serial_numbers,
+            samples: self.samples,
             part_numbers: self.part_numbers,
             revision_numbers: self.revision_numbers,
             batch_numbers: self.batch_numbers,
@@ -3570,6 +3616,9 @@ pub struct RunListUnit {
     pub id: String,
     /// Unit serial number.
     pub serial_number: String,
+    /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample: Option<String>,
     /// Part information with revision details.
     pub part: RunListPart,
     /// Batch information for this unit.
@@ -3589,6 +3638,7 @@ impl RunListUnit {
 pub struct RunListUnitBuilder {
     id: Option<String>,
     serial_number: Option<String>,
+    sample: Option<String>,
     part: Option<RunListPart>,
     batch: NullableField<RunListBatch>,
 }
@@ -3607,6 +3657,14 @@ impl RunListUnitBuilder {
     /// Unit serial number.
     pub fn serial_number(mut self, value: impl Into<String>) -> Self {
         self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = Some(value.into());
         self
     }
 
@@ -3639,6 +3697,7 @@ impl RunListUnitBuilder {
                 .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
                 .ok_or_else(|| "missing required field: serial_number".to_string())?,
+            sample: self.sample,
             part: self.part
                 .ok_or_else(|| "missing required field: part".to_string())?,
             batch: self.batch,
@@ -4229,6 +4288,9 @@ pub struct RunGetUnit {
     pub id: String,
     /// Unit serial number.
     pub serial_number: String,
+    /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample: Option<String>,
     /// Part information with revision details.
     pub part: RunGetPart,
     /// Batch information for this unit.
@@ -4248,6 +4310,7 @@ impl RunGetUnit {
 pub struct RunGetUnitBuilder {
     id: Option<String>,
     serial_number: Option<String>,
+    sample: Option<String>,
     part: Option<RunGetPart>,
     batch: NullableField<RunGetBatch>,
 }
@@ -4266,6 +4329,14 @@ impl RunGetUnitBuilder {
     /// Unit serial number.
     pub fn serial_number(mut self, value: impl Into<String>) -> Self {
         self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = Some(value.into());
         self
     }
 
@@ -4298,6 +4369,7 @@ impl RunGetUnitBuilder {
                 .ok_or_else(|| "missing required field: id".to_string())?,
             serial_number: self.serial_number
                 .ok_or_else(|| "missing required field: serial_number".to_string())?,
+            sample: self.sample,
             part: self.part
                 .ok_or_else(|| "missing required field: part".to_string())?,
             batch: self.batch,
@@ -5813,6 +5885,78 @@ pub struct UnitCreateRequest {
     pub part_number: String,
     /// Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created.
     pub revision_number: String,
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub sample: NullableField<String>,
+}
+
+impl UnitCreateRequest {
+    /// Create a builder for this type.
+    pub fn builder() -> UnitCreateRequestBuilder {
+        UnitCreateRequestBuilder::default()
+    }
+}
+
+/// Builder for [`UnitCreateRequest`].
+#[derive(Debug, Default)]
+pub struct UnitCreateRequestBuilder {
+    serial_number: Option<String>,
+    part_number: Option<String>,
+    revision_number: Option<String>,
+    sample: NullableField<String>,
+}
+
+impl UnitCreateRequestBuilder {
+    /// Set the `serial_number` field.
+    ///
+    /// Unique serial number identifier for the unit. Must be unique within the organization.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `part_number` field.
+    ///
+    /// Component part number that defines what type of unit this is. If the part does not exist, it will be created.
+    pub fn part_number(mut self, value: impl Into<String>) -> Self {
+        self.part_number = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_number` field.
+    ///
+    /// Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created.
+    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
+        self.revision_number = Some(value.into());
+        self
+    }
+
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `sample` to null.
+    pub fn sample_null(mut self) -> Self {
+        self.sample = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<UnitCreateRequest, String> {
+        Ok(UnitCreateRequest {
+            serial_number: self.serial_number
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
+            part_number: self.part_number
+                .ok_or_else(|| "missing required field: part_number".to_string())?,
+            revision_number: self.revision_number
+                .ok_or_else(|| "missing required field: revision_number".to_string())?,
+            sample: self.sample,
+        })
+    }
 }
 
 /// Unit created successfully
@@ -5860,6 +6004,8 @@ pub struct UnitListRequest {
     pub created_by_station_ids: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exclude_units_with_parent: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub samples: Option<Vec<ListSample>>,
     /// Maximum number of units to return.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -5901,6 +6047,7 @@ pub struct UnitListRequestBuilder {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
+    samples: Option<Vec<ListSample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
@@ -6016,6 +6163,12 @@ impl UnitListRequestBuilder {
         self
     }
 
+    /// Set the `samples` field.
+    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+        self.samples = Some(value.into());
+        self
+    }
+
     /// Set the `limit` field.
     ///
     /// Maximum number of units to return.
@@ -6067,6 +6220,7 @@ impl UnitListRequestBuilder {
             created_by_user_ids: self.created_by_user_ids,
             created_by_station_ids: self.created_by_station_ids,
             exclude_units_with_parent: self.exclude_units_with_parent,
+            samples: self.samples,
             limit: self.limit,
             cursor: self.cursor,
             sort_by: self.sort_by,
@@ -6284,6 +6438,9 @@ pub struct UnitListData {
     pub serial_number: String,
     /// ISO 8601 timestamp when the unit was created.
     pub created_at: chrono::DateTime<chrono::Utc>,
+    /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample: Option<String>,
     /// User who created this unit. Null if created by a station or system.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_user: NullableField<UnitListCreatedByUser>,
@@ -6319,6 +6476,7 @@ pub struct UnitListDataBuilder {
     id: Option<String>,
     serial_number: Option<String>,
     created_at: Option<chrono::DateTime<chrono::Utc>>,
+    sample: Option<String>,
     created_by_user: NullableField<UnitListCreatedByUser>,
     created_by_station: NullableField<UnitListCreatedByStation>,
     batch: NullableField<UnitListBatch>,
@@ -6350,6 +6508,14 @@ impl UnitListDataBuilder {
     /// ISO 8601 timestamp when the unit was created.
     pub fn created_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
         self.created_at = Some(value.into());
+        self
+    }
+
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = Some(value.into());
         self
     }
 
@@ -6448,6 +6614,7 @@ impl UnitListDataBuilder {
                 .ok_or_else(|| "missing required field: serial_number".to_string())?,
             created_at: self.created_at
                 .ok_or_else(|| "missing required field: created_at".to_string())?,
+            sample: self.sample,
             created_by_user: self.created_by_user,
             created_by_station: self.created_by_station,
             batch: self.batch,
@@ -7073,6 +7240,9 @@ pub struct UnitGetResponse {
     pub serial_number: String,
     /// ISO 8601 timestamp when the unit was created.
     pub created_at: chrono::DateTime<chrono::Utc>,
+    /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample: Option<String>,
     /// User who created this unit.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_user: NullableField<UnitGetCreatedByUser>,
@@ -7115,6 +7285,9 @@ pub struct UnitUpdateRequestBody {
     /// Array of upload IDs to attach to the unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attachments: Option<Vec<String>>,
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub sample: NullableField<String>,
 }
 
 impl UnitUpdateRequestBody {
@@ -7132,6 +7305,7 @@ pub struct UnitUpdateRequestBodyBuilder {
     revision_number: Option<String>,
     batch_number: NullableField<String>,
     attachments: Option<Vec<String>>,
+    sample: NullableField<String>,
 }
 
 impl UnitUpdateRequestBodyBuilder {
@@ -7181,6 +7355,20 @@ impl UnitUpdateRequestBodyBuilder {
         self
     }
 
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `sample` to null.
+    pub fn sample_null(mut self) -> Self {
+        self.sample = NullableField::Null;
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<UnitUpdateRequestBody, String> {
         Ok(UnitUpdateRequestBody {
@@ -7189,6 +7377,7 @@ impl UnitUpdateRequestBodyBuilder {
             revision_number: self.revision_number,
             batch_number: self.batch_number,
             attachments: self.attachments,
+            sample: self.sample,
         })
     }
 }

@@ -522,6 +522,7 @@ pub struct UpdateBuilder<'a> {
     auto_push_enabled: Option<bool>,
     excluded_branch_patterns: Option<Vec<String>>,
     root_directory: Option<NullableField<String>>,
+    entry_point: Option<NullableField<String>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -536,6 +537,7 @@ impl<'a> UpdateBuilder<'a> {
             auto_push_enabled: None,
             excluded_branch_patterns: None,
             root_directory: None,
+            entry_point: None,
             server_url: None,
             timeout: None,
         }
@@ -601,6 +603,20 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
+    /// Set the `entry_point` field.
+    ///
+    /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
+    pub fn entry_point(mut self, value: impl Into<String>) -> Self {
+        self.entry_point = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `entry_point` to null.
+    pub fn entry_point_null(mut self) -> Self {
+        self.entry_point = Some(NullableField::Null);
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: ProcedureUpdateRequestBody) -> Self {
         if body.name.is_some() {
@@ -614,6 +630,7 @@ impl<'a> UpdateBuilder<'a> {
             self.excluded_branch_patterns = body.excluded_branch_patterns;
         }
         self.root_directory = Some(body.root_directory);
+        self.entry_point = Some(body.entry_point);
         self
     }
 
@@ -663,6 +680,7 @@ impl<'a> UpdateBuilder<'a> {
             auto_push_enabled: self.auto_push_enabled,
             excluded_branch_patterns: self.excluded_branch_patterns,
             root_directory: self.root_directory.unwrap_or(NullableField::Absent),
+            entry_point: self.entry_point.unwrap_or(NullableField::Absent),
         };
         request = request.json(&body);
 

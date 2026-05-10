@@ -11,6 +11,7 @@
 | `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `procedure_versions` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `samples` | `Option<Vec<ListSample>>` | :heavy_minus_sign: | N/A |
 | `part_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `revision_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `batch_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |

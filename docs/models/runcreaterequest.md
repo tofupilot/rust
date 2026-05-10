@@ -9,7 +9,7 @@
 | `procedure_id` | `String` | :heavy_check_mark: | Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page. |
 | `deployment_id` | `NullableField<String>` | :heavy_minus_sign: | N/A |
 | `procedure_version` | `NullableField<String>` | :heavy_minus_sign: | N/A |
-| `operated_by` | `Option<String>` | :heavy_minus_sign: | Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test. |
+| `operated_by` | `Option<String>` | :heavy_minus_sign: | Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test. |
 | `started_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run began execution. This timestamp will be used to track when the test execution started and for historical analysis of test runs. A separate created_at timestamp is stored internally server side to track upload date. |
 | `ended_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run finished execution. |
 | `serial_number` | `String` | :heavy_check_mark: | Unique serial number of the unit under test. Matched case-insensitively. If no unit with this serial number exists, one will be created. |

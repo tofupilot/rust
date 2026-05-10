@@ -96,6 +96,7 @@ pub struct ListBuilder<'a> {
     procedure_ids: Option<Vec<String>>,
     procedure_versions: Option<Vec<String>>,
     serial_numbers: Option<Vec<String>>,
+    samples: Option<Vec<ListSample>>,
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
@@ -128,6 +129,7 @@ impl<'a> ListBuilder<'a> {
             procedure_ids: None,
             procedure_versions: None,
             serial_numbers: None,
+            samples: None,
             part_numbers: None,
             revision_numbers: None,
             batch_numbers: None,
@@ -184,6 +186,12 @@ impl<'a> ListBuilder<'a> {
     /// Set the `serial_numbers` query parameter.
     pub fn serial_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
         self.serial_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `samples` query parameter.
+    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+        self.samples = Some(value.into());
         self
     }
 
@@ -357,6 +365,11 @@ impl<'a> ListBuilder<'a> {
         if let Some(ref val) = self.serial_numbers {
             for item in val {
                 request = request.query(&[("serial_numbers", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.samples {
+            for item in val {
+                request = request.query(&[("samples", item.to_string())]);
             }
         }
         if let Some(ref val) = self.part_numbers {
@@ -550,7 +563,7 @@ impl<'a> CreateBuilder<'a> {
 
     /// Set the `operated_by` field.
     ///
-    /// Email address of the operator who executed the test run. The operator must exist as a user in the system. The run will be linked to this user to track who performed the test.
+    /// Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test.
     pub fn operated_by(mut self, value: impl Into<String>) -> Self {
         self.operated_by = Some(value.into());
         self

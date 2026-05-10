@@ -129,6 +129,7 @@ pub struct ListBuilder<'a> {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
+    samples: Option<Vec<ListSample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
@@ -159,6 +160,7 @@ impl<'a> ListBuilder<'a> {
             created_by_user_ids: None,
             created_by_station_ids: None,
             exclude_units_with_parent: None,
+            samples: None,
             limit: None,
             cursor: None,
             sort_by: None,
@@ -273,6 +275,12 @@ impl<'a> ListBuilder<'a> {
     /// Set the `exclude_units_with_parent` query parameter.
     pub fn exclude_units_with_parent(mut self, value: impl Into<bool>) -> Self {
         self.exclude_units_with_parent = Some(value.into());
+        self
+    }
+
+    /// Set the `samples` query parameter.
+    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+        self.samples = Some(value.into());
         self
     }
 
@@ -408,6 +416,11 @@ impl<'a> ListBuilder<'a> {
         if let Some(ref val) = self.exclude_units_with_parent {
             request = request.query(&[("exclude_units_with_parent", val.to_string())]);
         }
+        if let Some(ref val) = self.samples {
+            for item in val {
+                request = request.query(&[("samples", item.to_string())]);
+            }
+        }
         if let Some(ref val) = self.limit {
             request = request.query(&[("limit", val.to_string())]);
         }
@@ -461,6 +474,7 @@ pub struct CreateBuilder<'a> {
     serial_number: Option<String>,
     part_number: Option<String>,
     revision_number: Option<String>,
+    sample: Option<NullableField<String>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -472,6 +486,7 @@ impl<'a> CreateBuilder<'a> {
             serial_number: None,
             part_number: None,
             revision_number: None,
+            sample: None,
             server_url: None,
             timeout: None,
         }
@@ -501,11 +516,26 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `sample` to null.
+    pub fn sample_null(mut self) -> Self {
+        self.sample = Some(NullableField::Null);
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: UnitCreateRequest) -> Self {
         self.serial_number = Some(body.serial_number);
         self.part_number = Some(body.part_number);
         self.revision_number = Some(body.revision_number);
+        self.sample = Some(body.sample);
         self
     }
 
@@ -553,6 +583,7 @@ impl<'a> CreateBuilder<'a> {
                 .ok_or_else(|| Error::Validation(
                     "missing required field: revision_number".to_string(),
                 ))?,
+            sample: self.sample.unwrap_or(NullableField::Absent),
         };
         request = request.json(&body);
 
@@ -786,6 +817,7 @@ pub struct UpdateBuilder<'a> {
     revision_number: Option<String>,
     batch_number: Option<NullableField<String>>,
     attachments: Option<Vec<String>>,
+    sample: Option<NullableField<String>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -800,6 +832,7 @@ impl<'a> UpdateBuilder<'a> {
             revision_number: None,
             batch_number: None,
             attachments: None,
+            sample: None,
             server_url: None,
             timeout: None,
         }
@@ -859,6 +892,20 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
+    pub fn sample(mut self, value: impl Into<String>) -> Self {
+        self.sample = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `sample` to null.
+    pub fn sample_null(mut self) -> Self {
+        self.sample = Some(NullableField::Null);
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: UnitUpdateRequestBody) -> Self {
         if body.new_serial_number.is_some() {
@@ -874,6 +921,7 @@ impl<'a> UpdateBuilder<'a> {
         if body.attachments.is_some() {
             self.attachments = body.attachments;
         }
+        self.sample = Some(body.sample);
         self
     }
 
@@ -923,6 +971,7 @@ impl<'a> UpdateBuilder<'a> {
             revision_number: self.revision_number,
             batch_number: self.batch_number.unwrap_or(NullableField::Absent),
             attachments: self.attachments,
+            sample: self.sample.unwrap_or(NullableField::Absent),
         };
         request = request.json(&body);
 
