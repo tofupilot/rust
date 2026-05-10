@@ -859,7 +859,6 @@ pub struct UpdateBuilder<'a> {
     attachments: Option<Vec<String>>,
     sample: Option<NullableField<String>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    metadata_replace: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -876,7 +875,6 @@ impl<'a> UpdateBuilder<'a> {
             attachments: None,
             sample: None,
             metadata: None,
-            metadata_replace: None,
             server_url: None,
             timeout: None,
         }
@@ -952,17 +950,9 @@ impl<'a> UpdateBuilder<'a> {
 
     /// Set the `metadata` field.
     ///
-    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
-        self
-    }
-
-    /// Set the `metadata_replace` field.
-    ///
-    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
-    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
-        self.metadata_replace = Some(value.into());
         self
     }
 
@@ -984,9 +974,6 @@ impl<'a> UpdateBuilder<'a> {
         self.sample = Some(body.sample);
         if body.metadata.is_some() {
             self.metadata = body.metadata;
-        }
-        if body.metadata_replace.is_some() {
-            self.metadata_replace = body.metadata_replace;
         }
         self
     }
@@ -1039,7 +1026,6 @@ impl<'a> UpdateBuilder<'a> {
             attachments: self.attachments,
             sample: self.sample.unwrap_or(NullableField::Absent),
             metadata: self.metadata,
-            metadata_replace: self.metadata_replace,
         };
         request = request.json(&body);
 

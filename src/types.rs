@@ -5919,12 +5919,9 @@ pub struct RunCreateAttachmentResponse {
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct RunUpdateMetadataRequestBody {
-    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    /// When true, removes any metadata keys not present in `metadata`. Default: false.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub metadata_replace: Option<bool>,
 }
 
 impl RunUpdateMetadataRequestBody {
@@ -5938,23 +5935,14 @@ impl RunUpdateMetadataRequestBody {
 #[derive(Debug, Default)]
 pub struct RunUpdateMetadataRequestBodyBuilder {
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    metadata_replace: Option<bool>,
 }
 
 impl RunUpdateMetadataRequestBodyBuilder {
     /// Set the `metadata` field.
     ///
-    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
-        self
-    }
-
-    /// Set the `metadata_replace` field.
-    ///
-    /// When true, removes any metadata keys not present in `metadata`. Default: false.
-    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
-        self.metadata_replace = Some(value.into());
         self
     }
 
@@ -5962,7 +5950,6 @@ impl RunUpdateMetadataRequestBodyBuilder {
     pub fn build(self) -> std::result::Result<RunUpdateMetadataRequestBody, String> {
         Ok(RunUpdateMetadataRequestBody {
             metadata: self.metadata,
-            metadata_replace: self.metadata_replace,
         })
     }
 }
@@ -7475,12 +7462,9 @@ pub struct UnitUpdateRequestBody {
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub sample: NullableField<String>,
-    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub metadata_replace: Option<bool>,
 }
 
 impl UnitUpdateRequestBody {
@@ -7500,7 +7484,6 @@ pub struct UnitUpdateRequestBodyBuilder {
     attachments: Option<Vec<String>>,
     sample: NullableField<String>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    metadata_replace: Option<bool>,
 }
 
 impl UnitUpdateRequestBodyBuilder {
@@ -7566,17 +7549,9 @@ impl UnitUpdateRequestBodyBuilder {
 
     /// Set the `metadata` field.
     ///
-    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
-        self
-    }
-
-    /// Set the `metadata_replace` field.
-    ///
-    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
-    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
-        self.metadata_replace = Some(value.into());
         self
     }
 
@@ -7590,7 +7565,6 @@ impl UnitUpdateRequestBodyBuilder {
             attachments: self.attachments,
             sample: self.sample,
             metadata: self.metadata,
-            metadata_replace: self.metadata_replace,
         })
     }
 }
