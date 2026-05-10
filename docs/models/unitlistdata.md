@@ -16,3 +16,4 @@
 | `children` | `Vec<UnitListChildren>` | :heavy_check_mark: | Child units assembled into this unit. Limited to 10 results; use Get Unit endpoint for complete list. |
 | `part` | `UnitListPart` | :heavy_check_mark: | Part information with the specific revision this unit is built from. |
 | `last_run` | `NullableField<UnitListLastRun>` | :heavy_minus_sign: | Most recent test run performed on this unit. Null if no runs have been executed. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata key/value pairs on the unit. Only present when the request sets `include_metadata=true`. |

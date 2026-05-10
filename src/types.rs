@@ -2910,6 +2910,12 @@ pub struct RunCreateRequest {
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub logs: Option<Vec<RunCreateLogs>>,
+    /// Custom metadata to attach to the run (max 50 keys). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl RunCreateRequest {
@@ -2937,6 +2943,8 @@ pub struct RunCreateRequestBuilder {
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
     logs: Option<Vec<RunCreateLogs>>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl RunCreateRequestBuilder {
@@ -3068,6 +3076,22 @@ impl RunCreateRequestBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to attach to the run (max 50 keys). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `unit_metadata` field.
+    ///
+    /// Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit.
+    pub fn unit_metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.unit_metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunCreateRequest, String> {
         Ok(RunCreateRequest {
@@ -3091,6 +3115,8 @@ impl RunCreateRequestBuilder {
             docstring: self.docstring,
             phases: self.phases,
             logs: self.logs,
+            metadata: self.metadata,
+            unit_metadata: self.unit_metadata,
         })
     }
 }
@@ -3157,6 +3183,12 @@ pub struct RunListRequest {
     /// Sort order direction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort_order: Option<ListSortOrder>,
+    /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+    /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_metadata: Option<bool>,
 }
 
 impl RunListRequest {
@@ -3194,6 +3226,8 @@ pub struct RunListRequestBuilder {
     cursor: Option<i64>,
     sort_by: Option<RunListSortBy>,
     sort_order: Option<ListSortOrder>,
+    metadata: Option<serde_json::Value>,
+    include_metadata: Option<bool>,
 }
 
 impl RunListRequestBuilder {
@@ -3353,6 +3387,22 @@ impl RunListRequestBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `include_metadata` field.
+    ///
+    /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
+    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
+        self.include_metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunListRequest, String> {
         Ok(RunListRequest {
@@ -3381,6 +3431,8 @@ impl RunListRequestBuilder {
             cursor: self.cursor,
             sort_by: self.sort_by,
             sort_order: self.sort_order,
+            metadata: self.metadata,
+            include_metadata: self.include_metadata,
         })
     }
 }
@@ -3735,6 +3787,9 @@ pub struct RunListData {
     pub procedure: RunListProcedure,
     /// Unit under test information.
     pub unit: RunListUnit,
+    /// Custom metadata key/value pairs on the run. Only present when the request sets `include_metadata=true`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl RunListData {
@@ -3759,6 +3814,7 @@ pub struct RunListDataBuilder {
     operated_by: NullableField<RunListOperatedBy>,
     procedure: Option<RunListProcedure>,
     unit: Option<RunListUnit>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl RunListDataBuilder {
@@ -3882,6 +3938,14 @@ impl RunListDataBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata key/value pairs on the run. Only present when the request sets `include_metadata=true`.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunListData, String> {
         Ok(RunListData {
@@ -3905,6 +3969,7 @@ impl RunListDataBuilder {
                 .ok_or_else(|| "missing required field: procedure".to_string())?,
             unit: self.unit
                 .ok_or_else(|| "missing required field: unit".to_string())?,
+            metadata: self.metadata,
         })
     }
 }
@@ -5774,6 +5839,9 @@ pub struct RunGetResponse {
     /// Array of sub-units that had parent changes during this run. Only returned if `all` or `sub_units` is included.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sub_units: Option<Vec<RunGetSubUnits>>,
+    /// Custom metadata key/value pairs on the run.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -5849,6 +5917,70 @@ pub struct RunCreateAttachmentResponse {
     pub upload_url: String,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RunUpdateMetadataRequestBody {
+    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// When true, removes any metadata keys not present in `metadata`. Default: false.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata_replace: Option<bool>,
+}
+
+impl RunUpdateMetadataRequestBody {
+    /// Create a builder for this type.
+    pub fn builder() -> RunUpdateMetadataRequestBodyBuilder {
+        RunUpdateMetadataRequestBodyBuilder::default()
+    }
+}
+
+/// Builder for [`RunUpdateMetadataRequestBody`].
+#[derive(Debug, Default)]
+pub struct RunUpdateMetadataRequestBodyBuilder {
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    metadata_replace: Option<bool>,
+}
+
+impl RunUpdateMetadataRequestBodyBuilder {
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata_replace` field.
+    ///
+    /// When true, removes any metadata keys not present in `metadata`. Default: false.
+    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
+        self.metadata_replace = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunUpdateMetadataRequestBody, String> {
+        Ok(RunUpdateMetadataRequestBody {
+            metadata: self.metadata,
+            metadata_replace: self.metadata_replace,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunUpdateMetadataRequest {
+    /// Unique identifier of the run to update.
+    pub id: String,
+    pub request_body: RunUpdateMetadataRequestBody,
+}
+
+/// Run metadata updated successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunUpdateMetadataResponse {
+    /// Unique identifier of the updated run.
+    pub id: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AttachmentInitializeRequest {
     /// File name including extension (e.g. "report.pdf")
@@ -5888,6 +6020,9 @@ pub struct UnitCreateRequest {
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub sample: NullableField<String>,
+    /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl UnitCreateRequest {
@@ -5904,6 +6039,7 @@ pub struct UnitCreateRequestBuilder {
     part_number: Option<String>,
     revision_number: Option<String>,
     sample: NullableField<String>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl UnitCreateRequestBuilder {
@@ -5945,6 +6081,14 @@ impl UnitCreateRequestBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<UnitCreateRequest, String> {
         Ok(UnitCreateRequest {
@@ -5955,6 +6099,7 @@ impl UnitCreateRequestBuilder {
             revision_number: self.revision_number
                 .ok_or_else(|| "missing required field: revision_number".to_string())?,
             sample: self.sample,
+            metadata: self.metadata,
         })
     }
 }
@@ -6017,6 +6162,12 @@ pub struct UnitListRequest {
     /// Sort order direction.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort_order: Option<ListSortOrder>,
+    /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+    /// When true, includes the unit metadata array in the response. Defaults to false to keep payloads small.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_metadata: Option<bool>,
 }
 
 impl UnitListRequest {
@@ -6052,6 +6203,8 @@ pub struct UnitListRequestBuilder {
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
     sort_order: Option<ListSortOrder>,
+    metadata: Option<serde_json::Value>,
+    include_metadata: Option<bool>,
 }
 
 impl UnitListRequestBuilder {
@@ -6199,6 +6352,22 @@ impl UnitListRequestBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `include_metadata` field.
+    ///
+    /// When true, includes the unit metadata array in the response. Defaults to false to keep payloads small.
+    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
+        self.include_metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<UnitListRequest, String> {
         Ok(UnitListRequest {
@@ -6225,6 +6394,8 @@ impl UnitListRequestBuilder {
             cursor: self.cursor,
             sort_by: self.sort_by,
             sort_order: self.sort_order,
+            metadata: self.metadata,
+            include_metadata: self.include_metadata,
         })
     }
 }
@@ -6461,6 +6632,9 @@ pub struct UnitListData {
     /// Most recent test run performed on this unit. Null if no runs have been executed.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub last_run: NullableField<UnitListLastRun>,
+    /// Custom metadata key/value pairs on the unit. Only present when the request sets `include_metadata=true`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl UnitListData {
@@ -6484,6 +6658,7 @@ pub struct UnitListDataBuilder {
     children: Option<Vec<UnitListChildren>>,
     part: Option<UnitListPart>,
     last_run: NullableField<UnitListLastRun>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl UnitListDataBuilder {
@@ -6605,6 +6780,14 @@ impl UnitListDataBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata key/value pairs on the unit. Only present when the request sets `include_metadata=true`.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<UnitListData, String> {
         Ok(UnitListData {
@@ -6623,6 +6806,7 @@ impl UnitListDataBuilder {
             part: self.part
                 .ok_or_else(|| "missing required field: part".to_string())?,
             last_run: self.last_run,
+            metadata: self.metadata,
         })
     }
 }
@@ -7266,6 +7450,9 @@ pub struct UnitGetResponse {
     /// Files attached to this unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attachments: Option<Vec<UnitGetAttachments>>,
+    /// Custom metadata key/value pairs on the unit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -7288,6 +7475,12 @@ pub struct UnitUpdateRequestBody {
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub sample: NullableField<String>,
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata_replace: Option<bool>,
 }
 
 impl UnitUpdateRequestBody {
@@ -7306,6 +7499,8 @@ pub struct UnitUpdateRequestBodyBuilder {
     batch_number: NullableField<String>,
     attachments: Option<Vec<String>>,
     sample: NullableField<String>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    metadata_replace: Option<bool>,
 }
 
 impl UnitUpdateRequestBodyBuilder {
@@ -7369,6 +7564,22 @@ impl UnitUpdateRequestBodyBuilder {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata_replace` field.
+    ///
+    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
+    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
+        self.metadata_replace = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<UnitUpdateRequestBody, String> {
         Ok(UnitUpdateRequestBody {
@@ -7378,6 +7589,8 @@ impl UnitUpdateRequestBodyBuilder {
             batch_number: self.batch_number,
             attachments: self.attachments,
             sample: self.sample,
+            metadata: self.metadata,
+            metadata_replace: self.metadata_replace,
         })
     }
 }

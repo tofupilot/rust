@@ -134,6 +134,8 @@ pub struct ListBuilder<'a> {
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
     sort_order: Option<ListSortOrder>,
+    metadata: Option<serde_json::Value>,
+    include_metadata: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -165,6 +167,8 @@ impl<'a> ListBuilder<'a> {
             cursor: None,
             sort_by: None,
             sort_order: None,
+            metadata: None,
+            include_metadata: None,
             server_url: None,
             timeout: None,
         }
@@ -314,6 +318,22 @@ impl<'a> ListBuilder<'a> {
         self
     }
 
+    /// Set the `metadata` query parameter.
+    ///
+    /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `include_metadata` query parameter.
+    ///
+    /// When true, includes the unit metadata array in the response. Defaults to false to keep payloads small.
+    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
+        self.include_metadata = Some(value.into());
+        self
+    }
+
     /// Override the server URL for this request.
     pub fn server_url(mut self, url: impl Into<String>) -> Self {
         self.server_url = Some(url.into());
@@ -433,6 +453,12 @@ impl<'a> ListBuilder<'a> {
         if let Some(ref val) = self.sort_order {
             request = request.query(&[("sort_order", val.to_string())]);
         }
+        if let Some(ref val) = self.metadata {
+            request = request.query(&[("metadata", val.to_string())]);
+        }
+        if let Some(ref val) = self.include_metadata {
+            request = request.query(&[("include_metadata", val.to_string())]);
+        }
 
 
         let response = self.client.execute(
@@ -475,6 +501,7 @@ pub struct CreateBuilder<'a> {
     part_number: Option<String>,
     revision_number: Option<String>,
     sample: Option<NullableField<String>>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -487,6 +514,7 @@ impl<'a> CreateBuilder<'a> {
             part_number: None,
             revision_number: None,
             sample: None,
+            metadata: None,
             server_url: None,
             timeout: None,
         }
@@ -530,12 +558,23 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: UnitCreateRequest) -> Self {
         self.serial_number = Some(body.serial_number);
         self.part_number = Some(body.part_number);
         self.revision_number = Some(body.revision_number);
         self.sample = Some(body.sample);
+        if body.metadata.is_some() {
+            self.metadata = body.metadata;
+        }
         self
     }
 
@@ -584,6 +623,7 @@ impl<'a> CreateBuilder<'a> {
                     "missing required field: revision_number".to_string(),
                 ))?,
             sample: self.sample.unwrap_or(NullableField::Absent),
+            metadata: self.metadata,
         };
         request = request.json(&body);
 
@@ -818,6 +858,8 @@ pub struct UpdateBuilder<'a> {
     batch_number: Option<NullableField<String>>,
     attachments: Option<Vec<String>>,
     sample: Option<NullableField<String>>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    metadata_replace: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -833,6 +875,8 @@ impl<'a> UpdateBuilder<'a> {
             batch_number: None,
             attachments: None,
             sample: None,
+            metadata: None,
+            metadata_replace: None,
             server_url: None,
             timeout: None,
         }
@@ -906,6 +950,22 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata_replace` field.
+    ///
+    /// When true, removes any metadata keys not present in `metadata`. Default: false (PATCH).
+    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
+        self.metadata_replace = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: UnitUpdateRequestBody) -> Self {
         if body.new_serial_number.is_some() {
@@ -922,6 +982,12 @@ impl<'a> UpdateBuilder<'a> {
             self.attachments = body.attachments;
         }
         self.sample = Some(body.sample);
+        if body.metadata.is_some() {
+            self.metadata = body.metadata;
+        }
+        if body.metadata_replace.is_some() {
+            self.metadata_replace = body.metadata_replace;
+        }
         self
     }
 
@@ -972,6 +1038,8 @@ impl<'a> UpdateBuilder<'a> {
             batch_number: self.batch_number.unwrap_or(NullableField::Absent),
             attachments: self.attachments,
             sample: self.sample.unwrap_or(NullableField::Absent),
+            metadata: self.metadata,
+            metadata_replace: self.metadata_replace,
         };
         request = request.json(&body);
 

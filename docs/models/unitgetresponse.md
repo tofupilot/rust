@@ -18,3 +18,4 @@ Units retrieved successfully
 | `children` | `Option<Vec<UnitGetChildren>>` | :heavy_minus_sign: | Child units with part details. |
 | `created_during` | `NullableField<UnitGetCreatedDuring>` | :heavy_minus_sign: | Run that created this unit. |
 | `attachments` | `Option<Vec<UnitGetAttachments>>` | :heavy_minus_sign: | Files attached to this unit. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata key/value pairs on the unit. |

@@ -65,6 +65,13 @@ impl<'a> RunsClient<'a> {
         CreateAttachmentBuilder::new(self.client)
     }
 
+    /// Update run metadata
+    ///
+    /// Upsert custom metadata on a run. Plain object of key/value pairs. PATCH semantics by default (omitted keys preserved). Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    pub fn update_metadata(&self) -> UpdateMetadataBuilder<'a> {
+        UpdateMetadataBuilder::new(self.client)
+    }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +122,8 @@ pub struct ListBuilder<'a> {
     cursor: Option<i64>,
     sort_by: Option<RunListSortBy>,
     sort_order: Option<ListSortOrder>,
+    metadata: Option<serde_json::Value>,
+    include_metadata: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -148,6 +157,8 @@ impl<'a> ListBuilder<'a> {
             cursor: None,
             sort_by: None,
             sort_order: None,
+            metadata: None,
+            include_metadata: None,
             server_url: None,
             timeout: None,
         }
@@ -309,6 +320,22 @@ impl<'a> ListBuilder<'a> {
         self
     }
 
+    /// Set the `metadata` query parameter.
+    ///
+    /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `include_metadata` query parameter.
+    ///
+    /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
+    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
+        self.include_metadata = Some(value.into());
+        self
+    }
+
     /// Override the server URL for this request.
     pub fn server_url(mut self, url: impl Into<String>) -> Self {
         self.server_url = Some(url.into());
@@ -438,6 +465,12 @@ impl<'a> ListBuilder<'a> {
         if let Some(ref val) = self.sort_order {
             request = request.query(&[("sort_order", val.to_string())]);
         }
+        if let Some(ref val) = self.metadata {
+            request = request.query(&[("metadata", val.to_string())]);
+        }
+        if let Some(ref val) = self.include_metadata {
+            request = request.query(&[("include_metadata", val.to_string())]);
+        }
 
 
         let response = self.client.execute(
@@ -493,6 +526,8 @@ pub struct CreateBuilder<'a> {
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
     logs: Option<Vec<RunCreateLogs>>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -516,6 +551,8 @@ impl<'a> CreateBuilder<'a> {
             docstring: None,
             phases: None,
             logs: None,
+            metadata: None,
+            unit_metadata: None,
             server_url: None,
             timeout: None,
         }
@@ -649,6 +686,22 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to attach to the run (max 50 keys). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `unit_metadata` field.
+    ///
+    /// Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit.
+    pub fn unit_metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.unit_metadata = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: RunCreateRequest) -> Self {
         self.outcome = Some(body.outcome);
@@ -681,6 +734,12 @@ impl<'a> CreateBuilder<'a> {
         }
         if body.logs.is_some() {
             self.logs = body.logs;
+        }
+        if body.metadata.is_some() {
+            self.metadata = body.metadata;
+        }
+        if body.unit_metadata.is_some() {
+            self.unit_metadata = body.unit_metadata;
         }
         self
     }
@@ -747,6 +806,8 @@ impl<'a> CreateBuilder<'a> {
             docstring: self.docstring,
             phases: self.phases,
             logs: self.logs,
+            metadata: self.metadata,
+            unit_metadata: self.unit_metadata,
         };
         request = request.json(&body);
 
@@ -1187,6 +1248,139 @@ impl<'a> CreateAttachmentBuilder<'a> {
             base_url,
         ).await?;
         let result: RunCreateAttachmentResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// UpdateMetadataBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`RunsClient::update_metadata`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.runs().update_metadata()
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct UpdateMetadataBuilder<'a> {
+    client: &'a TofuPilot,
+    id: Option<String>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    metadata_replace: Option<bool>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> UpdateMetadataBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            id: None,
+            metadata: None,
+            metadata_replace: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `id` path parameter.
+    ///
+    /// Unique identifier of the run to update.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to upsert on the run. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. Pass `metadata_replace: true` to drop all keys not present.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata_replace` field.
+    ///
+    /// When true, removes any metadata keys not present in `metadata`. Default: false.
+    pub fn metadata_replace(mut self, value: impl Into<bool>) -> Self {
+        self.metadata_replace = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: RunUpdateMetadataRequestBody) -> Self {
+        if body.metadata.is_some() {
+            self.metadata = body.metadata;
+        }
+        if body.metadata_replace.is_some() {
+            self.metadata_replace = body.metadata_replace;
+        }
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<RunUpdateMetadataResponse> {
+        let id = self.id
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: id".to_string(),
+            ))?;
+        let id_encoded = utf8_percent_encode(&id, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/runs/{id}/metadata",
+            base_url,
+            id = id_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::PATCH,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = RunUpdateMetadataRequestBody {
+            metadata: self.metadata,
+            metadata_replace: self.metadata_replace,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "run-updateMetadata",
+            base_url,
+        ).await?;
+        let result: RunUpdateMetadataResponse = response.json().await?;
         Ok(result)
     }
 }

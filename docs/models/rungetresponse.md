@@ -22,3 +22,4 @@ Single test run details.
 | `attachments` | `Option<Vec<RunGetAttachments>>` | :heavy_minus_sign: | Files attached to this run, including both regular attachments and test reports. Only returned if `all` or `attachments` is included. |
 | `logs` | `Option<Vec<RunGetLogs>>` | :heavy_minus_sign: | N/A |
 | `sub_units` | `Option<Vec<RunGetSubUnits>>` | :heavy_minus_sign: | Array of sub-units that had parent changes during this run. Only returned if `all` or `sub_units` is included. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata key/value pairs on the run. |
