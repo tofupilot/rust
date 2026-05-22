@@ -1,6 +1,6 @@
-# TofuPilot Rust Client
+# TofuPilot Rust SDK
 
-Rust client for the [TofuPilot](https://tofupilot.com) REST API. Async, typed, with retries and request lifecycle hooks.
+Rust SDK for the [TofuPilot](https://tofupilot.com) REST API. Async, typed, with retries and request lifecycle hooks.
 
 ## Installation
 
@@ -233,3 +233,10 @@ let result = client.runs().list()
     .send()
     .await?;
 ```
+
+## Documentation
+
+- [Getting Started](https://tofupilot.com/docs/getting-started-with-tofupilot)
+- [Rust SDK Guide](https://tofupilot.com/docs/sdk/rust)
+- [API Reference](https://tofupilot.com/docs/api/rest-api)
+- [Changelog](https://tofupilot.com/changelog)
