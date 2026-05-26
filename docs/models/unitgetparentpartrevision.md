@@ -1,5 +1,6 @@
 # UnitGetParentPartRevision
 
+Part revision information.
 
 ## Fields
 

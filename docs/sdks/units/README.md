@@ -4,8 +4,8 @@
 
 ### Available Operations
 
-* [list](#list) - List and filter units
 * [create](#create) - Create unit
+* [list](#list) - List and filter units
 * [delete](#delete) - Delete units
 * [get](#get) - Get unit
 * [update](#update) - Update unit
@@ -14,9 +14,59 @@
 * [create_attachment](#create_attachment) - Attach file to unit
 * [delete_attachment](#delete_attachment) - Delete unit attachments
 
+## create
+
+Create a unit with a serial number and link it to a part revision.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+use tofupilot::types::*;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.units().create()
+        .serial_number("SN-001234")
+        .part_number("PCB-V1.2")
+        .revision_number("REV-A")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `serial_number` | `String` | :heavy_check_mark: | Unique serial number identifier for the unit. Must be unique within the organization. |
+| `part_number` | `String` | :heavy_check_mark: | Component part number that defines what type of unit this is. If the part does not exist, it will be created. |
+| `revision_number` | `String` | :heavy_check_mark: | Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created. |
+| `sample` | `NullableField<Sample>` | :heavy_minus_sign: | Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. |
+
+### Response
+
+**[`UnitCreateResponse`](../../models/unitcreateresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
+| `Error::Conflict` | 409 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
 ## list
 
-Retrieve a paginated list of units with filtering by serial number, part number, and batch. Uses cursor-based pagination for efficient large dataset traversal.
+List units with filtering by serial number, part number, and batch. Cursor-paginated.
 
 ### Example Usage
 
@@ -59,12 +109,12 @@ async fn main() -> tofupilot::Result<()> {
 | `created_by_user_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `created_by_station_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `exclude_units_with_parent` | `Option<bool>` | :heavy_minus_sign: | N/A |
-| `samples` | `Option<Vec<ListSample>>` | :heavy_minus_sign: | N/A |
+| `samples` | `Option<Vec<Sample>>` | :heavy_minus_sign: | N/A |
 | `limit` | `Option<i64>` | :heavy_minus_sign: | Maximum number of units to return. |
 | `cursor` | `Option<i64>` | :heavy_minus_sign: | N/A |
 | `sort_by` | `Option<UnitListSortBy>` | :heavy_minus_sign: | Field to sort results by. last_run_at sorts by most recent test run date. last_run_procedure sorts by procedure name of the last run. |
 | `sort_order` | `Option<ListSortOrder>` | :heavy_minus_sign: | Sort order direction. |
-| `metadata` | `Option<serde_json::Value>` | :heavy_minus_sign: | Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`. |
 | `include_metadata` | `Option<bool>` | :heavy_minus_sign: | When true, includes the unit metadata array in the response. Defaults to false to keep payloads small. |
 
 ### Response
@@ -79,58 +129,9 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
-## create
-
-Create a new unit with a serial number and link it to a part revision. Units represent individual hardware items tracked for manufacturing traceability.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.units().create()
-        .serial_number("SN-001234")
-        .part_number("PCB-V1.2")
-        .revision_number("REV-A")
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `serial_number` | `String` | :heavy_check_mark: | Unique serial number identifier for the unit. Must be unique within the organization. |
-| `part_number` | `String` | :heavy_check_mark: | Component part number that defines what type of unit this is. If the part does not exist, it will be created. |
-| `revision_number` | `String` | :heavy_check_mark: | Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created. |
-| `sample` | `NullableField<String>` | :heavy_minus_sign: | Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units. |
-| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. |
-
-### Response
-
-**[`UnitCreateResponse`](../../models/unitcreateresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::NotFound` | 404 | application/json |
-| `Error::Conflict` | 409 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
-
 ## delete
 
-Permanently delete units by serial number. This action will remove all nested elements and relationships associated with the units.
+Delete units by serial number. Sub-units are unlinked, not deleted. Irreversible.
 
 ### Example Usage
 
@@ -172,7 +173,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## get
 
-Retrieve a single unit by its serial number. Returns comprehensive unit data including part information, parent/child relationships, and test run history.
+Get a unit by serial number, with its part, parent/child links, and run history.
 
 ### Example Usage
 
@@ -215,12 +216,13 @@ async fn main() -> tofupilot::Result<()> {
 
 ## update
 
-Update unit properties including serial number, part revision, batch assignment, and file attachments with case-insensitive matching.
+Update a unit: serial number, part revision, batch, and file attachments.
 
 ### Example Usage
 
 ```rust
 use tofupilot::TofuPilot;
+use tofupilot::types::*;
 
 #[tokio::main]
 async fn main() -> tofupilot::Result<()> {
@@ -246,7 +248,7 @@ async fn main() -> tofupilot::Result<()> {
 | `revision_number` | `Option<String>` | :heavy_minus_sign: | New revision number for the unit. |
 | `batch_number` | `NullableField<String>` | :heavy_minus_sign: | New batch number for the unit. Set to null to remove batch. |
 | `attachments` | `Option<Vec<String>>` | :heavy_minus_sign: | Array of upload IDs to attach to the unit. |
-| `sample` | `NullableField<String>` | :heavy_minus_sign: | Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit. |
+| `sample` | `NullableField<Sample>` | :heavy_minus_sign: | Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit. |
 | `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. |
 
 ### Response
@@ -265,7 +267,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## add_child
 
-Add a sub-unit to a parent unit to track component assemblies and multi-level hardware traceability.
+Link a sub-unit to a parent unit to track assemblies.
 
 ### Example Usage
 
@@ -310,7 +312,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## remove_child
 
-Remove a sub-unit relationship from a parent unit by serial number. Only unlinks the parent-child relationship; neither unit is deleted from the system.
+Unlink a sub-unit from its parent. Neither unit is deleted.
 
 ### Example Usage
 
@@ -355,7 +357,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## create_attachment
 
-Create an attachment linked to a unit and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+Attach a file to a unit. Returns an upload ID and pre-signed URL; PUT the file to the URL, then call Finalize upload to commit.
 
 ### Example Usage
 
@@ -399,7 +401,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## delete_attachment
 
-Delete attachments from a unit by their IDs. Removes the files from storage and unlinks them from the unit.
+Delete attachments from a unit by ID. Removes the files from storage and unlinks them.
 
 ### Example Usage
 

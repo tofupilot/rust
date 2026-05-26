@@ -23,464 +23,55 @@ impl<'a> RunsClient<'a> {
         Self { client }
     }
 
-    /// List and filter runs
-    ///
-    /// Retrieve a paginated list of test runs with filtering by unit, procedure, date range, outcome, and station.
-    pub fn list(&self) -> ListBuilder<'a> {
-        ListBuilder::new(self.client)
-    }
-
     /// Create run
     ///
-    /// Create a new test run, linking it to a procedure and unit. Existing entities are reused automatically.
+    /// Create a run linked to a procedure and unit. Existing procedures and units are reused automatically.
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
 
+    /// List and filter runs
+    ///
+    /// List runs with filtering by unit, procedure, date range, outcome, and station. Cursor-paginated.
+    pub fn list(&self) -> ListBuilder<'a> {
+        ListBuilder::new(self.client)
+    }
+
     /// Delete runs
     ///
-    /// Permanently delete test runs by their IDs. Removes all associated phases, measurements, and attachments.
+    /// Delete runs by ID. Also removes their phases, measurements, and attachments. Irreversible.
     pub fn delete(&self) -> DeleteBuilder<'a> {
         DeleteBuilder::new(self.client)
     }
 
     /// Get run
     ///
-    /// Retrieve a single test run by its ID. Returns comprehensive run data including metadata, phases, measurements, and logs.
+    /// Get a run by ID, with its metadata, phases, measurements, and logs.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
     /// Update run
     ///
-    /// Update a test run, including linking file attachments. Files must be uploaded via Initialize upload and Finalize upload before linking.
+    /// Link uploaded files to a run. Upload files via Initialize and Finalize first, then call this to attach them.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
     /// Attach file to run
     ///
-    /// Create an attachment linked to a run and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+    /// Attach a file to a run. Returns an upload ID and pre-signed URL; PUT the file to the URL, then call Finalize upload to commit.
     pub fn create_attachment(&self) -> CreateAttachmentBuilder<'a> {
         CreateAttachmentBuilder::new(self.client)
     }
 
     /// Update run metadata
     ///
-    /// Upsert custom metadata on a run. Plain object of key/value pairs. PATCH semantics: omitted keys preserved. Pass `null` as a value to delete a key.
+    /// Upsert custom metadata on a run as a key/value object. Omitted keys are preserved; pass `null` to delete a key.
     pub fn update_metadata(&self) -> UpdateMetadataBuilder<'a> {
         UpdateMetadataBuilder::new(self.client)
     }
 
-}
-
-// ---------------------------------------------------------------------------
-// ListBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`RunsClient::list`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.runs().list()
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct ListBuilder<'a> {
-    client: &'a TofuPilot,
-    search_query: Option<String>,
-    ids: Option<Vec<String>>,
-    outcomes: Option<Vec<Outcome>>,
-    procedure_ids: Option<Vec<String>>,
-    procedure_versions: Option<Vec<String>>,
-    serial_numbers: Option<Vec<String>>,
-    samples: Option<Vec<ListSample>>,
-    part_numbers: Option<Vec<String>>,
-    revision_numbers: Option<Vec<String>>,
-    batch_numbers: Option<Vec<String>>,
-    duration_min: Option<String>,
-    duration_max: Option<String>,
-    started_after: Option<chrono::DateTime<chrono::Utc>>,
-    started_before: Option<chrono::DateTime<chrono::Utc>>,
-    ended_after: Option<chrono::DateTime<chrono::Utc>>,
-    ended_before: Option<chrono::DateTime<chrono::Utc>>,
-    created_after: Option<chrono::DateTime<chrono::Utc>>,
-    created_before: Option<chrono::DateTime<chrono::Utc>>,
-    created_by_user_ids: Option<Vec<String>>,
-    created_by_station_ids: Option<Vec<String>>,
-    operated_by_ids: Option<Vec<String>>,
-    limit: Option<i64>,
-    cursor: Option<i64>,
-    sort_by: Option<RunListSortBy>,
-    sort_order: Option<ListSortOrder>,
-    metadata: Option<serde_json::Value>,
-    include_metadata: Option<bool>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> ListBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            search_query: None,
-            ids: None,
-            outcomes: None,
-            procedure_ids: None,
-            procedure_versions: None,
-            serial_numbers: None,
-            samples: None,
-            part_numbers: None,
-            revision_numbers: None,
-            batch_numbers: None,
-            duration_min: None,
-            duration_max: None,
-            started_after: None,
-            started_before: None,
-            ended_after: None,
-            ended_before: None,
-            created_after: None,
-            created_before: None,
-            created_by_user_ids: None,
-            created_by_station_ids: None,
-            operated_by_ids: None,
-            limit: None,
-            cursor: None,
-            sort_by: None,
-            sort_order: None,
-            metadata: None,
-            include_metadata: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `search_query` query parameter.
-    pub fn search_query(mut self, value: impl Into<String>) -> Self {
-        self.search_query = Some(value.into());
-        self
-    }
-
-    /// Set the `ids` query parameter.
-    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.ids = Some(value.into());
-        self
-    }
-
-    /// Set the `outcomes` query parameter.
-    pub fn outcomes(mut self, value: impl Into<Vec<Outcome>>) -> Self {
-        self.outcomes = Some(value.into());
-        self
-    }
-
-    /// Set the `procedure_ids` query parameter.
-    pub fn procedure_ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.procedure_ids = Some(value.into());
-        self
-    }
-
-    /// Set the `procedure_versions` query parameter.
-    pub fn procedure_versions(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.procedure_versions = Some(value.into());
-        self
-    }
-
-    /// Set the `serial_numbers` query parameter.
-    pub fn serial_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.serial_numbers = Some(value.into());
-        self
-    }
-
-    /// Set the `samples` query parameter.
-    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
-        self.samples = Some(value.into());
-        self
-    }
-
-    /// Set the `part_numbers` query parameter.
-    pub fn part_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.part_numbers = Some(value.into());
-        self
-    }
-
-    /// Set the `revision_numbers` query parameter.
-    pub fn revision_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.revision_numbers = Some(value.into());
-        self
-    }
-
-    /// Set the `batch_numbers` query parameter.
-    pub fn batch_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.batch_numbers = Some(value.into());
-        self
-    }
-
-    /// Set the `duration_min` query parameter.
-    pub fn duration_min(mut self, value: impl Into<String>) -> Self {
-        self.duration_min = Some(value.into());
-        self
-    }
-
-    /// Set the `duration_max` query parameter.
-    pub fn duration_max(mut self, value: impl Into<String>) -> Self {
-        self.duration_max = Some(value.into());
-        self
-    }
-
-    /// Set the `started_after` query parameter.
-    pub fn started_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.started_after = Some(value.into());
-        self
-    }
-
-    /// Set the `started_before` query parameter.
-    pub fn started_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.started_before = Some(value.into());
-        self
-    }
-
-    /// Set the `ended_after` query parameter.
-    pub fn ended_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.ended_after = Some(value.into());
-        self
-    }
-
-    /// Set the `ended_before` query parameter.
-    pub fn ended_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.ended_before = Some(value.into());
-        self
-    }
-
-    /// Set the `created_after` query parameter.
-    pub fn created_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.created_after = Some(value.into());
-        self
-    }
-
-    /// Set the `created_before` query parameter.
-    pub fn created_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
-        self.created_before = Some(value.into());
-        self
-    }
-
-    /// Set the `created_by_user_ids` query parameter.
-    pub fn created_by_user_ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.created_by_user_ids = Some(value.into());
-        self
-    }
-
-    /// Set the `created_by_station_ids` query parameter.
-    pub fn created_by_station_ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.created_by_station_ids = Some(value.into());
-        self
-    }
-
-    /// Set the `operated_by_ids` query parameter.
-    pub fn operated_by_ids(mut self, value: impl Into<Vec<String>>) -> Self {
-        self.operated_by_ids = Some(value.into());
-        self
-    }
-
-    /// Set the `limit` query parameter.
-    ///
-    /// Maximum number of runs to return per page.
-    pub fn limit(mut self, value: impl Into<i64>) -> Self {
-        self.limit = Some(value.into());
-        self
-    }
-
-    /// Set the `cursor` query parameter.
-    pub fn cursor(mut self, value: impl Into<i64>) -> Self {
-        self.cursor = Some(value.into());
-        self
-    }
-
-    /// Set the `sort_by` query parameter.
-    ///
-    /// Field to sort results by.
-    pub fn sort_by(mut self, value: impl Into<RunListSortBy>) -> Self {
-        self.sort_by = Some(value.into());
-        self
-    }
-
-    /// Set the `sort_order` query parameter.
-    ///
-    /// Sort order direction.
-    pub fn sort_order(mut self, value: impl Into<ListSortOrder>) -> Self {
-        self.sort_order = Some(value.into());
-        self
-    }
-
-    /// Set the `metadata` query parameter.
-    ///
-    /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
-    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
-        self.metadata = Some(value.into());
-        self
-    }
-
-    /// Set the `include_metadata` query parameter.
-    ///
-    /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
-    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
-        self.include_metadata = Some(value.into());
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<RunListResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/runs");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::GET,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-        if let Some(ref val) = self.search_query {
-            request = request.query(&[("search_query", val.to_string())]);
-        }
-        if let Some(ref val) = self.ids {
-            for item in val {
-                request = request.query(&[("ids", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.outcomes {
-            for item in val {
-                request = request.query(&[("outcomes", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.procedure_ids {
-            for item in val {
-                request = request.query(&[("procedure_ids", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.procedure_versions {
-            for item in val {
-                request = request.query(&[("procedure_versions", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.serial_numbers {
-            for item in val {
-                request = request.query(&[("serial_numbers", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.samples {
-            for item in val {
-                request = request.query(&[("samples", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.part_numbers {
-            for item in val {
-                request = request.query(&[("part_numbers", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.revision_numbers {
-            for item in val {
-                request = request.query(&[("revision_numbers", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.batch_numbers {
-            for item in val {
-                request = request.query(&[("batch_numbers", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.duration_min {
-            request = request.query(&[("duration_min", val.to_string())]);
-        }
-        if let Some(ref val) = self.duration_max {
-            request = request.query(&[("duration_max", val.to_string())]);
-        }
-        if let Some(ref val) = self.started_after {
-            request = request.query(&[("started_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.started_before {
-            request = request.query(&[("started_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.ended_after {
-            request = request.query(&[("ended_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.ended_before {
-            request = request.query(&[("ended_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.created_after {
-            request = request.query(&[("created_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.created_before {
-            request = request.query(&[("created_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
-        }
-        if let Some(ref val) = self.created_by_user_ids {
-            for item in val {
-                request = request.query(&[("created_by_user_ids", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.created_by_station_ids {
-            for item in val {
-                request = request.query(&[("created_by_station_ids", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.operated_by_ids {
-            for item in val {
-                request = request.query(&[("operated_by_ids", item.to_string())]);
-            }
-        }
-        if let Some(ref val) = self.limit {
-            request = request.query(&[("limit", val.to_string())]);
-        }
-        if let Some(ref val) = self.cursor {
-            request = request.query(&[("cursor", val.to_string())]);
-        }
-        if let Some(ref val) = self.sort_by {
-            request = request.query(&[("sort_by", val.to_string())]);
-        }
-        if let Some(ref val) = self.sort_order {
-            request = request.query(&[("sort_order", val.to_string())]);
-        }
-        if let Some(ref val) = self.metadata {
-            request = request.query(&[("metadata", val.to_string())]);
-        }
-        if let Some(ref val) = self.include_metadata {
-            request = request.query(&[("include_metadata", val.to_string())]);
-        }
-
-
-        let response = self.client.execute(
-            request,
-            "run-list",
-            base_url,
-        ).await?;
-        let result: RunListResponse = response.json().await?;
-        Ok(result)
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -575,6 +166,8 @@ impl<'a> CreateBuilder<'a> {
     }
 
     /// Set the `deployment_id` field.
+    ///
+    /// Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs.
     pub fn deployment_id(mut self, value: impl Into<String>) -> Self {
         self.deployment_id = Some(NullableField::Value(value.into()));
         self
@@ -587,6 +180,8 @@ impl<'a> CreateBuilder<'a> {
     }
 
     /// Set the `procedure_version` field.
+    ///
+    /// Specific version of the test procedure used for the run. Matched case-insensitively. If none exist, a procedure with this procedure version will be created. If no procedure version is specified, the run will not be linked to any specific version.
     pub fn procedure_version(mut self, value: impl Into<String>) -> Self {
         self.procedure_version = Some(NullableField::Value(value.into()));
         self
@@ -817,6 +412,415 @@ impl<'a> CreateBuilder<'a> {
             base_url,
         ).await?;
         let result: RunCreateResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ListBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`RunsClient::list`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.runs().list()
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct ListBuilder<'a> {
+    client: &'a TofuPilot,
+    search_query: Option<String>,
+    ids: Option<Vec<String>>,
+    outcomes: Option<Vec<Outcome>>,
+    procedure_ids: Option<Vec<String>>,
+    procedure_versions: Option<Vec<String>>,
+    serial_numbers: Option<Vec<String>>,
+    samples: Option<Vec<Sample>>,
+    part_numbers: Option<Vec<String>>,
+    revision_numbers: Option<Vec<String>>,
+    batch_numbers: Option<Vec<String>>,
+    duration_min: Option<String>,
+    duration_max: Option<String>,
+    started_after: Option<chrono::DateTime<chrono::Utc>>,
+    started_before: Option<chrono::DateTime<chrono::Utc>>,
+    ended_after: Option<chrono::DateTime<chrono::Utc>>,
+    ended_before: Option<chrono::DateTime<chrono::Utc>>,
+    created_after: Option<chrono::DateTime<chrono::Utc>>,
+    created_before: Option<chrono::DateTime<chrono::Utc>>,
+    created_by_user_ids: Option<Vec<String>>,
+    created_by_station_ids: Option<Vec<String>>,
+    operated_by_ids: Option<Vec<String>>,
+    limit: Option<i64>,
+    cursor: Option<i64>,
+    sort_by: Option<RunListSortBy>,
+    sort_order: Option<ListSortOrder>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    include_metadata: Option<bool>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> ListBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            search_query: None,
+            ids: None,
+            outcomes: None,
+            procedure_ids: None,
+            procedure_versions: None,
+            serial_numbers: None,
+            samples: None,
+            part_numbers: None,
+            revision_numbers: None,
+            batch_numbers: None,
+            duration_min: None,
+            duration_max: None,
+            started_after: None,
+            started_before: None,
+            ended_after: None,
+            ended_before: None,
+            created_after: None,
+            created_before: None,
+            created_by_user_ids: None,
+            created_by_station_ids: None,
+            operated_by_ids: None,
+            limit: None,
+            cursor: None,
+            sort_by: None,
+            sort_order: None,
+            metadata: None,
+            include_metadata: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `search_query` query parameter.
+    pub fn search_query(mut self, value: impl Into<String>) -> Self {
+        self.search_query = Some(value.into());
+        self
+    }
+
+    /// Set the `ids` query parameter.
+    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.ids = Some(value.into());
+        self
+    }
+
+    /// Set the `outcomes` query parameter.
+    pub fn outcomes(mut self, value: impl Into<Vec<Outcome>>) -> Self {
+        self.outcomes = Some(value.into());
+        self
+    }
+
+    /// Set the `procedure_ids` query parameter.
+    pub fn procedure_ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.procedure_ids = Some(value.into());
+        self
+    }
+
+    /// Set the `procedure_versions` query parameter.
+    pub fn procedure_versions(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.procedure_versions = Some(value.into());
+        self
+    }
+
+    /// Set the `serial_numbers` query parameter.
+    pub fn serial_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.serial_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `samples` query parameter.
+    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
+        self.samples = Some(value.into());
+        self
+    }
+
+    /// Set the `part_numbers` query parameter.
+    pub fn part_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.part_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_numbers` query parameter.
+    pub fn revision_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.revision_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `batch_numbers` query parameter.
+    pub fn batch_numbers(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.batch_numbers = Some(value.into());
+        self
+    }
+
+    /// Set the `duration_min` query parameter.
+    pub fn duration_min(mut self, value: impl Into<String>) -> Self {
+        self.duration_min = Some(value.into());
+        self
+    }
+
+    /// Set the `duration_max` query parameter.
+    pub fn duration_max(mut self, value: impl Into<String>) -> Self {
+        self.duration_max = Some(value.into());
+        self
+    }
+
+    /// Set the `started_after` query parameter.
+    pub fn started_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.started_after = Some(value.into());
+        self
+    }
+
+    /// Set the `started_before` query parameter.
+    pub fn started_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.started_before = Some(value.into());
+        self
+    }
+
+    /// Set the `ended_after` query parameter.
+    pub fn ended_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.ended_after = Some(value.into());
+        self
+    }
+
+    /// Set the `ended_before` query parameter.
+    pub fn ended_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.ended_before = Some(value.into());
+        self
+    }
+
+    /// Set the `created_after` query parameter.
+    pub fn created_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.created_after = Some(value.into());
+        self
+    }
+
+    /// Set the `created_before` query parameter.
+    pub fn created_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.created_before = Some(value.into());
+        self
+    }
+
+    /// Set the `created_by_user_ids` query parameter.
+    pub fn created_by_user_ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.created_by_user_ids = Some(value.into());
+        self
+    }
+
+    /// Set the `created_by_station_ids` query parameter.
+    pub fn created_by_station_ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.created_by_station_ids = Some(value.into());
+        self
+    }
+
+    /// Set the `operated_by_ids` query parameter.
+    pub fn operated_by_ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.operated_by_ids = Some(value.into());
+        self
+    }
+
+    /// Set the `limit` query parameter.
+    ///
+    /// Maximum number of runs to return per page.
+    pub fn limit(mut self, value: impl Into<i64>) -> Self {
+        self.limit = Some(value.into());
+        self
+    }
+
+    /// Set the `cursor` query parameter.
+    pub fn cursor(mut self, value: impl Into<i64>) -> Self {
+        self.cursor = Some(value.into());
+        self
+    }
+
+    /// Set the `sort_by` query parameter.
+    ///
+    /// Field to sort results by.
+    pub fn sort_by(mut self, value: impl Into<RunListSortBy>) -> Self {
+        self.sort_by = Some(value.into());
+        self
+    }
+
+    /// Set the `sort_order` query parameter.
+    ///
+    /// Sort order direction.
+    pub fn sort_order(mut self, value: impl Into<ListSortOrder>) -> Self {
+        self.sort_order = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata` query parameter.
+    ///
+    /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `include_metadata` query parameter.
+    ///
+    /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
+    pub fn include_metadata(mut self, value: impl Into<bool>) -> Self {
+        self.include_metadata = Some(value.into());
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<RunListResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/runs");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::GET,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+        if let Some(ref val) = self.search_query {
+            request = request.query(&[("search_query", val.to_string())]);
+        }
+        if let Some(ref val) = self.ids {
+            for item in val {
+                request = request.query(&[("ids", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.outcomes {
+            for item in val {
+                request = request.query(&[("outcomes", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.procedure_ids {
+            for item in val {
+                request = request.query(&[("procedure_ids", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.procedure_versions {
+            for item in val {
+                request = request.query(&[("procedure_versions", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.serial_numbers {
+            for item in val {
+                request = request.query(&[("serial_numbers", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.samples {
+            for item in val {
+                request = request.query(&[("samples", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.part_numbers {
+            for item in val {
+                request = request.query(&[("part_numbers", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.revision_numbers {
+            for item in val {
+                request = request.query(&[("revision_numbers", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.batch_numbers {
+            for item in val {
+                request = request.query(&[("batch_numbers", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.duration_min {
+            request = request.query(&[("duration_min", val.to_string())]);
+        }
+        if let Some(ref val) = self.duration_max {
+            request = request.query(&[("duration_max", val.to_string())]);
+        }
+        if let Some(ref val) = self.started_after {
+            request = request.query(&[("started_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.started_before {
+            request = request.query(&[("started_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.ended_after {
+            request = request.query(&[("ended_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.ended_before {
+            request = request.query(&[("ended_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.created_after {
+            request = request.query(&[("created_after", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.created_before {
+            request = request.query(&[("created_before", val.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))]);
+        }
+        if let Some(ref val) = self.created_by_user_ids {
+            for item in val {
+                request = request.query(&[("created_by_user_ids", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.created_by_station_ids {
+            for item in val {
+                request = request.query(&[("created_by_station_ids", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.operated_by_ids {
+            for item in val {
+                request = request.query(&[("operated_by_ids", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.limit {
+            request = request.query(&[("limit", val.to_string())]);
+        }
+        if let Some(ref val) = self.cursor {
+            request = request.query(&[("cursor", val.to_string())]);
+        }
+        if let Some(ref val) = self.sort_by {
+            request = request.query(&[("sort_by", val.to_string())]);
+        }
+        if let Some(ref val) = self.sort_order {
+            request = request.query(&[("sort_order", val.to_string())]);
+        }
+        if let Some(ref val) = self.metadata {
+            request = request.query(&[("metadata", val.to_string())]);
+        }
+        if let Some(ref val) = self.include_metadata {
+            request = request.query(&[("include_metadata", val.to_string())]);
+        }
+
+
+        let response = self.client.execute(
+            request,
+            "run-list",
+            base_url,
+        ).await?;
+        let result: RunListResponse = response.json().await?;
         Ok(result)
     }
 }

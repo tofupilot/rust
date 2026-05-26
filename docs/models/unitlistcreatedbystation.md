@@ -1,5 +1,6 @@
 # UnitListCreatedByStation
 
+Station that created this unit. Null if created by a user.
 
 ## Fields
 

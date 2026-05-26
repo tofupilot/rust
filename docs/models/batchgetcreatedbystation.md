@@ -1,5 +1,6 @@
 # BatchGetCreatedByStation
 
+Station that created this batch.
 
 ## Fields
 

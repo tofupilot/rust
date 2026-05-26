@@ -1,5 +1,6 @@
 # PartGetRevisionCreatedByUser
 
+User who created the revision.
 
 ## Fields
 

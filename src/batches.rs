@@ -25,35 +25,35 @@ impl<'a> BatchesClient<'a> {
 
     /// Get batch
     ///
-    /// Retrieve a single batch by its number, including all associated units, serial numbers, and part revisions.
+    /// Get a batch by number, with its units, serial numbers, and part revisions.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
     /// Delete batch
     ///
-    /// Permanently delete a batch by number. Units associated with the batch will be disassociated but not deleted. No nested elements are removed.
+    /// Delete a batch by number. Linked units are unlinked, not deleted.
     pub fn delete(&self) -> DeleteBuilder<'a> {
         DeleteBuilder::new(self.client)
     }
 
     /// Update batch
     ///
-    /// Update a batch number. The current batch number is specified in the URL path with case-insensitive matching.
+    /// Rename a batch. The current number matches case-insensitively.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
     /// List and filter batches
     ///
-    /// Retrieve batches with associated units, serial numbers, and part revisions using cursor-based pagination.
+    /// List batches with their units, serial numbers, and part revisions. Cursor-paginated.
     pub fn list(&self) -> ListBuilder<'a> {
         ListBuilder::new(self.client)
     }
 
     /// Create batch
     ///
-    /// Create a new batch without any units attached. Batch numbers are matched case-insensitively (e.g., "BATCH-001" and "batch-001" are considered the same).
+    /// Create an empty batch. Batch numbers match case-insensitively ("BATCH-001" == "batch-001").
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }

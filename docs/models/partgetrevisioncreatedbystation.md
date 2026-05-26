@@ -1,5 +1,6 @@
 # PartGetRevisionCreatedByStation
 
+Station that created the revision.
 
 ## Fields
 

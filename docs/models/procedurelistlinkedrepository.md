@@ -1,5 +1,6 @@
 # ProcedureListLinkedRepository
 
+Linked repository for this procedure.
 
 ## Fields
 

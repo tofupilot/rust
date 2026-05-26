@@ -1,5 +1,6 @@
 # StationGetTeam
 
+Team this station is assigned to
 
 ## Fields
 

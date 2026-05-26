@@ -4,59 +4,16 @@
 
 ### Available Operations
 
-* [list](#list) - List and filter stations
 * [create](#create) - Create station
+* [list](#list) - List and filter stations
 * [get_current](#get_current) - Get current station
 * [get](#get) - Get station
-* [remove](#remove) - Remove station
 * [update](#update) - Update station
-
-## list
-
-Retrieve a paginated list of test stations in your organization. Search by station name and filter by status for station fleet management.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.stations().list()
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `limit` | `Option<i64>` | :heavy_minus_sign: | Number of stations to return per page |
-| `cursor` | `Option<i64>` | :heavy_minus_sign: | N/A |
-| `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
-| `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-
-### Response
-
-**[`StationListResponse`](../../models/stationlistresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+* [remove](#remove) - Remove station
 
 ## create
 
-Create a new test station in TofuPilot to register production equipment and link it to test procedures.
+Create a station to register production equipment and link it to procedures.
 
 ### Example Usage
 
@@ -98,9 +55,52 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
+## list
+
+List stations. Search by name and filter by status. Cursor-paginated.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.stations().list()
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `limit` | `Option<i64>` | :heavy_minus_sign: | Number of stations to return per page |
+| `cursor` | `Option<i64>` | :heavy_minus_sign: | N/A |
+| `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+
+### Response
+
+**[`StationListResponse`](../../models/stationlistresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
 ## get_current
 
-Retrieve detailed information about the currently authenticated station including linked procedures and connection status.
+Get the station the request is authenticated as, with its linked procedures and connection status.
 
 ### Example Usage
 
@@ -140,7 +140,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## get
 
-Retrieve detailed station information including linked procedures, connection status, and recent activity.
+Get a station by ID, with its linked procedures, connection status, and recent activity.
 
 ### Example Usage
 
@@ -180,52 +180,9 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
-## remove
-
-Remove a test station. Deletes permanently if unused, or archives with preserved historical data if runs exist.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.stations().remove()
-        .id("550e8400-e29b-41d4-a716-446655440000")
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `id` | `String` | :heavy_check_mark: | Unique identifier of the station to remove |
-
-### Response
-
-**[`StationRemoveResponse`](../../models/stationremoveresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::BadRequest` | 400 | application/json |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::NotFound` | 404 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
-
 ## update
 
-Update station name and/or image. The station ID is specified in the URL path. To remove an image, pass an empty string for image_id.
+Update a station name and/or image. Pass an empty string for image_id to remove the image.
 
 ### Example Usage
 
@@ -266,6 +223,49 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::Unauthorized` | 401 | application/json |
 | `Error::NotFound` | 404 | application/json |
 | `Error::Conflict` | 409 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
+## remove
+
+Remove a station. Deleted if unused; archived (history preserved) if runs reference it.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.stations().remove()
+        .id("550e8400-e29b-41d4-a716-446655440000")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | `String` | :heavy_check_mark: | Unique identifier of the station to remove |
+
+### Response
+
+**[`StationRemoveResponse`](../../models/stationremoveresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::NotFound` | 404 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 

@@ -1,5 +1,6 @@
 # UnitGetChildrenPart
 
+Part information for the child unit.
 
 ## Fields
 

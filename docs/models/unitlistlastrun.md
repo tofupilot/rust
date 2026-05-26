@@ -1,5 +1,6 @@
 # UnitListLastRun
 
+Most recent test run performed on this unit. Null if no runs have been executed.
 
 ## Fields
 

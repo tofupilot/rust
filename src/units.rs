@@ -23,69 +23,235 @@ impl<'a> UnitsClient<'a> {
         Self { client }
     }
 
-    /// List and filter units
-    ///
-    /// Retrieve a paginated list of units with filtering by serial number, part number, and batch. Uses cursor-based pagination for efficient large dataset traversal.
-    pub fn list(&self) -> ListBuilder<'a> {
-        ListBuilder::new(self.client)
-    }
-
     /// Create unit
     ///
-    /// Create a new unit with a serial number and link it to a part revision. Units represent individual hardware items tracked for manufacturing traceability.
+    /// Create a unit with a serial number and link it to a part revision.
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
 
+    /// List and filter units
+    ///
+    /// List units with filtering by serial number, part number, and batch. Cursor-paginated.
+    pub fn list(&self) -> ListBuilder<'a> {
+        ListBuilder::new(self.client)
+    }
+
     /// Delete units
     ///
-    /// Permanently delete units by serial number. This action will remove all nested elements and relationships associated with the units.
+    /// Delete units by serial number. Sub-units are unlinked, not deleted. Irreversible.
     pub fn delete(&self) -> DeleteBuilder<'a> {
         DeleteBuilder::new(self.client)
     }
 
     /// Get unit
     ///
-    /// Retrieve a single unit by its serial number. Returns comprehensive unit data including part information, parent/child relationships, and test run history.
+    /// Get a unit by serial number, with its part, parent/child links, and run history.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
     /// Update unit
     ///
-    /// Update unit properties including serial number, part revision, batch assignment, and file attachments with case-insensitive matching.
+    /// Update a unit: serial number, part revision, batch, and file attachments.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
     /// Add sub-unit
     ///
-    /// Add a sub-unit to a parent unit to track component assemblies and multi-level hardware traceability.
+    /// Link a sub-unit to a parent unit to track assemblies.
     pub fn add_child(&self) -> AddChildBuilder<'a> {
         AddChildBuilder::new(self.client)
     }
 
     /// Remove sub-unit
     ///
-    /// Remove a sub-unit relationship from a parent unit by serial number. Only unlinks the parent-child relationship; neither unit is deleted from the system.
+    /// Unlink a sub-unit from its parent. Neither unit is deleted.
     pub fn remove_child(&self) -> RemoveChildBuilder<'a> {
         RemoveChildBuilder::new(self.client)
     }
 
     /// Attach file to unit
     ///
-    /// Create an attachment linked to a unit and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+    /// Attach a file to a unit. Returns an upload ID and pre-signed URL; PUT the file to the URL, then call Finalize upload to commit.
     pub fn create_attachment(&self) -> CreateAttachmentBuilder<'a> {
         CreateAttachmentBuilder::new(self.client)
     }
 
     /// Delete unit attachments
     ///
-    /// Delete attachments from a unit by their IDs. Removes the files from storage and unlinks them from the unit.
+    /// Delete attachments from a unit by ID. Removes the files from storage and unlinks them.
     pub fn delete_attachment(&self) -> DeleteAttachmentBuilder<'a> {
         DeleteAttachmentBuilder::new(self.client)
     }
 
+}
+
+// ---------------------------------------------------------------------------
+// CreateBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`UnitsClient::create`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.units().create()
+///     .serial_number("value")
+///     .part_number("value")
+///     .revision_number("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateBuilder<'a> {
+    client: &'a TofuPilot,
+    serial_number: Option<String>,
+    part_number: Option<String>,
+    revision_number: Option<String>,
+    sample: Option<NullableField<Sample>>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            serial_number: None,
+            part_number: None,
+            revision_number: None,
+            sample: None,
+            metadata: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `serial_number` field.
+    ///
+    /// Unique serial number identifier for the unit. Must be unique within the organization.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `part_number` field.
+    ///
+    /// Component part number that defines what type of unit this is. If the part does not exist, it will be created.
+    pub fn part_number(mut self, value: impl Into<String>) -> Self {
+        self.part_number = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_number` field.
+    ///
+    /// Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created.
+    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
+        self.revision_number = Some(value.into());
+        self
+    }
+
+    /// Set the `sample` field.
+    ///
+    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
+        self.sample = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `sample` to null.
+    pub fn sample_null(mut self) -> Self {
+        self.sample = Some(NullableField::Null);
+        self
+    }
+
+    /// Set the `metadata` field.
+    ///
+    /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: UnitCreateRequest) -> Self {
+        self.serial_number = Some(body.serial_number);
+        self.part_number = Some(body.part_number);
+        self.revision_number = Some(body.revision_number);
+        self.sample = Some(body.sample);
+        if body.metadata.is_some() {
+            self.metadata = body.metadata;
+        }
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<UnitCreateResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/units");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = UnitCreateRequest {
+            serial_number: self.serial_number
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: serial_number".to_string(),
+                ))?,
+            part_number: self.part_number
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: part_number".to_string(),
+                ))?,
+            revision_number: self.revision_number
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: revision_number".to_string(),
+                ))?,
+            sample: self.sample.unwrap_or(NullableField::Absent),
+            metadata: self.metadata,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "unit-create",
+            base_url,
+        ).await?;
+        let result: UnitCreateResponse = response.json().await?;
+        Ok(result)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -129,12 +295,12 @@ pub struct ListBuilder<'a> {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
-    samples: Option<Vec<ListSample>>,
+    samples: Option<Vec<Sample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
     sort_order: Option<ListSortOrder>,
-    metadata: Option<serde_json::Value>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     include_metadata: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
@@ -283,7 +449,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `samples` query parameter.
-    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
@@ -321,7 +487,7 @@ impl<'a> ListBuilder<'a> {
     /// Set the `metadata` query parameter.
     ///
     /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
-    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
         self
     }
@@ -467,172 +633,6 @@ impl<'a> ListBuilder<'a> {
             base_url,
         ).await?;
         let result: UnitListResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// CreateBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`UnitsClient::create`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.units().create()
-///     .serial_number("value")
-///     .part_number("value")
-///     .revision_number("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct CreateBuilder<'a> {
-    client: &'a TofuPilot,
-    serial_number: Option<String>,
-    part_number: Option<String>,
-    revision_number: Option<String>,
-    sample: Option<NullableField<String>>,
-    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> CreateBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            serial_number: None,
-            part_number: None,
-            revision_number: None,
-            sample: None,
-            metadata: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `serial_number` field.
-    ///
-    /// Unique serial number identifier for the unit. Must be unique within the organization.
-    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
-        self.serial_number = Some(value.into());
-        self
-    }
-
-    /// Set the `part_number` field.
-    ///
-    /// Component part number that defines what type of unit this is. If the part does not exist, it will be created.
-    pub fn part_number(mut self, value: impl Into<String>) -> Self {
-        self.part_number = Some(value.into());
-        self
-    }
-
-    /// Set the `revision_number` field.
-    ///
-    /// Hardware revision identifier for the specific version of the part. If the revision does not exist, it will be created.
-    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
-        self.revision_number = Some(value.into());
-        self
-    }
-
-    /// Set the `sample` field.
-    ///
-    /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
-        self.sample = Some(NullableField::Value(value.into()));
-        self
-    }
-
-    /// Explicitly set `sample` to null.
-    pub fn sample_null(mut self) -> Self {
-        self.sample = Some(NullableField::Null);
-        self
-    }
-
-    /// Set the `metadata` field.
-    ///
-    /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
-    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
-        self.metadata = Some(value.into());
-        self
-    }
-
-    /// Set the full request body (alternative to setting individual fields).
-    pub fn body(mut self, body: UnitCreateRequest) -> Self {
-        self.serial_number = Some(body.serial_number);
-        self.part_number = Some(body.part_number);
-        self.revision_number = Some(body.revision_number);
-        self.sample = Some(body.sample);
-        if body.metadata.is_some() {
-            self.metadata = body.metadata;
-        }
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<UnitCreateResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/units");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::POST,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-        let body = UnitCreateRequest {
-            serial_number: self.serial_number
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: serial_number".to_string(),
-                ))?,
-            part_number: self.part_number
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: part_number".to_string(),
-                ))?,
-            revision_number: self.revision_number
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: revision_number".to_string(),
-                ))?,
-            sample: self.sample.unwrap_or(NullableField::Absent),
-            metadata: self.metadata,
-        };
-        request = request.json(&body);
-
-        let response = self.client.execute(
-            request,
-            "unit-create",
-            base_url,
-        ).await?;
-        let result: UnitCreateResponse = response.json().await?;
         Ok(result)
     }
 }
@@ -857,7 +857,7 @@ pub struct UpdateBuilder<'a> {
     revision_number: Option<String>,
     batch_number: Option<NullableField<String>>,
     attachments: Option<Vec<String>>,
-    sample: Option<NullableField<String>>,
+    sample: Option<NullableField<Sample>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
@@ -937,7 +937,7 @@ impl<'a> UpdateBuilder<'a> {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = Some(NullableField::Value(value.into()));
         self
     }

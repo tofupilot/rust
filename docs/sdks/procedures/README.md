@@ -4,15 +4,56 @@
 
 ### Available Operations
 
-* [list](#list) - List and filter procedures
 * [create](#create) - Create procedure
+* [list](#list) - List and filter procedures
 * [get](#get) - Get procedure
 * [delete](#delete) - Delete procedure
 * [update](#update) - Update procedure
 
+## create
+
+Create a procedure to group and track related runs.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.procedures().create()
+        .name("My Test Procedure")
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | `String` | :heavy_check_mark: | Name of the procedure. Must be unique within the organization. |
+
+### Response
+
+**[`ProcedureCreateResponse`](../../models/procedurecreateresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
 ## list
 
-Retrieve procedures with optional filtering and search. Returns procedure data including creator and linked repository.
+List procedures with filtering and search. Includes creator and linked repository. Cursor-paginated.
 
 ### Example Usage
 
@@ -55,50 +96,9 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
-## create
-
-Create a new test procedure that can be used to organize and track test runs. The procedure serves as a template or framework for organizing test execution.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.procedures().create()
-        .name("My Test Procedure")
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `name` | `String` | :heavy_check_mark: | Name of the procedure. Must be unique within the organization. |
-
-### Response
-
-**[`ProcedureCreateResponse`](../../models/procedurecreateresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
-
 ## get
 
-Retrieve a single procedure by ID, including recent test runs, linked stations, and version history.
+Get a procedure by ID, with recent runs, linked stations, and version history.
 
 ### Example Usage
 
@@ -140,7 +140,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## delete
 
-Permanently delete a procedure, removing all associated runs, phases, measurements, and attachments.
+Delete a procedure and all its runs, phases, measurements, and attachments. Irreversible.
 
 ### Example Usage
 
@@ -183,7 +183,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## update
 
-Update a test procedure's name or configuration. The procedure is identified by its unique ID in the URL path. Only provided fields are modified.
+Update a procedure's name or configuration. Only provided fields are changed.
 
 ### Example Usage
 

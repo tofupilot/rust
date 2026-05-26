@@ -1,5 +1,6 @@
 # PartGetCreatedByStation
 
+Station that created this part.
 
 ## Fields
 

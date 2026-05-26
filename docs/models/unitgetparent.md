@@ -1,5 +1,6 @@
 # UnitGetParent
 
+Parent unit information with part details and processed images.
 
 ## Fields
 

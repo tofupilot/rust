@@ -1,5 +1,6 @@
 # UnitListCreatedByUser
 
+User who created this unit. Null if created by a station or system.
 
 ## Fields
 

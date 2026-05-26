@@ -23,48 +23,164 @@ impl<'a> StationsClient<'a> {
         Self { client }
     }
 
-    /// List and filter stations
-    ///
-    /// Retrieve a paginated list of test stations in your organization. Search by station name and filter by status for station fleet management.
-    pub fn list(&self) -> ListBuilder<'a> {
-        ListBuilder::new(self.client)
-    }
-
     /// Create station
     ///
-    /// Create a new test station in TofuPilot to register production equipment and link it to test procedures.
+    /// Create a station to register production equipment and link it to procedures.
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
 
+    /// List and filter stations
+    ///
+    /// List stations. Search by name and filter by status. Cursor-paginated.
+    pub fn list(&self) -> ListBuilder<'a> {
+        ListBuilder::new(self.client)
+    }
+
     /// Get current station
     ///
-    /// Retrieve detailed information about the currently authenticated station including linked procedures and connection status.
+    /// Get the station the request is authenticated as, with its linked procedures and connection status.
     pub fn get_current(&self) -> GetCurrentBuilder<'a> {
         GetCurrentBuilder::new(self.client)
     }
 
     /// Get station
     ///
-    /// Retrieve detailed station information including linked procedures, connection status, and recent activity.
+    /// Get a station by ID, with its linked procedures, connection status, and recent activity.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
-    /// Remove station
-    ///
-    /// Remove a test station. Deletes permanently if unused, or archives with preserved historical data if runs exist.
-    pub fn remove(&self) -> RemoveBuilder<'a> {
-        RemoveBuilder::new(self.client)
-    }
-
     /// Update station
     ///
-    /// Update station name and/or image. The station ID is specified in the URL path. To remove an image, pass an empty string for image_id.
+    /// Update a station name and/or image. Pass an empty string for image_id to remove the image.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
+    /// Remove station
+    ///
+    /// Remove a station. Deleted if unused; archived (history preserved) if runs reference it.
+    pub fn remove(&self) -> RemoveBuilder<'a> {
+        RemoveBuilder::new(self.client)
+    }
+
+}
+
+// ---------------------------------------------------------------------------
+// CreateBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`StationsClient::create`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.stations().create()
+///     .name("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateBuilder<'a> {
+    client: &'a TofuPilot,
+    name: Option<String>,
+    procedure_id: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            name: None,
+            procedure_id: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Name of the station
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `procedure_id` field.
+    ///
+    /// Optional procedure ID to link the station to
+    pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
+        self.procedure_id = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: StationCreateRequest) -> Self {
+        self.name = Some(body.name);
+        if body.procedure_id.is_some() {
+            self.procedure_id = body.procedure_id;
+        }
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<StationCreateResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/stations");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = StationCreateRequest {
+            name: self.name
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: name".to_string(),
+                ))?,
+            procedure_id: self.procedure_id,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "station-create",
+            base_url,
+        ).await?;
+        let result: StationCreateResponse = response.json().await?;
+        Ok(result)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -189,122 +305,6 @@ impl<'a> ListBuilder<'a> {
             base_url,
         ).await?;
         let result: StationListResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// CreateBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`StationsClient::create`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.stations().create()
-///     .name("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct CreateBuilder<'a> {
-    client: &'a TofuPilot,
-    name: Option<String>,
-    procedure_id: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> CreateBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            name: None,
-            procedure_id: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `name` field.
-    ///
-    /// Name of the station
-    pub fn name(mut self, value: impl Into<String>) -> Self {
-        self.name = Some(value.into());
-        self
-    }
-
-    /// Set the `procedure_id` field.
-    ///
-    /// Optional procedure ID to link the station to
-    pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
-        self.procedure_id = Some(value.into());
-        self
-    }
-
-    /// Set the full request body (alternative to setting individual fields).
-    pub fn body(mut self, body: StationCreateRequest) -> Self {
-        self.name = Some(body.name);
-        if body.procedure_id.is_some() {
-            self.procedure_id = body.procedure_id;
-        }
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<StationCreateResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/stations");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::POST,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-        let body = StationCreateRequest {
-            name: self.name
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: name".to_string(),
-                ))?,
-            procedure_id: self.procedure_id,
-        };
-        request = request.json(&body);
-
-        let response = self.client.execute(
-            request,
-            "station-create",
-            base_url,
-        ).await?;
-        let result: StationCreateResponse = response.json().await?;
         Ok(result)
     }
 }
@@ -486,104 +486,6 @@ impl<'a> GetBuilder<'a> {
 }
 
 // ---------------------------------------------------------------------------
-// RemoveBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`StationsClient::remove`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.stations().remove()
-///     .id("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct RemoveBuilder<'a> {
-    client: &'a TofuPilot,
-    id: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> RemoveBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            id: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `id` path parameter.
-    ///
-    /// Unique identifier of the station to remove
-    pub fn id(mut self, value: impl Into<String>) -> Self {
-        self.id = Some(value.into());
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<StationRemoveResponse> {
-        let id = self.id
-            .ok_or_else(|| Error::Validation(
-                "missing required path parameter: id".to_string(),
-            ))?;
-        let id_encoded = utf8_percent_encode(&id, URI_COMPONENT).to_string();
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!(
-            "{}/v2/stations/{id}",
-            base_url,
-            id = id_encoded,
-        );
-
-        let mut request = self.client.http.request(
-            reqwest::Method::DELETE,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-
-        let response = self.client.execute(
-            request,
-            "station-remove",
-            base_url,
-        ).await?;
-        let result: StationRemoveResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
 // UpdateBuilder
 // ---------------------------------------------------------------------------
 
@@ -730,6 +632,104 @@ impl<'a> UpdateBuilder<'a> {
             base_url,
         ).await?;
         let result: StationUpdateResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// RemoveBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`StationsClient::remove`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.stations().remove()
+///     .id("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct RemoveBuilder<'a> {
+    client: &'a TofuPilot,
+    id: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> RemoveBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            id: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `id` path parameter.
+    ///
+    /// Unique identifier of the station to remove
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<StationRemoveResponse> {
+        let id = self.id
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: id".to_string(),
+            ))?;
+        let id_encoded = utf8_percent_encode(&id, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/stations/{id}",
+            base_url,
+            id = id_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::DELETE,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+
+        let response = self.client.execute(
+            request,
+            "station-remove",
+            base_url,
+        ).await?;
+        let result: StationRemoveResponse = response.json().await?;
         Ok(result)
     }
 }

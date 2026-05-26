@@ -4,85 +4,17 @@
 
 ### Available Operations
 
-* [list](#list) - List and filter runs
 * [create](#create) - Create run
+* [list](#list) - List and filter runs
 * [delete](#delete) - Delete runs
 * [get](#get) - Get run
 * [update](#update) - Update run
 * [create_attachment](#create_attachment) - Attach file to run
 * [update_metadata](#update_metadata) - Update run metadata
 
-## list
-
-Retrieve a paginated list of test runs with filtering by unit, procedure, date range, outcome, and station.
-
-### Example Usage
-
-```rust
-use tofupilot::TofuPilot;
-use tofupilot::types::*;
-
-#[tokio::main]
-async fn main() -> tofupilot::Result<()> {
-    let client = TofuPilot::new("your-api-key");
-
-    let result = client.runs().list()
-        .send()
-        .await?;
-
-    println!("{:?}", result);
-    Ok(())
-}
-```
-
-### Parameters
-
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
-| `ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `outcomes` | `Option<Vec<Outcome>>` | :heavy_minus_sign: | N/A |
-| `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `procedure_versions` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `samples` | `Option<Vec<ListSample>>` | :heavy_minus_sign: | N/A |
-| `part_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `revision_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `batch_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `duration_min` | `Option<String>` | :heavy_minus_sign: | N/A |
-| `duration_max` | `Option<String>` | :heavy_minus_sign: | N/A |
-| `started_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `started_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `ended_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `ended_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `created_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `created_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
-| `created_by_user_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `created_by_station_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `operated_by_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `limit` | `Option<i64>` | :heavy_minus_sign: | Maximum number of runs to return per page. |
-| `cursor` | `Option<i64>` | :heavy_minus_sign: | N/A |
-| `sort_by` | `Option<RunListSortBy>` | :heavy_minus_sign: | Field to sort results by. |
-| `sort_order` | `Option<ListSortOrder>` | :heavy_minus_sign: | Sort order direction. |
-| `metadata` | `Option<serde_json::Value>` | :heavy_minus_sign: | Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`. |
-| `include_metadata` | `Option<bool>` | :heavy_minus_sign: | When true, includes the run metadata array in the response. Defaults to false to keep payloads small. |
-
-### Response
-
-**[`RunListResponse`](../../models/runlistresponse.md)**
-
-### Errors
-
-| Error Type | Status Code | Content Type |
-| --- | --- | --- |
-| `Error::BadRequest` | 400 | application/json |
-| `Error::Unauthorized` | 401 | application/json |
-| `Error::InternalServerError` | 500 | application/json |
-| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
-
 ## create
 
-Create a new test run, linking it to a procedure and unit. Existing entities are reused automatically.
+Create a run linked to a procedure and unit. Existing procedures and units are reused automatically.
 
 ### Example Usage
 
@@ -114,8 +46,8 @@ async fn main() -> tofupilot::Result<()> {
 | --- | --- | --- | --- |
 | `outcome` | `Outcome` | :heavy_check_mark: | Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption. |
 | `procedure_id` | `String` | :heavy_check_mark: | Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page. |
-| `deployment_id` | `NullableField<String>` | :heavy_minus_sign: | N/A |
-| `procedure_version` | `NullableField<String>` | :heavy_minus_sign: | N/A |
+| `deployment_id` | `NullableField<String>` | :heavy_minus_sign: | Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs. |
+| `procedure_version` | `NullableField<String>` | :heavy_minus_sign: | Specific version of the test procedure used for the run. Matched case-insensitively. If none exist, a procedure with this procedure version will be created. If no procedure version is specified, the run will not be linked to any specific version. |
 | `operated_by` | `Option<String>` | :heavy_minus_sign: | Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test. |
 | `started_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run began execution. This timestamp will be used to track when the test execution started and for historical analysis of test runs. A separate created_at timestamp is stored internally server side to track upload date. |
 | `ended_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | ISO 8601 timestamp when the test run finished execution. |
@@ -146,9 +78,77 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
+## list
+
+List runs with filtering by unit, procedure, date range, outcome, and station. Cursor-paginated.
+
+### Example Usage
+
+```rust
+use tofupilot::TofuPilot;
+use tofupilot::types::*;
+
+#[tokio::main]
+async fn main() -> tofupilot::Result<()> {
+    let client = TofuPilot::new("your-api-key");
+
+    let result = client.runs().list()
+        .send()
+        .await?;
+
+    println!("{:?}", result);
+    Ok(())
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `outcomes` | `Option<Vec<Outcome>>` | :heavy_minus_sign: | N/A |
+| `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `procedure_versions` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `samples` | `Option<Vec<Sample>>` | :heavy_minus_sign: | N/A |
+| `part_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `revision_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `batch_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `duration_min` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `duration_max` | `Option<String>` | :heavy_minus_sign: | N/A |
+| `started_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `started_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `ended_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `ended_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
+| `created_by_user_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `created_by_station_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `operated_by_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
+| `limit` | `Option<i64>` | :heavy_minus_sign: | Maximum number of runs to return per page. |
+| `cursor` | `Option<i64>` | :heavy_minus_sign: | N/A |
+| `sort_by` | `Option<RunListSortBy>` | :heavy_minus_sign: | Field to sort results by. |
+| `sort_order` | `Option<ListSortOrder>` | :heavy_minus_sign: | Sort order direction. |
+| `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`. |
+| `include_metadata` | `Option<bool>` | :heavy_minus_sign: | When true, includes the run metadata array in the response. Defaults to false to keep payloads small. |
+
+### Response
+
+**[`RunListResponse`](../../models/runlistresponse.md)**
+
+### Errors
+
+| Error Type | Status Code | Content Type |
+| --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
+| `Error::Unauthorized` | 401 | application/json |
+| `Error::InternalServerError` | 500 | application/json |
+| `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
+
 ## delete
 
-Permanently delete test runs by their IDs. Removes all associated phases, measurements, and attachments.
+Delete runs by ID. Also removes their phases, measurements, and attachments. Irreversible.
 
 ### Example Usage
 
@@ -190,7 +190,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## get
 
-Retrieve a single test run by its ID. Returns comprehensive run data including metadata, phases, measurements, and logs.
+Get a run by ID, with its metadata, phases, measurements, and logs.
 
 ### Example Usage
 
@@ -233,7 +233,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## update
 
-Update a test run, including linking file attachments. Files must be uploaded via Initialize upload and Finalize upload before linking.
+Link uploaded files to a run. Upload files via Initialize and Finalize first, then call this to attach them.
 
 ### Example Usage
 
@@ -276,7 +276,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## create_attachment
 
-Create an attachment linked to a run and get a temporary pre-signed URL. Upload the file to the URL with a PUT request to complete the attachment.
+Attach a file to a run. Returns an upload ID and pre-signed URL; PUT the file to the URL, then call Finalize upload to commit.
 
 ### Example Usage
 
@@ -320,7 +320,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## update_metadata
 
-Upsert custom metadata on a run. Plain object of key/value pairs. PATCH semantics: omitted keys preserved. Pass `null` as a value to delete a key.
+Upsert custom metadata on a run as a key/value object. Omitted keys are preserved; pass `null` to delete a key.
 
 ### Example Usage
 

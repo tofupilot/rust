@@ -167,6 +167,39 @@ impl std::fmt::Display for BatchListSortBy {
     }
 }
 
+/// Source format of the uploaded file. OPENHTF for OpenHTF JSON logs; WATS for Virinco WATS WSJF (JSON); WSXF for WATS WSXF (XML); ATML for IEEE 1671 ATML Test Results (XML); TESTSTAND for NI TestStand native XML reports; STDF for binary STDF V4 datalogs; ATDF for ATDF (the ASCII text form of STDF). For CSV/tabular files use the dedicated tabular import endpoint.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImportCreateFromFilesImporter {
+    #[serde(rename = "OPENHTF")]
+    Openhtf,
+    #[serde(rename = "WATS")]
+    Wats,
+    #[serde(rename = "WSXF")]
+    Wsxf,
+    #[serde(rename = "ATML")]
+    Atml,
+    #[serde(rename = "TESTSTAND")]
+    Teststand,
+    #[serde(rename = "STDF")]
+    Stdf,
+    #[serde(rename = "ATDF")]
+    Atdf,
+}
+
+impl std::fmt::Display for ImportCreateFromFilesImporter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Openhtf => write!(f, "OPENHTF"),
+            Self::Wats => write!(f, "WATS"),
+            Self::Wsxf => write!(f, "WSXF"),
+            Self::Atml => write!(f, "ATML"),
+            Self::Teststand => write!(f, "TESTSTAND"),
+            Self::Stdf => write!(f, "STDF"),
+            Self::Atdf => write!(f, "ATDF"),
+        }
+    }
+}
+
 /// Git provider
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Provider {
@@ -284,15 +317,16 @@ impl std::fmt::Display for Level {
     }
 }
 
+/// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ListSample {
+pub enum Sample {
     #[serde(rename = "golden")]
     Golden,
     #[serde(rename = "failing")]
     Failing,
 }
 
-impl std::fmt::Display for ListSample {
+impl std::fmt::Display for Sample {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Golden => write!(f, "golden"),
@@ -317,125 +351,6 @@ impl std::fmt::Display for ListSortOrder {
             Self::Desc => write!(f, "desc"),
         }
     }
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateAggregationsExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Computed aggregation value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateValue {
-    Number(f64),
-    Str(String),
-    Boolean(bool),
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateYAxisExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateYAxisAggregationsExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Computed aggregation value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateYAxisValue {
-    Number(f64),
-    Str(String),
-    Boolean(bool),
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateMeasurementsExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Expected value for comparison. Type depends on operator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateMeasurementsAggregationsExpectedValue {
-    Boolean(bool),
-    Number(f64),
-    Str(String),
-    NumberArray(Vec<f64>),
-    StringArray(Vec<String>),
-}
-
-/// Computed aggregation value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateMeasurementsValue {
-    Number(f64),
-    Str(String),
-    Boolean(bool),
-}
-
-/// [LEGACY for multi-dim] Units of measurement. For structured multi-dimensional, use units within x_axis/y_axis instead.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunCreateUnits {
-    Str(String),
-    StringArray(Vec<String>),
-}
-
-/// Computed aggregation value. Type depends on aggregation type.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunGetValue {
-    Number(f64),
-    Str(String),
-    Boolean(bool),
-}
-
-/// Computed aggregation value. Type depends on aggregation type.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum RunGetDataSeriesValue {
-    Number(f64),
-    Str(String),
-    Boolean(bool),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -592,6 +507,7 @@ impl ProcedureListCreatedByUserBuilder {
     }
 }
 
+/// Linked repository for this procedure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureListLinkedRepository {
     /// Unique identifier for the linked repository.
@@ -758,12 +674,15 @@ pub struct ProcedureGetRequest {
     pub id: String,
 }
 
+/// User who created this procedure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureGetCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// User email address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
@@ -793,12 +712,16 @@ impl ProcedureGetCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
     }
 
     /// Set the `email` field.
+    ///
+    /// User email address.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -815,6 +738,7 @@ impl ProcedureGetCreatedByUserBuilder {
     }
 }
 
+/// Unit information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureGetUnit {
     /// Unit serial number.
@@ -946,18 +870,23 @@ pub struct ProcedureUpdateRequestBody {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
+    #[serde(rename = "productionBranch")]
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub production_branch: NullableField<String>,
     /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
+    #[serde(rename = "autoPushEnabled")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_push_enabled: Option<bool>,
     /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
+    #[serde(rename = "excludedBranchPatterns")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub excluded_branch_patterns: Option<Vec<String>>,
     /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
+    #[serde(rename = "rootDirectory")]
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub root_directory: NullableField<String>,
     /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
+    #[serde(rename = "entryPoint")]
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub entry_point: NullableField<String>,
 }
@@ -989,7 +918,7 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Set the `production_branch` field.
+    /// Set the `productionBranch` field.
     ///
     /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
     pub fn production_branch(mut self, value: impl Into<String>) -> Self {
@@ -997,13 +926,13 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Explicitly set `production_branch` to null.
+    /// Explicitly set `productionBranch` to null.
     pub fn production_branch_null(mut self) -> Self {
         self.production_branch = NullableField::Null;
         self
     }
 
-    /// Set the `auto_push_enabled` field.
+    /// Set the `autoPushEnabled` field.
     ///
     /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
     pub fn auto_push_enabled(mut self, value: impl Into<bool>) -> Self {
@@ -1011,7 +940,7 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Set the `excluded_branch_patterns` field.
+    /// Set the `excludedBranchPatterns` field.
     ///
     /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
     pub fn excluded_branch_patterns(mut self, value: impl Into<Vec<String>>) -> Self {
@@ -1019,7 +948,7 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Set the `root_directory` field.
+    /// Set the `rootDirectory` field.
     ///
     /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
     pub fn root_directory(mut self, value: impl Into<String>) -> Self {
@@ -1027,13 +956,13 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Explicitly set `root_directory` to null.
+    /// Explicitly set `rootDirectory` to null.
     pub fn root_directory_null(mut self) -> Self {
         self.root_directory = NullableField::Null;
         self
     }
 
-    /// Set the `entry_point` field.
+    /// Set the `entryPoint` field.
     ///
     /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
     pub fn entry_point(mut self, value: impl Into<String>) -> Self {
@@ -1041,7 +970,7 @@ impl ProcedureUpdateRequestBodyBuilder {
         self
     }
 
-    /// Explicitly set `entry_point` to null.
+    /// Explicitly set `entryPoint` to null.
     pub fn entry_point_null(mut self) -> Self {
         self.entry_point = NullableField::Null;
         self
@@ -1082,10 +1011,12 @@ pub struct ProcedureGetVersionRequest {
     pub tag: String,
 }
 
+/// User who created this procedure version.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureGetVersionCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -1114,6 +1045,8 @@ impl ProcedureGetVersionCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -1129,6 +1062,7 @@ impl ProcedureGetVersionCreatedByUserBuilder {
     }
 }
 
+/// Station that created this procedure version.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureGetVersionCreatedByStation {
     /// Station ID.
@@ -1207,7 +1141,7 @@ pub struct ProcedureCreateVersionResponse {
 pub struct RunCreateValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1232,7 +1166,7 @@ impl RunCreateValidators {
 /// Builder for [`RunCreateValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1243,7 +1177,7 @@ impl RunCreateValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1327,7 +1261,7 @@ impl RunCreateValidatorsBuilder {
 pub struct RunCreateAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1352,7 +1286,7 @@ impl RunCreateAggregationsValidators {
 /// Builder for [`RunCreateAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateAggregationsValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1363,7 +1297,7 @@ impl RunCreateAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1450,7 +1384,7 @@ pub struct RunCreateAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -1473,7 +1407,7 @@ impl RunCreateAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateAggregationsValidators>>,
@@ -1491,7 +1425,7 @@ impl RunCreateAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1695,7 +1629,7 @@ impl RunCreateXAxisBuilder {
 pub struct RunCreateYAxisValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1720,7 +1654,7 @@ impl RunCreateYAxisValidators {
 /// Builder for [`RunCreateYAxisValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1731,7 +1665,7 @@ impl RunCreateYAxisValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1815,7 +1749,7 @@ impl RunCreateYAxisValidatorsBuilder {
 pub struct RunCreateYAxisAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1840,7 +1774,7 @@ impl RunCreateYAxisAggregationsValidators {
 /// Builder for [`RunCreateYAxisAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisAggregationsValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1851,7 +1785,7 @@ impl RunCreateYAxisAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1938,7 +1872,7 @@ pub struct RunCreateYAxisAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -1961,7 +1895,7 @@ impl RunCreateYAxisAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateYAxisAggregationsValidators>>,
@@ -1979,7 +1913,7 @@ impl RunCreateYAxisAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2183,7 +2117,7 @@ impl RunCreateYAxisBuilder {
 pub struct RunCreateMeasurementsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -2208,7 +2142,7 @@ impl RunCreateMeasurementsValidators {
 /// Builder for [`RunCreateMeasurementsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -2219,7 +2153,7 @@ impl RunCreateMeasurementsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2303,7 +2237,7 @@ impl RunCreateMeasurementsValidatorsBuilder {
 pub struct RunCreateMeasurementsAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -2328,7 +2262,7 @@ impl RunCreateMeasurementsAggregationsValidators {
 /// Builder for [`RunCreateMeasurementsAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsAggregationsValidatorsBuilder {
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -2339,7 +2273,7 @@ impl RunCreateMeasurementsAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2426,7 +2360,7 @@ pub struct RunCreateMeasurementsAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<String>,
+    pub outcome: NullableField<ValidatorsOutcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -2449,7 +2383,7 @@ impl RunCreateMeasurementsAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<String>,
+    outcome: NullableField<ValidatorsOutcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateMeasurementsAggregationsValidators>>,
@@ -2467,7 +2401,7 @@ impl RunCreateMeasurementsAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2539,12 +2473,13 @@ pub struct RunCreateMeasurements {
     pub name: String,
     /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
     pub outcome: ValidatorsOutcome,
-    /// X-axis data series for multi-dimensional measurements. Use with y_axis for structured multi-dimensional data with per-axis validators/aggregations.
+    /// Data series with numeric data, unit, and optional validators/aggregations.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub x_axis: NullableField<RunCreateXAxis>,
     /// Y-axis data series (one or more) for multi-dimensional measurements. Each series can have its own validators and aggregations.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub y_axis: NullableField<Vec<RunCreateYAxis>>,
+    /// The actual value captured. [LEGACY for multi-dim] For multi-dimensional with per-axis validators/aggregations, use x_axis/y_axis instead.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub measured_value: NullableField<serde_json::Value>,
     /// [LEGACY for multi-dim] Units of measurement. For structured multi-dimensional, use units within x_axis/y_axis instead.
@@ -2558,10 +2493,13 @@ pub struct RunCreateMeasurements {
     #[deprecated]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub upper_limit: Option<f64>,
+    /// Validators for this measurement. Use structured ValidatorSpec objects with operator and expected_value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub validators: NullableField<Vec<RunCreateMeasurementsValidators>>,
+    /// Aggregations computed over measurement values (min, max, avg, etc.). Each aggregation can have its own validators.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub aggregations: NullableField<Vec<RunCreateMeasurementsAggregations>>,
+    /// Additional notes or documentation about this measurement.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
 }
@@ -2608,7 +2546,7 @@ impl RunCreateMeasurementsBuilder {
 
     /// Set the `x_axis` field.
     ///
-    /// X-axis data series for multi-dimensional measurements. Use with y_axis for structured multi-dimensional data with per-axis validators/aggregations.
+    /// Data series with numeric data, unit, and optional validators/aggregations.
     pub fn x_axis(mut self, value: impl Into<RunCreateXAxis>) -> Self {
         self.x_axis = NullableField::Value(value.into());
         self
@@ -2635,6 +2573,8 @@ impl RunCreateMeasurementsBuilder {
     }
 
     /// Set the `measured_value` field.
+    ///
+    /// The actual value captured. [LEGACY for multi-dim] For multi-dimensional with per-axis validators/aggregations, use x_axis/y_axis instead.
     pub fn measured_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.measured_value = NullableField::Value(value.into());
         self
@@ -2679,6 +2619,8 @@ impl RunCreateMeasurementsBuilder {
     }
 
     /// Set the `validators` field.
+    ///
+    /// Validators for this measurement. Use structured ValidatorSpec objects with operator and expected_value.
     pub fn validators(mut self, value: impl Into<Vec<RunCreateMeasurementsValidators>>) -> Self {
         self.validators = NullableField::Value(value.into());
         self
@@ -2691,6 +2633,8 @@ impl RunCreateMeasurementsBuilder {
     }
 
     /// Set the `aggregations` field.
+    ///
+    /// Aggregations computed over measurement values (min, max, avg, etc.). Each aggregation can have its own validators.
     pub fn aggregations(mut self, value: impl Into<Vec<RunCreateMeasurementsAggregations>>) -> Self {
         self.aggregations = NullableField::Value(value.into());
         self
@@ -2703,6 +2647,8 @@ impl RunCreateMeasurementsBuilder {
     }
 
     /// Set the `docstring` field.
+    ///
+    /// Additional notes or documentation about this measurement.
     pub fn docstring(mut self, value: impl Into<String>) -> Self {
         self.docstring = NullableField::Value(value.into());
         self
@@ -2745,8 +2691,10 @@ pub struct RunCreatePhases {
     pub started_at: chrono::DateTime<chrono::Utc>,
     /// ISO 8601 timestamp when the phase execution completed.
     pub ended_at: chrono::DateTime<chrono::Utc>,
+    /// Additional notes or documentation about this test phase.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
+    /// Array of measurements collected during this phase. Each measurement captures specific test data points with values, limits, and validation results. If no measurements are specified, the phase will be created without measurement data.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub measurements: NullableField<Vec<RunCreateMeasurements>>,
     /// Zero-based retry attempt index for this phase. 0 = first attempt, 1 = first retry, etc. When a phase is retried, all attempts are stored with the same name and increasing retry_count.
@@ -2807,6 +2755,8 @@ impl RunCreatePhasesBuilder {
     }
 
     /// Set the `docstring` field.
+    ///
+    /// Additional notes or documentation about this test phase.
     pub fn docstring(mut self, value: impl Into<String>) -> Self {
         self.docstring = NullableField::Value(value.into());
         self
@@ -2819,6 +2769,8 @@ impl RunCreatePhasesBuilder {
     }
 
     /// Set the `measurements` field.
+    ///
+    /// Array of measurements collected during this phase. Each measurement captures specific test data points with values, limits, and validation results. If no measurements are specified, the phase will be created without measurement data.
     pub fn measurements(mut self, value: impl Into<Vec<RunCreateMeasurements>>) -> Self {
         self.measurements = NullableField::Value(value.into());
         self
@@ -2876,8 +2828,10 @@ pub struct RunCreateRequest {
     pub outcome: Outcome,
     /// Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
     pub procedure_id: String,
+    /// Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub deployment_id: NullableField<String>,
+    /// Specific version of the test procedure used for the run. Matched case-insensitively. If none exist, a procedure with this procedure version will be created. If no procedure version is specified, the run will not be linked to any specific version.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub procedure_version: NullableField<String>,
     /// Email address of the operator who executed the test run. Honored only for API-key callers (user keys and station keys); browser session callers are auto-stamped with the session user and this field is ignored. If the email does not match a member of the calling organization, it is silently dropped and the run is recorded with no operator. The run is linked to this user (when resolved) to track who performed the test.
@@ -2965,6 +2919,8 @@ impl RunCreateRequestBuilder {
     }
 
     /// Set the `deployment_id` field.
+    ///
+    /// Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs.
     pub fn deployment_id(mut self, value: impl Into<String>) -> Self {
         self.deployment_id = NullableField::Value(value.into());
         self
@@ -2977,6 +2933,8 @@ impl RunCreateRequestBuilder {
     }
 
     /// Set the `procedure_version` field.
+    ///
+    /// Specific version of the test procedure used for the run. Matched case-insensitively. If none exist, a procedure with this procedure version will be created. If no procedure version is specified, the run will not be linked to any specific version.
     pub fn procedure_version(mut self, value: impl Into<String>) -> Self {
         self.procedure_version = NullableField::Value(value.into());
         self
@@ -3124,8 +3082,135 @@ impl RunCreateRequestBuilder {
 /// Run created successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateResponse {
-    /// Unique identifier of the created run.
+    /// Unique identifier of the created run. For a file that yields several runs (a multi-part STDF/ATDF datalog or a multi-report WSXF/TestStand document), this is the first run; see `ids` for the full set.
     pub id: String,
+    /// All run identifiers created from the file. Present when the import produced more than one run; a single-run import omits it (use `id`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ids: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RunListMetadataQueryParam1 {
+    #[serde(rename = "in")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub in_: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub contains: Option<String>,
+}
+
+impl RunListMetadataQueryParam1 {
+    /// Create a builder for this type.
+    pub fn builder() -> RunListMetadataQueryParam1Builder {
+        RunListMetadataQueryParam1Builder::default()
+    }
+}
+
+/// Builder for [`RunListMetadataQueryParam1`].
+#[derive(Debug, Default)]
+pub struct RunListMetadataQueryParam1Builder {
+    in_: Option<Vec<String>>,
+    contains: Option<String>,
+}
+
+impl RunListMetadataQueryParam1Builder {
+    /// Set the `in` field.
+    pub fn in_(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.in_ = Some(value.into());
+        self
+    }
+
+    /// Set the `contains` field.
+    pub fn contains(mut self, value: impl Into<String>) -> Self {
+        self.contains = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunListMetadataQueryParam1, String> {
+        Ok(RunListMetadataQueryParam1 {
+            in_: self.in_,
+            contains: self.contains,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct RunListMetadataQueryParam2 {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gte: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lte: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gt: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lt: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eq: Option<f64>,
+}
+
+impl RunListMetadataQueryParam2 {
+    /// Create a builder for this type.
+    pub fn builder() -> RunListMetadataQueryParam2Builder {
+        RunListMetadataQueryParam2Builder::default()
+    }
+}
+
+/// Builder for [`RunListMetadataQueryParam2`].
+#[derive(Debug, Default)]
+pub struct RunListMetadataQueryParam2Builder {
+    gte: Option<f64>,
+    lte: Option<f64>,
+    gt: Option<f64>,
+    lt: Option<f64>,
+    eq: Option<f64>,
+}
+
+impl RunListMetadataQueryParam2Builder {
+    /// Set the `gte` field.
+    pub fn gte(mut self, value: impl Into<f64>) -> Self {
+        self.gte = Some(value.into());
+        self
+    }
+
+    /// Set the `lte` field.
+    pub fn lte(mut self, value: impl Into<f64>) -> Self {
+        self.lte = Some(value.into());
+        self
+    }
+
+    /// Set the `gt` field.
+    pub fn gt(mut self, value: impl Into<f64>) -> Self {
+        self.gt = Some(value.into());
+        self
+    }
+
+    /// Set the `lt` field.
+    pub fn lt(mut self, value: impl Into<f64>) -> Self {
+        self.lt = Some(value.into());
+        self
+    }
+
+    /// Set the `eq` field.
+    pub fn eq(mut self, value: impl Into<f64>) -> Self {
+        self.eq = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunListMetadataQueryParam2, String> {
+        Ok(RunListMetadataQueryParam2 {
+            gte: self.gte,
+            lte: self.lte,
+            gt: self.gt,
+            lt: self.lt,
+            eq: self.eq,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunListMetadataQueryParam3 {
+    pub eq: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -3143,7 +3228,7 @@ pub struct RunListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub samples: Option<Vec<ListSample>>,
+    pub samples: Option<Vec<Sample>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub part_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -3185,7 +3270,7 @@ pub struct RunListRequest {
     pub sort_order: Option<ListSortOrder>,
     /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<serde_json::Value>,
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub include_metadata: Option<bool>,
@@ -3207,7 +3292,7 @@ pub struct RunListRequestBuilder {
     procedure_ids: Option<Vec<String>>,
     procedure_versions: Option<Vec<String>>,
     serial_numbers: Option<Vec<String>>,
-    samples: Option<Vec<ListSample>>,
+    samples: Option<Vec<Sample>>,
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
@@ -3226,7 +3311,7 @@ pub struct RunListRequestBuilder {
     cursor: Option<i64>,
     sort_by: Option<RunListSortBy>,
     sort_order: Option<ListSortOrder>,
-    metadata: Option<serde_json::Value>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     include_metadata: Option<bool>,
 }
 
@@ -3268,7 +3353,7 @@ impl RunListRequestBuilder {
     }
 
     /// Set the `samples` field.
-    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
@@ -3390,7 +3475,7 @@ impl RunListRequestBuilder {
     /// Set the `metadata` field.
     ///
     /// Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
-    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
         self
     }
@@ -3437,12 +3522,15 @@ impl RunListRequestBuilder {
     }
 }
 
+/// User whose API key was used to create this run. Only returned if `all` or `created_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// User email address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
@@ -3472,12 +3560,16 @@ impl RunListCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
     }
 
     /// Set the `email` field.
+    ///
+    /// User email address.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -3494,6 +3586,7 @@ impl RunListCreatedByUserBuilder {
     }
 }
 
+/// Station whose API key was used to create this run. Only returned if `all` or `created_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListCreatedByStation {
     /// Station ID.
@@ -3502,12 +3595,15 @@ pub struct RunListCreatedByStation {
     pub name: String,
 }
 
+/// User who operated this run. Only returned if `all` or `operated_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListOperatedBy {
     /// Operator ID.
     pub id: String,
+    /// Operator display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// Operator email address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
@@ -3537,12 +3633,16 @@ impl RunListOperatedByBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// Operator display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
     }
 
     /// Set the `email` field.
+    ///
+    /// Operator email address.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -3559,6 +3659,7 @@ impl RunListOperatedByBuilder {
     }
 }
 
+/// Version of the procedure used for this run.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListVersion {
     /// Procedure version ID.
@@ -3653,6 +3754,7 @@ pub struct RunListPart {
     pub revision: RunListRevision,
 }
 
+/// Batch information for this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListBatch {
     /// Batch ID.
@@ -3670,7 +3772,7 @@ pub struct RunListUnit {
     pub serial_number: String,
     /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sample: Option<String>,
+    pub sample: Option<Sample>,
     /// Part information with revision details.
     pub part: RunListPart,
     /// Batch information for this unit.
@@ -3690,7 +3792,7 @@ impl RunListUnit {
 pub struct RunListUnitBuilder {
     id: Option<String>,
     serial_number: Option<String>,
-    sample: Option<String>,
+    sample: Option<Sample>,
     part: Option<RunListPart>,
     batch: NullableField<RunListBatch>,
 }
@@ -3715,7 +3817,7 @@ impl RunListUnitBuilder {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = Some(value.into());
         self
     }
@@ -4083,12 +4185,15 @@ pub struct RunGetRequest {
     pub id: String,
 }
 
+/// User whose API key was used to create this run. Only returned if `all` or `created_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// User email address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
@@ -4118,12 +4223,16 @@ impl RunGetCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
     }
 
     /// Set the `email` field.
+    ///
+    /// User email address.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -4140,10 +4249,12 @@ impl RunGetCreatedByUserBuilder {
     }
 }
 
+/// Station whose API key was used to create this run. Only returned if `all` or `created_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetCreatedByStation {
     /// Station ID.
     pub id: String,
+    /// Station name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -4172,6 +4283,8 @@ impl RunGetCreatedByStationBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// Station name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -4187,12 +4300,15 @@ impl RunGetCreatedByStationBuilder {
     }
 }
 
+/// User who operated this run. Only returned if `all` or `operated_by` is included.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetOperatedBy {
     /// Operator ID.
     pub id: String,
+    /// Operator display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// Operator email address.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
@@ -4222,12 +4338,16 @@ impl RunGetOperatedByBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// Operator display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
     }
 
     /// Set the `email` field.
+    ///
+    /// Operator email address.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -4244,6 +4364,7 @@ impl RunGetOperatedByBuilder {
     }
 }
 
+/// Version of the procedure used for this run.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetVersion {
     /// Procedure version ID.
@@ -4338,6 +4459,7 @@ pub struct RunGetPart {
     pub revision: RunGetRevision,
 }
 
+/// Batch information for this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetBatch {
     /// Batch ID.
@@ -4355,7 +4477,7 @@ pub struct RunGetUnit {
     pub serial_number: String,
     /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sample: Option<String>,
+    pub sample: Option<Sample>,
     /// Part information with revision details.
     pub part: RunGetPart,
     /// Batch information for this unit.
@@ -4375,7 +4497,7 @@ impl RunGetUnit {
 pub struct RunGetUnitBuilder {
     id: Option<String>,
     serial_number: Option<String>,
-    sample: Option<String>,
+    sample: Option<Sample>,
     part: Option<RunGetPart>,
     batch: NullableField<RunGetBatch>,
 }
@@ -4400,7 +4522,7 @@ impl RunGetUnitBuilder {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification of the unit. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = Some(value.into());
         self
     }
@@ -4710,7 +4832,7 @@ pub struct RunGetAggregations {
     pub r#type: String,
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcome: Option<String>,
+    pub outcome: Option<ValidatorsOutcome>,
     /// Computed aggregation value. Type depends on aggregation type.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<serde_json::Value>,
@@ -4734,7 +4856,7 @@ impl RunGetAggregations {
 pub struct RunGetAggregationsBuilder {
     id: Option<String>,
     r#type: Option<String>,
-    outcome: Option<String>,
+    outcome: Option<ValidatorsOutcome>,
     value: Option<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunGetAggregationsValidators>>,
@@ -4760,7 +4882,7 @@ impl RunGetAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5084,7 +5206,7 @@ pub struct RunGetDataSeriesAggregations {
     pub r#type: String,
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcome: Option<String>,
+    pub outcome: Option<ValidatorsOutcome>,
     /// Computed aggregation value. Type depends on aggregation type.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<serde_json::Value>,
@@ -5108,7 +5230,7 @@ impl RunGetDataSeriesAggregations {
 pub struct RunGetDataSeriesAggregationsBuilder {
     id: Option<String>,
     r#type: Option<String>,
-    outcome: Option<String>,
+    outcome: Option<ValidatorsOutcome>,
     value: Option<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunGetDataSeriesAggregationsValidators>>,
@@ -5134,7 +5256,7 @@ impl RunGetDataSeriesAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
-    pub fn outcome(mut self, value: impl Into<String>) -> Self {
+    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -6006,7 +6128,7 @@ pub struct UnitCreateRequest {
     pub revision_number: String,
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub sample: NullableField<String>,
+    pub sample: NullableField<Sample>,
     /// Custom metadata to attach to the unit (max 50 keys per unit). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -6025,7 +6147,7 @@ pub struct UnitCreateRequestBuilder {
     serial_number: Option<String>,
     part_number: Option<String>,
     revision_number: Option<String>,
-    sample: NullableField<String>,
+    sample: NullableField<Sample>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
@@ -6057,7 +6179,7 @@ impl UnitCreateRequestBuilder {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = NullableField::Value(value.into());
         self
     }
@@ -6099,6 +6221,130 @@ pub struct UnitCreateResponse {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct UnitListMetadataQueryParam1 {
+    #[serde(rename = "in")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub in_: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub contains: Option<String>,
+}
+
+impl UnitListMetadataQueryParam1 {
+    /// Create a builder for this type.
+    pub fn builder() -> UnitListMetadataQueryParam1Builder {
+        UnitListMetadataQueryParam1Builder::default()
+    }
+}
+
+/// Builder for [`UnitListMetadataQueryParam1`].
+#[derive(Debug, Default)]
+pub struct UnitListMetadataQueryParam1Builder {
+    in_: Option<Vec<String>>,
+    contains: Option<String>,
+}
+
+impl UnitListMetadataQueryParam1Builder {
+    /// Set the `in` field.
+    pub fn in_(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.in_ = Some(value.into());
+        self
+    }
+
+    /// Set the `contains` field.
+    pub fn contains(mut self, value: impl Into<String>) -> Self {
+        self.contains = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<UnitListMetadataQueryParam1, String> {
+        Ok(UnitListMetadataQueryParam1 {
+            in_: self.in_,
+            contains: self.contains,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct UnitListMetadataQueryParam2 {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gte: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lte: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gt: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lt: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eq: Option<f64>,
+}
+
+impl UnitListMetadataQueryParam2 {
+    /// Create a builder for this type.
+    pub fn builder() -> UnitListMetadataQueryParam2Builder {
+        UnitListMetadataQueryParam2Builder::default()
+    }
+}
+
+/// Builder for [`UnitListMetadataQueryParam2`].
+#[derive(Debug, Default)]
+pub struct UnitListMetadataQueryParam2Builder {
+    gte: Option<f64>,
+    lte: Option<f64>,
+    gt: Option<f64>,
+    lt: Option<f64>,
+    eq: Option<f64>,
+}
+
+impl UnitListMetadataQueryParam2Builder {
+    /// Set the `gte` field.
+    pub fn gte(mut self, value: impl Into<f64>) -> Self {
+        self.gte = Some(value.into());
+        self
+    }
+
+    /// Set the `lte` field.
+    pub fn lte(mut self, value: impl Into<f64>) -> Self {
+        self.lte = Some(value.into());
+        self
+    }
+
+    /// Set the `gt` field.
+    pub fn gt(mut self, value: impl Into<f64>) -> Self {
+        self.gt = Some(value.into());
+        self
+    }
+
+    /// Set the `lt` field.
+    pub fn lt(mut self, value: impl Into<f64>) -> Self {
+        self.lt = Some(value.into());
+        self
+    }
+
+    /// Set the `eq` field.
+    pub fn eq(mut self, value: impl Into<f64>) -> Self {
+        self.eq = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<UnitListMetadataQueryParam2, String> {
+        Ok(UnitListMetadataQueryParam2 {
+            gte: self.gte,
+            lte: self.lte,
+            gt: self.gt,
+            lt: self.lt,
+            eq: self.eq,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UnitListMetadataQueryParam3 {
+    pub eq: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct UnitListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub search_query: Option<String>,
@@ -6137,7 +6383,7 @@ pub struct UnitListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exclude_units_with_parent: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub samples: Option<Vec<ListSample>>,
+    pub samples: Option<Vec<Sample>>,
     /// Maximum number of units to return.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -6151,7 +6397,7 @@ pub struct UnitListRequest {
     pub sort_order: Option<ListSortOrder>,
     /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<serde_json::Value>,
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     /// When true, includes the unit metadata array in the response. Defaults to false to keep payloads small.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub include_metadata: Option<bool>,
@@ -6185,12 +6431,12 @@ pub struct UnitListRequestBuilder {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
-    samples: Option<Vec<ListSample>>,
+    samples: Option<Vec<Sample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
     sort_order: Option<ListSortOrder>,
-    metadata: Option<serde_json::Value>,
+    metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     include_metadata: Option<bool>,
 }
 
@@ -6304,7 +6550,7 @@ impl UnitListRequestBuilder {
     }
 
     /// Set the `samples` field.
-    pub fn samples(mut self, value: impl Into<Vec<ListSample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
@@ -6342,7 +6588,7 @@ impl UnitListRequestBuilder {
     /// Set the `metadata` field.
     ///
     /// Filter units by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`.
-    pub fn metadata(mut self, value: impl Into<serde_json::Value>) -> Self {
+    pub fn metadata(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
         self.metadata = Some(value.into());
         self
     }
@@ -6387,6 +6633,7 @@ impl UnitListRequestBuilder {
     }
 }
 
+/// User who created this unit. Null if created by a station or system.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListCreatedByUser {
     /// Unique identifier for the user.
@@ -6437,6 +6684,7 @@ impl UnitListCreatedByUserBuilder {
     }
 }
 
+/// Station that created this unit. Null if created by a user.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListCreatedByStation {
     /// Unique identifier for the station.
@@ -6445,6 +6693,7 @@ pub struct UnitListCreatedByStation {
     pub name: String,
 }
 
+/// Production batch this unit belongs to. Null if not part of a batch.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListBatch {
     /// Unique identifier for the batch.
@@ -6453,6 +6702,7 @@ pub struct UnitListBatch {
     pub number: String,
 }
 
+/// Parent unit in the assembly hierarchy. Null if this is a top-level unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListParent {
     /// Unique identifier for the parent unit.
@@ -6491,6 +6741,7 @@ pub struct UnitListPart {
     pub revision: UnitListRevision,
 }
 
+/// Test procedure that was executed. Null if run had no associated procedure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListProcedure {
     /// Unique identifier for the procedure.
@@ -6499,6 +6750,7 @@ pub struct UnitListProcedure {
     pub name: String,
 }
 
+/// Most recent test run performed on this unit. Null if no runs have been executed.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListLastRun {
     /// Unique identifier for the run.
@@ -6598,7 +6850,7 @@ pub struct UnitListData {
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sample: Option<String>,
+    pub sample: Option<Sample>,
     /// User who created this unit. Null if created by a station or system.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_user: NullableField<UnitListCreatedByUser>,
@@ -6637,7 +6889,7 @@ pub struct UnitListDataBuilder {
     id: Option<String>,
     serial_number: Option<String>,
     created_at: Option<chrono::DateTime<chrono::Utc>>,
-    sample: Option<String>,
+    sample: Option<Sample>,
     created_by_user: NullableField<UnitListCreatedByUser>,
     created_by_station: NullableField<UnitListCreatedByStation>,
     batch: NullableField<UnitListBatch>,
@@ -6676,7 +6928,7 @@ impl UnitListDataBuilder {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = Some(value.into());
         self
     }
@@ -6907,10 +7159,12 @@ pub struct UnitGetRequest {
     pub serial_number: String,
 }
 
+/// User who created this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -6939,6 +7193,8 @@ impl UnitGetCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -6954,6 +7210,7 @@ impl UnitGetCreatedByUserBuilder {
     }
 }
 
+/// Station that created this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetCreatedByStation {
     /// Station ID.
@@ -6984,6 +7241,7 @@ pub struct UnitGetPart {
     pub revision: UnitGetRevision,
 }
 
+/// Batch information for this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetBatch {
     /// Batch ID.
@@ -6992,6 +7250,7 @@ pub struct UnitGetBatch {
     pub number: String,
 }
 
+/// Part revision information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetParentPartRevision {
     /// Revision ID.
@@ -7000,6 +7259,7 @@ pub struct UnitGetParentPartRevision {
     pub number: String,
 }
 
+/// Part information for the parent unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetParentPart {
     /// Part ID.
@@ -7076,6 +7336,7 @@ impl UnitGetParentPartBuilder {
     }
 }
 
+/// Parent unit information with part details and processed images.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetParent {
     /// Unit ID.
@@ -7139,6 +7400,7 @@ impl UnitGetParentBuilder {
     }
 }
 
+/// Part revision information.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetChildrenPartRevision {
     /// Revision ID.
@@ -7147,6 +7409,7 @@ pub struct UnitGetChildrenPartRevision {
     pub number: String,
 }
 
+/// Part information for the child unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetChildrenPart {
     /// Part ID.
@@ -7295,6 +7558,7 @@ pub struct UnitGetProcedure {
     pub name: String,
 }
 
+/// Run that created this unit.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitGetCreatedDuring {
     /// Run ID.
@@ -7413,7 +7677,7 @@ pub struct UnitGetResponse {
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// Reference-sample classification. 'golden' = known-good reference, 'failing' = known-faulty reference, null = production unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub sample: Option<String>,
+    pub sample: Option<Sample>,
     /// User who created this unit.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_user: NullableField<UnitGetCreatedByUser>,
@@ -7461,7 +7725,7 @@ pub struct UnitUpdateRequestBody {
     pub attachments: Option<Vec<String>>,
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub sample: NullableField<String>,
+    pub sample: NullableField<Sample>,
     /// Custom metadata to upsert on the unit. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -7482,7 +7746,7 @@ pub struct UnitUpdateRequestBodyBuilder {
     revision_number: Option<String>,
     batch_number: NullableField<String>,
     attachments: Option<Vec<String>>,
-    sample: NullableField<String>,
+    sample: NullableField<Sample>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
@@ -7536,7 +7800,7 @@ impl UnitUpdateRequestBodyBuilder {
     /// Set the `sample` field.
     ///
     /// Reference-sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit. Both are excluded from production analytics by default. Set to null to clear and treat as a production unit.
-    pub fn sample(mut self, value: impl Into<String>) -> Self {
+    pub fn sample(mut self, value: impl Into<Sample>) -> Self {
         self.sample = NullableField::Value(value.into());
         self
     }
@@ -8025,10 +8289,12 @@ pub struct PartGetRequest {
     pub number: String,
 }
 
+/// User who created this part.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartGetCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -8057,6 +8323,8 @@ impl PartGetCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -8072,6 +8340,7 @@ impl PartGetCreatedByUserBuilder {
     }
 }
 
+/// Station that created this part.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartGetCreatedByStation {
     /// Station ID.
@@ -8207,6 +8476,7 @@ pub struct PartGetRevisionRequest {
     pub revision_number: String,
 }
 
+/// User who created the revision.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartGetRevisionCreatedByUser {
     /// Unique identifier of the user.
@@ -8257,6 +8527,7 @@ impl PartGetRevisionCreatedByUserBuilder {
     }
 }
 
+/// Station that created the revision.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartGetRevisionCreatedByStation {
     /// Unique identifier of the station.
@@ -8414,10 +8685,12 @@ pub struct BatchGetRequest {
     pub number: String,
 }
 
+/// User who created this batch.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchGetCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -8446,6 +8719,8 @@ impl BatchGetCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -8461,6 +8736,7 @@ impl BatchGetCreatedByUserBuilder {
     }
 }
 
+/// Station that created this batch.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchGetCreatedByStation {
     /// Station ID.
@@ -8699,10 +8975,12 @@ impl BatchListRequestBuilder {
     }
 }
 
+/// User who created this batch.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchListCreatedByUser {
     /// User ID.
     pub id: String,
+    /// User display name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
@@ -8731,6 +9009,8 @@ impl BatchListCreatedByUserBuilder {
     }
 
     /// Set the `name` field.
+    ///
+    /// User display name.
     pub fn name(mut self, value: impl Into<String>) -> Self {
         self.name = Some(value.into());
         self
@@ -8746,6 +9026,7 @@ impl BatchListCreatedByUserBuilder {
     }
 }
 
+/// Station that created this batch.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchListCreatedByStation {
     /// Station ID.
@@ -9074,6 +9355,7 @@ pub struct StationListProcedures {
     pub name: String,
 }
 
+/// Team this station belongs to
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationListTeam {
     /// Team ID
@@ -9371,6 +9653,7 @@ impl StationGetCurrentRepositoryBuilder {
     }
 }
 
+/// Deployment information for this procedure on this station
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationGetCurrentDeployment {
     /// When the procedure was deployed
@@ -9510,6 +9793,7 @@ impl StationGetCurrentProceduresBuilder {
     }
 }
 
+/// Team this station is assigned to
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationGetCurrentTeam {
     pub id: String,
@@ -9681,6 +9965,7 @@ impl StationGetRepositoryBuilder {
     }
 }
 
+/// Deployment information for this procedure on this station
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationGetDeployment {
     /// When the procedure was deployed
@@ -9820,6 +10105,7 @@ impl StationGetProceduresBuilder {
     }
 }
 
+/// Team this station is assigned to
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationGetTeam {
     pub id: String,
@@ -9995,5 +10281,146 @@ pub struct UserListResponse {
     pub image: Option<String>,
     /// Whether the user is banned.
     pub banned: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportCreateFromFilesItems {
+    /// ID of a previously uploaded file (via Initialize and Finalize upload).
+    pub upload_id: String,
+    /// Source format of the uploaded file. OPENHTF for OpenHTF JSON logs; WATS for Virinco WATS WSJF (JSON); WSXF for WATS WSXF (XML); ATML for IEEE 1671 ATML Test Results (XML); TESTSTAND for NI TestStand native XML reports; STDF for binary STDF V4 datalogs; ATDF for ATDF (the ASCII text form of STDF). For CSV/tabular files use the dedicated tabular import endpoint.
+    pub importer: ImportCreateFromFilesImporter,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportCreateFromFilesRequest {
+    /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<ImportCreateFromFilesItems>,
+}
+
+impl ImportCreateFromFilesRequest {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportCreateFromFilesRequestBuilder {
+        ImportCreateFromFilesRequestBuilder::default()
+    }
+}
+
+/// Builder for [`ImportCreateFromFilesRequest`].
+#[derive(Debug, Default)]
+pub struct ImportCreateFromFilesRequestBuilder {
+    items: Option<Vec<ImportCreateFromFilesItems>>,
+}
+
+impl ImportCreateFromFilesRequestBuilder {
+    /// Set the `items` field.
+    ///
+    /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
+    pub fn items(mut self, value: impl Into<Vec<ImportCreateFromFilesItems>>) -> Self {
+        self.items = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportCreateFromFilesRequest, String> {
+        Ok(ImportCreateFromFilesRequest {
+            items: self.items.unwrap_or_default(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportCreateFromFilesResults {
+    /// Upload ID this result corresponds to.
+    pub upload_id: String,
+    /// Whether the file was imported successfully.
+    pub success: bool,
+    /// ID of the created run (present when success is true). For a multi-run file this is the first run; see `ids`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// All run ids created from the file. Present when the file produced more than one run.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ids: Option<Vec<String>>,
+    /// Error message (present when success is false).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+impl ImportCreateFromFilesResults {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportCreateFromFilesResultsBuilder {
+        ImportCreateFromFilesResultsBuilder::default()
+    }
+}
+
+/// Builder for [`ImportCreateFromFilesResults`].
+#[derive(Debug, Default)]
+pub struct ImportCreateFromFilesResultsBuilder {
+    upload_id: Option<String>,
+    success: Option<bool>,
+    id: Option<String>,
+    ids: Option<Vec<String>>,
+    error: Option<String>,
+}
+
+impl ImportCreateFromFilesResultsBuilder {
+    /// Set the `upload_id` field.
+    ///
+    /// Upload ID this result corresponds to.
+    pub fn upload_id(mut self, value: impl Into<String>) -> Self {
+        self.upload_id = Some(value.into());
+        self
+    }
+
+    /// Set the `success` field.
+    ///
+    /// Whether the file was imported successfully.
+    pub fn success(mut self, value: impl Into<bool>) -> Self {
+        self.success = Some(value.into());
+        self
+    }
+
+    /// Set the `id` field.
+    ///
+    /// ID of the created run (present when success is true). For a multi-run file this is the first run; see `ids`.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `ids` field.
+    ///
+    /// All run ids created from the file. Present when the file produced more than one run.
+    pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.ids = Some(value.into());
+        self
+    }
+
+    /// Set the `error` field.
+    ///
+    /// Error message (present when success is false).
+    pub fn error(mut self, value: impl Into<String>) -> Self {
+        self.error = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportCreateFromFilesResults, String> {
+        Ok(ImportCreateFromFilesResults {
+            upload_id: self.upload_id
+                .ok_or_else(|| "missing required field: upload_id".to_string())?,
+            success: self.success
+                .ok_or_else(|| "missing required field: success".to_string())?,
+            id: self.id,
+            ids: self.ids,
+            error: self.error,
+        })
+    }
+}
+
+/// Run imported successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportCreateFromFilesResponse {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub results: Vec<ImportCreateFromFilesResults>,
 }
 

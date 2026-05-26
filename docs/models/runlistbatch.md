@@ -1,5 +1,6 @@
 # RunListBatch
 
+Batch information for this unit.
 
 ## Fields
 

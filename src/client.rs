@@ -17,7 +17,8 @@ use crate::parts::PartsClient;
 use crate::revisions::RevisionsClient;
 use crate::batches::BatchesClient;
 use crate::stations::StationsClient;
-use crate::user::UserClient;
+use crate::users::UsersClient;
+use crate::imports::ImportsClient;
 
 /// TofuPilot API client.
 ///
@@ -135,9 +136,14 @@ impl TofuPilot {
         StationsClient::new(self)
     }
 
-    /// Access the User API.
-    pub fn user(&self) -> UserClient<'_> {
-        UserClient::new(self)
+    /// Access the Users API.
+    pub fn users(&self) -> UsersClient<'_> {
+        UsersClient::new(self)
+    }
+
+    /// Access the Imports API.
+    pub fn imports(&self) -> ImportsClient<'_> {
+        ImportsClient::new(self)
     }
 
     /// Execute a request with retry logic and hooks.

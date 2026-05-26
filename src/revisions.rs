@@ -25,28 +25,28 @@ impl<'a> RevisionsClient<'a> {
 
     /// Get part revision
     ///
-    /// Retrieve a single part revision by its part number and revision number, including revision metadata, configuration details, and linked units.
+    /// Get a part revision by part number and revision number, with its metadata, configuration, and linked units.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
-    /// Delete part revision
-    ///
-    /// Permanently delete a part revision by its part number and revision number. This action removes the revision and all associated data and cannot be undone.
-    pub fn delete(&self) -> DeleteBuilder<'a> {
-        DeleteBuilder::new(self.client)
-    }
-
     /// Update part revision
     ///
-    /// Update a part revision's number or image. Identifies the revision by part number and revision number in the URL.
+    /// Update a revision's number or image.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
+    /// Delete part revision
+    ///
+    /// Delete a part revision. Irreversible.
+    pub fn delete(&self) -> DeleteBuilder<'a> {
+        DeleteBuilder::new(self.client)
+    }
+
     /// Create part revision
     ///
-    /// Create a new part revision for an existing part. Revision numbers are matched case-insensitively (e.g., "REV-A" and "rev-a" are considered the same).
+    /// Create a revision of a part. Revision numbers match case-insensitively ("REV-A" == "rev-a").
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
@@ -164,121 +164,6 @@ impl<'a> GetBuilder<'a> {
             base_url,
         ).await?;
         let result: PartGetRevisionResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// DeleteBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`RevisionsClient::delete`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.revisions().delete()
-///     .part_number("value")
-///     .revision_number("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct DeleteBuilder<'a> {
-    client: &'a TofuPilot,
-    part_number: Option<String>,
-    revision_number: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> DeleteBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            part_number: None,
-            revision_number: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `part_number` path parameter.
-    ///
-    /// Part number that the revision belongs to.
-    pub fn part_number(mut self, value: impl Into<String>) -> Self {
-        self.part_number = Some(value.into());
-        self
-    }
-
-    /// Set the `revision_number` path parameter.
-    ///
-    /// Revision number to delete.
-    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
-        self.revision_number = Some(value.into());
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<PartDeleteRevisionResponse> {
-        let part_number = self.part_number
-            .ok_or_else(|| Error::Validation(
-                "missing required path parameter: part_number".to_string(),
-            ))?;
-        let revision_number = self.revision_number
-            .ok_or_else(|| Error::Validation(
-                "missing required path parameter: revision_number".to_string(),
-            ))?;
-        let part_number_encoded = utf8_percent_encode(&part_number, URI_COMPONENT).to_string();
-        let revision_number_encoded = utf8_percent_encode(&revision_number, URI_COMPONENT).to_string();
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!(
-            "{}/v2/parts/{part_number}/revisions/{revision_number}",
-            base_url,
-            part_number = part_number_encoded,
-            revision_number = revision_number_encoded,
-        );
-
-        let mut request = self.client.http.request(
-            reqwest::Method::DELETE,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-
-        let response = self.client.execute(
-            request,
-            "part-deleteRevision",
-            base_url,
-        ).await?;
-        let result: PartDeleteRevisionResponse = response.json().await?;
         Ok(result)
     }
 }
@@ -428,6 +313,121 @@ impl<'a> UpdateBuilder<'a> {
             base_url,
         ).await?;
         let result: PartUpdateRevisionResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// DeleteBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`RevisionsClient::delete`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.revisions().delete()
+///     .part_number("value")
+///     .revision_number("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct DeleteBuilder<'a> {
+    client: &'a TofuPilot,
+    part_number: Option<String>,
+    revision_number: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> DeleteBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            part_number: None,
+            revision_number: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `part_number` path parameter.
+    ///
+    /// Part number that the revision belongs to.
+    pub fn part_number(mut self, value: impl Into<String>) -> Self {
+        self.part_number = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_number` path parameter.
+    ///
+    /// Revision number to delete.
+    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
+        self.revision_number = Some(value.into());
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<PartDeleteRevisionResponse> {
+        let part_number = self.part_number
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: part_number".to_string(),
+            ))?;
+        let revision_number = self.revision_number
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: revision_number".to_string(),
+            ))?;
+        let part_number_encoded = utf8_percent_encode(&part_number, URI_COMPONENT).to_string();
+        let revision_number_encoded = utf8_percent_encode(&revision_number, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/parts/{part_number}/revisions/{revision_number}",
+            base_url,
+            part_number = part_number_encoded,
+            revision_number = revision_number_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::DELETE,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+
+        let response = self.client.execute(
+            request,
+            "part-deleteRevision",
+            base_url,
+        ).await?;
+        let result: PartDeleteRevisionResponse = response.json().await?;
         Ok(result)
     }
 }

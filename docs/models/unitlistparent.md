@@ -1,5 +1,6 @@
 # UnitListParent
 
+Parent unit in the assembly hierarchy. Null if this is a top-level unit.
 
 ## Fields
 

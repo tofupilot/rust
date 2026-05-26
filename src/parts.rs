@@ -23,41 +23,171 @@ impl<'a> PartsClient<'a> {
         Self { client }
     }
 
-    /// List and filter parts
-    ///
-    /// Retrieve a paginated list of parts and components in your organization. Filter and search by part name, number, or revision number for inventory management.
-    pub fn list(&self) -> ListBuilder<'a> {
-        ListBuilder::new(self.client)
-    }
-
     /// Create part
     ///
-    /// Create a new part. Optionally create with a revision. Part numbers are matched case-insensitively (e.g., "PART-001" and "part-001" are considered the same).
+    /// Create a part, optionally with an initial revision. Part numbers match case-insensitively ("PART-001" == "part-001").
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
 
+    /// List and filter parts
+    ///
+    /// List parts. Filter and search by name, number, or revision number. Cursor-paginated.
+    pub fn list(&self) -> ListBuilder<'a> {
+        ListBuilder::new(self.client)
+    }
+
     /// Get part
     ///
-    /// Retrieve a single part by its number, including all revisions, metadata, and linked units. Part numbers are matched case-insensitively.
+    /// Get a part by number, with its revisions, metadata, and linked units. Numbers match case-insensitively.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
-    /// Delete part
-    ///
-    /// Permanently delete a part and all its revisions. This removes all associated data and cannot be undone.
-    pub fn delete(&self) -> DeleteBuilder<'a> {
-        DeleteBuilder::new(self.client)
-    }
-
     /// Update part
     ///
-    /// Update a part's number or name. Identifies the part by its current number in the URL with case-insensitive matching.
+    /// Update a part's number or name. Numbers match case-insensitively.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
+    /// Delete part
+    ///
+    /// Delete a part and all its revisions. Irreversible.
+    pub fn delete(&self) -> DeleteBuilder<'a> {
+        DeleteBuilder::new(self.client)
+    }
+
+}
+
+// ---------------------------------------------------------------------------
+// CreateBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`PartsClient::create`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.parts().create()
+///     .number("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateBuilder<'a> {
+    client: &'a TofuPilot,
+    number: Option<String>,
+    name: Option<String>,
+    revision_number: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            number: None,
+            name: None,
+            revision_number: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `number` field.
+    ///
+    /// Unique identifier number for the part.
+    pub fn number(mut self, value: impl Into<String>) -> Self {
+        self.number = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Human-readable name for the part. If not provided, a default name will be used.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_number` field.
+    ///
+    /// Revision identifier for the part version. If not provided, default revision identifier will be used.
+    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
+        self.revision_number = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: PartCreateRequest) -> Self {
+        self.number = Some(body.number);
+        if body.name.is_some() {
+            self.name = body.name;
+        }
+        if body.revision_number.is_some() {
+            self.revision_number = body.revision_number;
+        }
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<PartCreateResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/parts");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = PartCreateRequest {
+            number: self.number
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: number".to_string(),
+                ))?,
+            name: self.name,
+            revision_number: self.revision_number,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "part-create",
+            base_url,
+        ).await?;
+        let result: PartCreateResponse = response.json().await?;
+        Ok(result)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -213,136 +343,6 @@ impl<'a> ListBuilder<'a> {
 }
 
 // ---------------------------------------------------------------------------
-// CreateBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`PartsClient::create`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.parts().create()
-///     .number("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct CreateBuilder<'a> {
-    client: &'a TofuPilot,
-    number: Option<String>,
-    name: Option<String>,
-    revision_number: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> CreateBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            number: None,
-            name: None,
-            revision_number: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `number` field.
-    ///
-    /// Unique identifier number for the part.
-    pub fn number(mut self, value: impl Into<String>) -> Self {
-        self.number = Some(value.into());
-        self
-    }
-
-    /// Set the `name` field.
-    ///
-    /// Human-readable name for the part. If not provided, a default name will be used.
-    pub fn name(mut self, value: impl Into<String>) -> Self {
-        self.name = Some(value.into());
-        self
-    }
-
-    /// Set the `revision_number` field.
-    ///
-    /// Revision identifier for the part version. If not provided, default revision identifier will be used.
-    pub fn revision_number(mut self, value: impl Into<String>) -> Self {
-        self.revision_number = Some(value.into());
-        self
-    }
-
-    /// Set the full request body (alternative to setting individual fields).
-    pub fn body(mut self, body: PartCreateRequest) -> Self {
-        self.number = Some(body.number);
-        if body.name.is_some() {
-            self.name = body.name;
-        }
-        if body.revision_number.is_some() {
-            self.revision_number = body.revision_number;
-        }
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<PartCreateResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/parts");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::POST,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-        let body = PartCreateRequest {
-            number: self.number
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: number".to_string(),
-                ))?,
-            name: self.name,
-            revision_number: self.revision_number,
-        };
-        request = request.json(&body);
-
-        let response = self.client.execute(
-            request,
-            "part-create",
-            base_url,
-        ).await?;
-        let result: PartCreateResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
 // GetBuilder
 // ---------------------------------------------------------------------------
 
@@ -436,104 +436,6 @@ impl<'a> GetBuilder<'a> {
             base_url,
         ).await?;
         let result: PartGetResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// DeleteBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`PartsClient::delete`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.parts().delete()
-///     .number("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct DeleteBuilder<'a> {
-    client: &'a TofuPilot,
-    number: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> DeleteBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            number: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `number` path parameter.
-    ///
-    /// Part number to delete.
-    pub fn number(mut self, value: impl Into<String>) -> Self {
-        self.number = Some(value.into());
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<PartDeleteResponse> {
-        let number = self.number
-            .ok_or_else(|| Error::Validation(
-                "missing required path parameter: number".to_string(),
-            ))?;
-        let number_encoded = utf8_percent_encode(&number, URI_COMPONENT).to_string();
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!(
-            "{}/v2/parts/{number}",
-            base_url,
-            number = number_encoded,
-        );
-
-        let mut request = self.client.http.request(
-            reqwest::Method::DELETE,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-
-        let response = self.client.execute(
-            request,
-            "part-delete",
-            base_url,
-        ).await?;
-        let result: PartDeleteResponse = response.json().await?;
         Ok(result)
     }
 }
@@ -667,6 +569,104 @@ impl<'a> UpdateBuilder<'a> {
             base_url,
         ).await?;
         let result: PartUpdateResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// DeleteBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`PartsClient::delete`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.parts().delete()
+///     .number("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct DeleteBuilder<'a> {
+    client: &'a TofuPilot,
+    number: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> DeleteBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            number: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `number` path parameter.
+    ///
+    /// Part number to delete.
+    pub fn number(mut self, value: impl Into<String>) -> Self {
+        self.number = Some(value.into());
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<PartDeleteResponse> {
+        let number = self.number
+            .ok_or_else(|| Error::Validation(
+                "missing required path parameter: number".to_string(),
+            ))?;
+        let number_encoded = utf8_percent_encode(&number, URI_COMPONENT).to_string();
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!(
+            "{}/v2/parts/{number}",
+            base_url,
+            number = number_encoded,
+        );
+
+        let mut request = self.client.http.request(
+            reqwest::Method::DELETE,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+
+        let response = self.client.execute(
+            request,
+            "part-delete",
+            base_url,
+        ).await?;
+        let result: PartDeleteResponse = response.json().await?;
         Ok(result)
     }
 }

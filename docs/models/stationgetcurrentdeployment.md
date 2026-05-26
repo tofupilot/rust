@@ -1,5 +1,6 @@
 # StationGetCurrentDeployment
 
+Deployment information for this procedure on this station
 
 ## Fields
 

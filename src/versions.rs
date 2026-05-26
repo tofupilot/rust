@@ -25,21 +25,21 @@ impl<'a> VersionsClient<'a> {
 
     /// Get procedure version
     ///
-    /// Retrieve a single procedure version by its tag, including version metadata and configuration details.
+    /// Get a procedure version by tag, with its metadata and configuration.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
     /// Delete procedure version
     ///
-    /// Permanently delete a procedure version by its tag. This removes the version record and all associated configuration data and cannot be undone.
+    /// Delete a procedure version by tag. Irreversible.
     pub fn delete(&self) -> DeleteBuilder<'a> {
         DeleteBuilder::new(self.client)
     }
 
     /// Create procedure version
     ///
-    /// Create a new version for an existing test procedure. Versions let you track procedure changes over time and maintain a history of test configurations.
+    /// Create a version of a procedure. Versions snapshot procedure configuration over time.
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }

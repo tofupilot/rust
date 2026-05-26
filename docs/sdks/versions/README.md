@@ -10,7 +10,7 @@
 
 ## get
 
-Retrieve a single procedure version by its tag, including version metadata and configuration details.
+Get a procedure version by tag, with its metadata and configuration.
 
 ### Example Usage
 
@@ -54,7 +54,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## delete
 
-Permanently delete a procedure version by its tag. This removes the version record and all associated configuration data and cannot be undone.
+Delete a procedure version by tag. Irreversible.
 
 ### Example Usage
 
@@ -99,7 +99,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## create
 
-Create a new version for an existing test procedure. Versions let you track procedure changes over time and maintain a history of test configurations.
+Create a version of a procedure. Versions snapshot procedure configuration over time.
 
 ### Example Usage
 

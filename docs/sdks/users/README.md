@@ -1,4 +1,4 @@
-# User
+# Users
 
 ## Overview
 
@@ -8,7 +8,7 @@
 
 ## list
 
-Retrieve a list of users in your organization. Use the current parameter to get only the authenticated user profile and permissions.
+List users in your organization. Set `current=true` to return only the authenticated user.
 
 ### Example Usage
 
@@ -19,7 +19,7 @@ use tofupilot::TofuPilot;
 async fn main() -> tofupilot::Result<()> {
     let client = TofuPilot::new("your-api-key");
 
-    let result = client.user().list()
+    let result = client.users().list()
         .send()
         .await?;
 

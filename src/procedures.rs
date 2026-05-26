@@ -23,41 +23,143 @@ impl<'a> ProceduresClient<'a> {
         Self { client }
     }
 
-    /// List and filter procedures
-    ///
-    /// Retrieve procedures with optional filtering and search. Returns procedure data including creator and linked repository.
-    pub fn list(&self) -> ListBuilder<'a> {
-        ListBuilder::new(self.client)
-    }
-
     /// Create procedure
     ///
-    /// Create a new test procedure that can be used to organize and track test runs. The procedure serves as a template or framework for organizing test execution.
+    /// Create a procedure to group and track related runs.
     pub fn create(&self) -> CreateBuilder<'a> {
         CreateBuilder::new(self.client)
     }
 
+    /// List and filter procedures
+    ///
+    /// List procedures with filtering and search. Includes creator and linked repository. Cursor-paginated.
+    pub fn list(&self) -> ListBuilder<'a> {
+        ListBuilder::new(self.client)
+    }
+
     /// Get procedure
     ///
-    /// Retrieve a single procedure by ID, including recent test runs, linked stations, and version history.
+    /// Get a procedure by ID, with recent runs, linked stations, and version history.
     pub fn get(&self) -> GetBuilder<'a> {
         GetBuilder::new(self.client)
     }
 
     /// Delete procedure
     ///
-    /// Permanently delete a procedure, removing all associated runs, phases, measurements, and attachments.
+    /// Delete a procedure and all its runs, phases, measurements, and attachments. Irreversible.
     pub fn delete(&self) -> DeleteBuilder<'a> {
         DeleteBuilder::new(self.client)
     }
 
     /// Update procedure
     ///
-    /// Update a test procedure's name or configuration. The procedure is identified by its unique ID in the URL path. Only provided fields are modified.
+    /// Update a procedure's name or configuration. Only provided fields are changed.
     pub fn update(&self) -> UpdateBuilder<'a> {
         UpdateBuilder::new(self.client)
     }
 
+}
+
+// ---------------------------------------------------------------------------
+// CreateBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`ProceduresClient::create`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.procedures().create()
+///     .name("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct CreateBuilder<'a> {
+    client: &'a TofuPilot,
+    name: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> CreateBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            name: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Name of the procedure. Must be unique within the organization.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: ProcedureCreateRequest) -> Self {
+        self.name = Some(body.name);
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<ProcedureCreateResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/procedures");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = ProcedureCreateRequest {
+            name: self.name
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: name".to_string(),
+                ))?,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "procedure-create",
+            base_url,
+        ).await?;
+        let result: ProcedureCreateResponse = response.json().await?;
+        Ok(result)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -191,108 +293,6 @@ impl<'a> ListBuilder<'a> {
             base_url,
         ).await?;
         let result: ProcedureListResponse = response.json().await?;
-        Ok(result)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// CreateBuilder
-// ---------------------------------------------------------------------------
-
-/// Builder for [`ProceduresClient::create`].
-///
-/// # Example
-///
-/// ```no_run
-/// use tofupilot::TofuPilot;
-///
-/// # #[tokio::main]
-/// # async fn main() -> tofupilot::Result<()> {
-/// let client = TofuPilot::new("your-api-key");
-/// let response = client.procedures().create()
-///     .name("value")
-///     .send()
-///     .await?;
-/// # Ok(())
-/// # }
-/// ```
-#[derive(Debug)]
-pub struct CreateBuilder<'a> {
-    client: &'a TofuPilot,
-    name: Option<String>,
-    server_url: Option<String>,
-    timeout: Option<std::time::Duration>,
-}
-
-impl<'a> CreateBuilder<'a> {
-    pub(crate) fn new(client: &'a TofuPilot) -> Self {
-        Self {
-            client,
-            name: None,
-            server_url: None,
-            timeout: None,
-        }
-    }
-
-    /// Set the `name` field.
-    ///
-    /// Name of the procedure. Must be unique within the organization.
-    pub fn name(mut self, value: impl Into<String>) -> Self {
-        self.name = Some(value.into());
-        self
-    }
-
-    /// Set the full request body (alternative to setting individual fields).
-    pub fn body(mut self, body: ProcedureCreateRequest) -> Self {
-        self.name = Some(body.name);
-        self
-    }
-
-    /// Override the server URL for this request.
-    pub fn server_url(mut self, url: impl Into<String>) -> Self {
-        self.server_url = Some(url.into());
-        self
-    }
-
-    /// Override the timeout for this request.
-    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
-        self.timeout = Some(timeout);
-        self
-    }
-
-    /// Send the request.
-    pub async fn send(self) -> Result<ProcedureCreateResponse> {
-
-        let base_url = self.server_url
-            .as_deref()
-            .unwrap_or(&self.client.config.base_url);
-
-        let url = format!("{}{}", base_url, "/v2/procedures");
-
-        let mut request = self.client.http.request(
-            reqwest::Method::POST,
-            &url,
-        );
-
-        if let Some(timeout) = self.timeout {
-            request = request.timeout(timeout);
-        }
-
-
-        let body = ProcedureCreateRequest {
-            name: self.name
-                .ok_or_else(|| Error::Validation(
-                    "missing required field: name".to_string(),
-                ))?,
-        };
-        request = request.json(&body);
-
-        let response = self.client.execute(
-            request,
-            "procedure-create",
-            base_url,
-        ).await?;
-        let result: ProcedureCreateResponse = response.json().await?;
         Ok(result)
     }
 }
@@ -559,7 +559,7 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Set the `production_branch` field.
+    /// Set the `productionBranch` field.
     ///
     /// Branch treated as production. Pushes to this branch deploy as production; every other branch deploys as preview. Null = no branch promoted to production.
     pub fn production_branch(mut self, value: impl Into<String>) -> Self {
@@ -567,13 +567,13 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Explicitly set `production_branch` to null.
+    /// Explicitly set `productionBranch` to null.
     pub fn production_branch_null(mut self) -> Self {
         self.production_branch = Some(NullableField::Null);
         self
     }
 
-    /// Set the `auto_push_enabled` field.
+    /// Set the `autoPushEnabled` field.
     ///
     /// Master switch for auto-pushing builds to linked stations. Build artifacts are always recorded; this only gates the station fan-out.
     pub fn auto_push_enabled(mut self, value: impl Into<bool>) -> Self {
@@ -581,7 +581,7 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Set the `excluded_branch_patterns` field.
+    /// Set the `excludedBranchPatterns` field.
     ///
     /// Branches matching any of these patterns (exact name or minimatch glob, e.g. "renovate/*") skip preview deployments. Empty array = no exclusions.
     pub fn excluded_branch_patterns(mut self, value: impl Into<Vec<String>>) -> Self {
@@ -589,7 +589,7 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Set the `root_directory` field.
+    /// Set the `rootDirectory` field.
     ///
     /// Path within the linked repo to the directory holding this procedure's `pyproject.toml` (and `procedure.yaml` for framework procedures). Empty/null = repo root.
     pub fn root_directory(mut self, value: impl Into<String>) -> Self {
@@ -597,13 +597,13 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Explicitly set `root_directory` to null.
+    /// Explicitly set `rootDirectory` to null.
     pub fn root_directory_null(mut self) -> Self {
         self.root_directory = Some(NullableField::Null);
         self
     }
 
-    /// Set the `entry_point` field.
+    /// Set the `entryPoint` field.
     ///
     /// Entry-point path inside the procedure's package dir, relative to it. Forwarded to the CLI through the deployment manifest. Empty/null = use the framework default (openhtf/plain → main.py, pytest → ".", yaml → procedure.yaml auto-discovery).
     pub fn entry_point(mut self, value: impl Into<String>) -> Self {
@@ -611,7 +611,7 @@ impl<'a> UpdateBuilder<'a> {
         self
     }
 
-    /// Explicitly set `entry_point` to null.
+    /// Explicitly set `entryPoint` to null.
     pub fn entry_point_null(mut self) -> Self {
         self.entry_point = Some(NullableField::Null);
         self

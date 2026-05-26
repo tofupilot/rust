@@ -1,5 +1,6 @@
 # RunGetVersion
 
+Version of the procedure used for this run.
 
 ## Fields
 

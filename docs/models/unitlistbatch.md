@@ -1,5 +1,6 @@
 # UnitListBatch
 
+Production batch this unit belongs to. Null if not part of a batch.
 
 ## Fields
 

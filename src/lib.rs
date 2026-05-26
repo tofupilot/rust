@@ -16,7 +16,8 @@ pub mod parts;
 pub mod revisions;
 pub mod batches;
 pub mod stations;
-pub mod user;
+pub mod users;
+pub mod imports;
 pub mod upload;
 
 pub use client::TofuPilot;

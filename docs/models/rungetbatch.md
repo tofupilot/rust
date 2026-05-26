@@ -1,5 +1,6 @@
 # RunGetBatch
 
+Batch information for this unit.
 
 ## Fields
 

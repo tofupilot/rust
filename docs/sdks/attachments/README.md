@@ -9,7 +9,7 @@
 
 ## initialize
 
-Get a temporary pre-signed URL to upload a file. Returns the upload ID and URL. Upload the file to the URL with a PUT request, then call Finalize upload.
+Get a pre-signed URL to upload a file. Returns the upload ID and URL. PUT the file to the URL, then call Finalize upload.
 
 ### Example Usage
 

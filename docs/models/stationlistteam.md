@@ -1,5 +1,6 @@
 # StationListTeam
 
+Team this station belongs to
 
 ## Fields
 

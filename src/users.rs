@@ -4,20 +4,20 @@ use crate::client::TofuPilot;
 use crate::error::Result;
 use crate::types::*;
 
-/// Client for the User API.
+/// Client for the Users API.
 #[derive(Debug, Clone)]
-pub struct UserClient<'a> {
+pub struct UsersClient<'a> {
     pub(crate) client: &'a TofuPilot,
 }
 
-impl<'a> UserClient<'a> {
+impl<'a> UsersClient<'a> {
     pub(crate) fn new(client: &'a TofuPilot) -> Self {
         Self { client }
     }
 
     /// List users
     ///
-    /// Retrieve a list of users in your organization. Use the current parameter to get only the authenticated user profile and permissions.
+    /// List users in your organization. Set `current=true` to return only the authenticated user.
     pub fn list(&self) -> ListBuilder<'a> {
         ListBuilder::new(self.client)
     }
@@ -28,7 +28,7 @@ impl<'a> UserClient<'a> {
 // ListBuilder
 // ---------------------------------------------------------------------------
 
-/// Builder for [`UserClient::list`].
+/// Builder for [`UsersClient::list`].
 ///
 /// # Example
 ///
@@ -38,7 +38,7 @@ impl<'a> UserClient<'a> {
 /// # #[tokio::main]
 /// # async fn main() -> tofupilot::Result<()> {
 /// let client = TofuPilot::new("your-api-key");
-/// let response = client.user().list()
+/// let response = client.users().list()
 ///     .send()
 ///     .await?;
 /// # Ok(())
