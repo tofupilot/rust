@@ -6,7 +6,7 @@
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `name` | `String` | :heavy_check_mark: | Name identifier for the measurement. Each measurement should have a descriptive name that identifies the specific data point being captured. Analytics at measurement level are computed using this name as unique identifier. |
-| `outcome` | `ValidatorsOutcome` | :heavy_check_mark: | Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed. |
+| `outcome` | `Outcome` | :heavy_check_mark: | Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed. |
 | `x_axis` | `NullableField<RunCreateXAxis>` | :heavy_minus_sign: | Data series with numeric data, unit, and optional validators/aggregations. |
 | `y_axis` | `NullableField<Vec<RunCreateYAxis>>` | :heavy_minus_sign: | Y-axis data series (one or more) for multi-dimensional measurements. Each series can have its own validators and aggregations. |
 | `measured_value` | `NullableField<serde_json::Value>` | :heavy_minus_sign: | The actual value captured. [LEGACY for multi-dim] For multi-dimensional with per-axis validators/aggregations, use x_axis/y_axis instead. |

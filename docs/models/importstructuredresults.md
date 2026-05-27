@@ -1,4 +1,4 @@
-# ImportCreateFromFilesResults
+# ImportStructuredResults
 
 
 ## Fields

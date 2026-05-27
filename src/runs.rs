@@ -89,7 +89,7 @@ impl<'a> RunsClient<'a> {
 /// # async fn main() -> tofupilot::Result<()> {
 /// let client = TofuPilot::new("your-api-key");
 /// let response = client.runs().create()
-///     .outcome(tofupilot::types::Outcome::Pass)
+///     .outcome("value")
 ///     .procedure_id("value")
 ///     .started_at(chrono::Utc::now())
 ///     .ended_at(chrono::Utc::now())
@@ -102,7 +102,7 @@ impl<'a> RunsClient<'a> {
 #[derive(Debug)]
 pub struct CreateBuilder<'a> {
     client: &'a TofuPilot,
-    outcome: Option<Outcome>,
+    outcome: Option<RunGetOutcome>,
     procedure_id: Option<String>,
     deployment_id: Option<NullableField<String>>,
     procedure_version: Option<NullableField<String>>,
@@ -152,7 +152,7 @@ impl<'a> CreateBuilder<'a> {
     /// Set the `outcome` field.
     ///
     /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
-    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -441,7 +441,7 @@ pub struct ListBuilder<'a> {
     client: &'a TofuPilot,
     search_query: Option<String>,
     ids: Option<Vec<String>>,
-    outcomes: Option<Vec<Outcome>>,
+    outcomes: Option<Vec<RunGetOutcome>>,
     procedure_ids: Option<Vec<String>>,
     procedure_versions: Option<Vec<String>>,
     serial_numbers: Option<Vec<String>>,
@@ -519,7 +519,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `outcomes` query parameter.
-    pub fn outcomes(mut self, value: impl Into<Vec<Outcome>>) -> Self {
+    pub fn outcomes(mut self, value: impl Into<Vec<RunGetOutcome>>) -> Self {
         self.outcomes = Some(value.into());
         self
     }

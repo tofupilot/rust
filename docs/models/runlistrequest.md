@@ -7,7 +7,7 @@
 | --- | --- | --- | --- |
 | `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
 | `ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `outcomes` | `Option<Vec<Outcome>>` | :heavy_minus_sign: | N/A |
+| `outcomes` | `Option<Vec<RunGetOutcome>>` | :heavy_minus_sign: | N/A |
 | `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `procedure_versions` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |

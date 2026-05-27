@@ -169,7 +169,7 @@ impl std::fmt::Display for BatchListSortBy {
 
 /// Source format of the uploaded file. OPENHTF for OpenHTF JSON logs; WATS for Virinco WATS WSJF (JSON); WSXF for WATS WSXF (XML); ATML for IEEE 1671 ATML Test Results (XML); TESTSTAND for NI TestStand native XML reports; STDF for binary STDF V4 datalogs; ATDF for ATDF (the ASCII text form of STDF). For CSV/tabular files use the dedicated tabular import endpoint.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ImportCreateFromFilesImporter {
+pub enum ImportStructuredImporter {
     #[serde(rename = "OPENHTF")]
     Openhtf,
     #[serde(rename = "WATS")]
@@ -186,7 +186,7 @@ pub enum ImportCreateFromFilesImporter {
     Atdf,
 }
 
-impl std::fmt::Display for ImportCreateFromFilesImporter {
+impl std::fmt::Display for ImportStructuredImporter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Openhtf => write!(f, "OPENHTF"),
@@ -220,7 +220,7 @@ impl std::fmt::Display for Provider {
 
 /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Outcome {
+pub enum RunGetOutcome {
     #[serde(rename = "PASS")]
     Pass,
     #[serde(rename = "FAIL")]
@@ -233,7 +233,7 @@ pub enum Outcome {
     Aborted,
 }
 
-impl std::fmt::Display for Outcome {
+impl std::fmt::Display for RunGetOutcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Pass => write!(f, "PASS"),
@@ -247,7 +247,7 @@ impl std::fmt::Display for Outcome {
 
 /// Overall result of the phase execution. Use PASS when phase succeeds, FAIL when phase fails but execution completed successfully, ERROR when phase execution fails, SKIP when phase was not executed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PhasesOutcome {
+pub enum RunGetPhasesOutcome {
     #[serde(rename = "PASS")]
     Pass,
     #[serde(rename = "FAIL")]
@@ -258,7 +258,7 @@ pub enum PhasesOutcome {
     Error,
 }
 
-impl std::fmt::Display for PhasesOutcome {
+impl std::fmt::Display for RunGetPhasesOutcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Pass => write!(f, "PASS"),
@@ -271,7 +271,7 @@ impl std::fmt::Display for PhasesOutcome {
 
 /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ValidatorsOutcome {
+pub enum Outcome {
     #[serde(rename = "PASS")]
     Pass,
     #[serde(rename = "FAIL")]
@@ -280,7 +280,7 @@ pub enum ValidatorsOutcome {
     Unset,
 }
 
-impl std::fmt::Display for ValidatorsOutcome {
+impl std::fmt::Display for Outcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Pass => write!(f, "PASS"),
@@ -752,7 +752,7 @@ pub struct ProcedureGetRecentRuns {
     /// ISO 8601 timestamp when the run started.
     pub started_at: chrono::DateTime<chrono::Utc>,
     /// Run outcome.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// Unit information.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit: Option<ProcedureGetUnit>,
@@ -770,7 +770,7 @@ impl ProcedureGetRecentRuns {
 pub struct ProcedureGetRecentRunsBuilder {
     id: Option<String>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
-    outcome: Option<Outcome>,
+    outcome: Option<RunGetOutcome>,
     unit: Option<ProcedureGetUnit>,
 }
 
@@ -794,7 +794,7 @@ impl ProcedureGetRecentRunsBuilder {
     /// Set the `outcome` field.
     ///
     /// Run outcome.
-    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -1141,7 +1141,7 @@ pub struct ProcedureCreateVersionResponse {
 pub struct RunCreateValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1166,7 +1166,7 @@ impl RunCreateValidators {
 /// Builder for [`RunCreateValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1177,7 +1177,7 @@ impl RunCreateValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1261,7 +1261,7 @@ impl RunCreateValidatorsBuilder {
 pub struct RunCreateAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1286,7 +1286,7 @@ impl RunCreateAggregationsValidators {
 /// Builder for [`RunCreateAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateAggregationsValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1297,7 +1297,7 @@ impl RunCreateAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1384,7 +1384,7 @@ pub struct RunCreateAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -1407,7 +1407,7 @@ impl RunCreateAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateAggregationsValidators>>,
@@ -1425,7 +1425,7 @@ impl RunCreateAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1629,7 +1629,7 @@ impl RunCreateXAxisBuilder {
 pub struct RunCreateYAxisValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1654,7 +1654,7 @@ impl RunCreateYAxisValidators {
 /// Builder for [`RunCreateYAxisValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1665,7 +1665,7 @@ impl RunCreateYAxisValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1749,7 +1749,7 @@ impl RunCreateYAxisValidatorsBuilder {
 pub struct RunCreateYAxisAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -1774,7 +1774,7 @@ impl RunCreateYAxisAggregationsValidators {
 /// Builder for [`RunCreateYAxisAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisAggregationsValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -1785,7 +1785,7 @@ impl RunCreateYAxisAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -1872,7 +1872,7 @@ pub struct RunCreateYAxisAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -1895,7 +1895,7 @@ impl RunCreateYAxisAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateYAxisAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateYAxisAggregationsValidators>>,
@@ -1913,7 +1913,7 @@ impl RunCreateYAxisAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2117,7 +2117,7 @@ impl RunCreateYAxisBuilder {
 pub struct RunCreateMeasurementsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -2142,7 +2142,7 @@ impl RunCreateMeasurementsValidators {
 /// Builder for [`RunCreateMeasurementsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -2153,7 +2153,7 @@ impl RunCreateMeasurementsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2237,7 +2237,7 @@ impl RunCreateMeasurementsValidatorsBuilder {
 pub struct RunCreateMeasurementsAggregationsValidators {
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
@@ -2262,7 +2262,7 @@ impl RunCreateMeasurementsAggregationsValidators {
 /// Builder for [`RunCreateMeasurementsAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsAggregationsValidatorsBuilder {
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     operator: NullableField<String>,
     expected_value: NullableField<serde_json::Value>,
     expression: NullableField<String>,
@@ -2273,7 +2273,7 @@ impl RunCreateMeasurementsAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Pre-computed validation result from test framework. Server stores as-is, does not re-evaluate.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2360,7 +2360,7 @@ pub struct RunCreateMeasurementsAggregations {
     pub r#type: String,
     /// Computed result of aggregation validation. Server stores as-is.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
-    pub outcome: NullableField<ValidatorsOutcome>,
+    pub outcome: NullableField<Outcome>,
     /// Computed aggregation value.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub value: NullableField<serde_json::Value>,
@@ -2383,7 +2383,7 @@ impl RunCreateMeasurementsAggregations {
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsAggregationsBuilder {
     r#type: Option<String>,
-    outcome: NullableField<ValidatorsOutcome>,
+    outcome: NullableField<Outcome>,
     value: NullableField<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunCreateMeasurementsAggregationsValidators>>,
@@ -2401,7 +2401,7 @@ impl RunCreateMeasurementsAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Computed result of aggregation validation. Server stores as-is.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = NullableField::Value(value.into());
         self
     }
@@ -2472,7 +2472,7 @@ pub struct RunCreateMeasurements {
     /// Name identifier for the measurement. Each measurement should have a descriptive name that identifies the specific data point being captured. Analytics at measurement level are computed using this name as unique identifier.
     pub name: String,
     /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Data series with numeric data, unit, and optional validators/aggregations.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub x_axis: NullableField<RunCreateXAxis>,
@@ -2515,7 +2515,7 @@ impl RunCreateMeasurements {
 #[derive(Debug, Default)]
 pub struct RunCreateMeasurementsBuilder {
     name: Option<String>,
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     x_axis: NullableField<RunCreateXAxis>,
     y_axis: NullableField<Vec<RunCreateYAxis>>,
     measured_value: NullableField<serde_json::Value>,
@@ -2539,7 +2539,7 @@ impl RunCreateMeasurementsBuilder {
     /// Set the `outcome` field.
     ///
     /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -2686,7 +2686,7 @@ pub struct RunCreatePhases {
     /// Name identifier for the test phase. Each phase should have a descriptive name that identifies the specific stage of testing being performed. Analytics at phase level are computed using this name as unique identifier.
     pub name: String,
     /// Overall result of the phase execution. Use PASS when phase succeeds, FAIL when phase fails but execution completed successfully, ERROR when phase execution fails, SKIP when phase was not executed.
-    pub outcome: PhasesOutcome,
+    pub outcome: RunGetPhasesOutcome,
     /// ISO 8601 timestamp when the phase execution began.
     pub started_at: chrono::DateTime<chrono::Utc>,
     /// ISO 8601 timestamp when the phase execution completed.
@@ -2713,7 +2713,7 @@ impl RunCreatePhases {
 #[derive(Debug, Default)]
 pub struct RunCreatePhasesBuilder {
     name: Option<String>,
-    outcome: Option<PhasesOutcome>,
+    outcome: Option<RunGetPhasesOutcome>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     docstring: NullableField<String>,
@@ -2733,7 +2733,7 @@ impl RunCreatePhasesBuilder {
     /// Set the `outcome` field.
     ///
     /// Overall result of the phase execution. Use PASS when phase succeeds, FAIL when phase fails but execution completed successfully, ERROR when phase execution fails, SKIP when phase was not executed.
-    pub fn outcome(mut self, value: impl Into<PhasesOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetPhasesOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -2825,7 +2825,7 @@ pub struct RunCreateLogs {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateRequest {
     /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// Procedure ID. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
     pub procedure_id: String,
     /// Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs.
@@ -2882,7 +2882,7 @@ impl RunCreateRequest {
 /// Builder for [`RunCreateRequest`].
 #[derive(Debug, Default)]
 pub struct RunCreateRequestBuilder {
-    outcome: Option<Outcome>,
+    outcome: Option<RunGetOutcome>,
     procedure_id: Option<String>,
     deployment_id: NullableField<String>,
     procedure_version: NullableField<String>,
@@ -2905,7 +2905,7 @@ impl RunCreateRequestBuilder {
     /// Set the `outcome` field.
     ///
     /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
-    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -3220,7 +3220,7 @@ pub struct RunListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ids: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcomes: Option<Vec<Outcome>>,
+    pub outcomes: Option<Vec<RunGetOutcome>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub procedure_ids: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -3288,7 +3288,7 @@ impl RunListRequest {
 pub struct RunListRequestBuilder {
     search_query: Option<String>,
     ids: Option<Vec<String>>,
-    outcomes: Option<Vec<Outcome>>,
+    outcomes: Option<Vec<RunGetOutcome>>,
     procedure_ids: Option<Vec<String>>,
     procedure_versions: Option<Vec<String>>,
     serial_numbers: Option<Vec<String>>,
@@ -3329,7 +3329,7 @@ impl RunListRequestBuilder {
     }
 
     /// Set the `outcomes` field.
-    pub fn outcomes(mut self, value: impl Into<Vec<Outcome>>) -> Self {
+    pub fn outcomes(mut self, value: impl Into<Vec<RunGetOutcome>>) -> Self {
         self.outcomes = Some(value.into());
         self
     }
@@ -3872,7 +3872,7 @@ pub struct RunListData {
     /// ISO 8601 duration of the run (computed from started_at and ended_at).
     pub duration: String,
     /// Final result of the run execution.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// Additional notes or documentation about this test run.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
@@ -3909,7 +3909,7 @@ pub struct RunListDataBuilder {
     started_at: Option<chrono::DateTime<chrono::Utc>>,
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     duration: Option<String>,
-    outcome: Option<Outcome>,
+    outcome: Option<RunGetOutcome>,
     docstring: NullableField<String>,
     created_by_user: NullableField<RunListCreatedByUser>,
     created_by_station: NullableField<RunListCreatedByStation>,
@@ -3963,7 +3963,7 @@ impl RunListDataBuilder {
     /// Set the `outcome` field.
     ///
     /// Final result of the run execution.
-    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -4568,7 +4568,7 @@ impl RunGetUnitBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetValidators {
     /// Validation result: PASS, FAIL, or UNSET.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Comparison operator used for validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub operator: Option<String>,
@@ -4599,7 +4599,7 @@ impl RunGetValidators {
 /// Builder for [`RunGetValidators`].
 #[derive(Debug, Default)]
 pub struct RunGetValidatorsBuilder {
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     operator: Option<String>,
     expected_value: Option<serde_json::Value>,
     expression: Option<String>,
@@ -4613,7 +4613,7 @@ impl RunGetValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Validation result: PASS, FAIL, or UNSET.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -4697,7 +4697,7 @@ impl RunGetValidatorsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetAggregationsValidators {
     /// Validation result: PASS, FAIL, or UNSET.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Comparison operator used for validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub operator: Option<String>,
@@ -4728,7 +4728,7 @@ impl RunGetAggregationsValidators {
 /// Builder for [`RunGetAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunGetAggregationsValidatorsBuilder {
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     operator: Option<String>,
     expected_value: Option<serde_json::Value>,
     expression: Option<String>,
@@ -4742,7 +4742,7 @@ impl RunGetAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Validation result: PASS, FAIL, or UNSET.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -4832,7 +4832,7 @@ pub struct RunGetAggregations {
     pub r#type: String,
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcome: Option<ValidatorsOutcome>,
+    pub outcome: Option<Outcome>,
     /// Computed aggregation value. Type depends on aggregation type.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<serde_json::Value>,
@@ -4856,7 +4856,7 @@ impl RunGetAggregations {
 pub struct RunGetAggregationsBuilder {
     id: Option<String>,
     r#type: Option<String>,
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     value: Option<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunGetAggregationsValidators>>,
@@ -4882,7 +4882,7 @@ impl RunGetAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -4942,7 +4942,7 @@ impl RunGetAggregationsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetDataSeriesValidators {
     /// Validation result: PASS, FAIL, or UNSET.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Comparison operator used for validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub operator: Option<String>,
@@ -4973,7 +4973,7 @@ impl RunGetDataSeriesValidators {
 /// Builder for [`RunGetDataSeriesValidators`].
 #[derive(Debug, Default)]
 pub struct RunGetDataSeriesValidatorsBuilder {
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     operator: Option<String>,
     expected_value: Option<serde_json::Value>,
     expression: Option<String>,
@@ -4987,7 +4987,7 @@ impl RunGetDataSeriesValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Validation result: PASS, FAIL, or UNSET.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5071,7 +5071,7 @@ impl RunGetDataSeriesValidatorsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetDataSeriesAggregationsValidators {
     /// Validation result: PASS, FAIL, or UNSET.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Comparison operator used for validation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub operator: Option<String>,
@@ -5102,7 +5102,7 @@ impl RunGetDataSeriesAggregationsValidators {
 /// Builder for [`RunGetDataSeriesAggregationsValidators`].
 #[derive(Debug, Default)]
 pub struct RunGetDataSeriesAggregationsValidatorsBuilder {
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     operator: Option<String>,
     expected_value: Option<serde_json::Value>,
     expression: Option<String>,
@@ -5116,7 +5116,7 @@ impl RunGetDataSeriesAggregationsValidatorsBuilder {
     /// Set the `outcome` field.
     ///
     /// Validation result: PASS, FAIL, or UNSET.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5206,7 +5206,7 @@ pub struct RunGetDataSeriesAggregations {
     pub r#type: String,
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcome: Option<ValidatorsOutcome>,
+    pub outcome: Option<Outcome>,
     /// Computed aggregation value. Type depends on aggregation type.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<serde_json::Value>,
@@ -5230,7 +5230,7 @@ impl RunGetDataSeriesAggregations {
 pub struct RunGetDataSeriesAggregationsBuilder {
     id: Option<String>,
     r#type: Option<String>,
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     value: Option<serde_json::Value>,
     unit: NullableField<String>,
     validators: NullableField<Vec<RunGetDataSeriesAggregationsValidators>>,
@@ -5256,7 +5256,7 @@ impl RunGetDataSeriesAggregationsBuilder {
     /// Set the `outcome` field.
     ///
     /// Aggregation validation result: PASS, FAIL, UNSET, or null if no validators.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5445,7 +5445,7 @@ pub struct RunGetMeasurements {
     /// Measurement name.
     pub name: String,
     /// Measurement validation result.
-    pub outcome: ValidatorsOutcome,
+    pub outcome: Outcome,
     /// Units of measurement. Not present for multi-dimensional measurements (units are per data series).
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub units: NullableField<String>,
@@ -5475,7 +5475,7 @@ impl RunGetMeasurements {
 pub struct RunGetMeasurementsBuilder {
     id: Option<String>,
     name: Option<String>,
-    outcome: Option<ValidatorsOutcome>,
+    outcome: Option<Outcome>,
     units: NullableField<String>,
     validators: Option<Vec<RunGetValidators>>,
     aggregations: NullableField<Vec<RunGetAggregations>>,
@@ -5503,7 +5503,7 @@ impl RunGetMeasurementsBuilder {
     /// Set the `outcome` field.
     ///
     /// Measurement validation result.
-    pub fn outcome(mut self, value: impl Into<ValidatorsOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5585,7 +5585,7 @@ pub struct RunGetPhases {
     /// Phase name.
     pub name: String,
     /// Phase execution result.
-    pub outcome: PhasesOutcome,
+    pub outcome: RunGetPhasesOutcome,
     /// ISO 8601 timestamp when the phase started.
     pub started_at: chrono::DateTime<chrono::Utc>,
     /// ISO 8601 timestamp when the phase ended.
@@ -5614,7 +5614,7 @@ impl RunGetPhases {
 pub struct RunGetPhasesBuilder {
     id: Option<String>,
     name: Option<String>,
-    outcome: Option<PhasesOutcome>,
+    outcome: Option<RunGetPhasesOutcome>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     duration: Option<String>,
@@ -5643,7 +5643,7 @@ impl RunGetPhasesBuilder {
     /// Set the `outcome` field.
     ///
     /// Phase execution result.
-    pub fn outcome(mut self, value: impl Into<PhasesOutcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetPhasesOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -5933,7 +5933,7 @@ pub struct RunGetResponse {
     /// ISO 8601 duration of the run (computed from started_at and ended_at).
     pub duration: String,
     /// Final result of the run execution.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// Additional notes or documentation about this test run.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
@@ -6361,7 +6361,7 @@ pub struct UnitListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub procedure_ids: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub outcomes: Option<Vec<Outcome>>,
+    pub outcomes: Option<Vec<RunGetOutcome>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_after: Option<chrono::DateTime<chrono::Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -6420,7 +6420,7 @@ pub struct UnitListRequestBuilder {
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
     procedure_ids: Option<Vec<String>>,
-    outcomes: Option<Vec<Outcome>>,
+    outcomes: Option<Vec<RunGetOutcome>>,
     started_after: Option<chrono::DateTime<chrono::Utc>>,
     started_before: Option<chrono::DateTime<chrono::Utc>>,
     latest_only: Option<bool>,
@@ -6484,7 +6484,7 @@ impl UnitListRequestBuilder {
     }
 
     /// Set the `outcomes` field.
-    pub fn outcomes(mut self, value: impl Into<Vec<Outcome>>) -> Self {
+    pub fn outcomes(mut self, value: impl Into<Vec<RunGetOutcome>>) -> Self {
         self.outcomes = Some(value.into());
         self
     }
@@ -6756,7 +6756,7 @@ pub struct UnitListLastRun {
     /// Unique identifier for the run.
     pub id: String,
     /// Final result of the test run execution.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// ISO 8601 timestamp when the run execution started.
     pub started_at: chrono::DateTime<chrono::Utc>,
     /// ISO 8601 timestamp when the run execution completed. Null if still running.
@@ -6778,7 +6778,7 @@ impl UnitListLastRun {
 #[derive(Debug, Default)]
 pub struct UnitListLastRunBuilder {
     id: Option<String>,
-    outcome: Option<Outcome>,
+    outcome: Option<RunGetOutcome>,
     started_at: Option<chrono::DateTime<chrono::Utc>>,
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     procedure: Option<UnitListProcedure>,
@@ -6796,7 +6796,7 @@ impl UnitListLastRunBuilder {
     /// Set the `outcome` field.
     ///
     /// Final result of the test run execution.
-    pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
+    pub fn outcome(mut self, value: impl Into<RunGetOutcome>) -> Self {
         self.outcome = Some(value.into());
         self
     }
@@ -7572,7 +7572,7 @@ pub struct UnitGetCreatedDuring {
     /// ISO 8601 duration of the run (computed from started_at and ended_at).
     pub duration: String,
     /// Final result of the run execution.
-    pub outcome: Outcome,
+    pub outcome: RunGetOutcome,
     /// Procedure information.
     pub procedure: UnitGetProcedure,
 }
@@ -10284,52 +10284,52 @@ pub struct UserListResponse {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ImportCreateFromFilesItems {
+pub struct ImportStructuredItems {
     /// ID of a previously uploaded file (via Initialize and Finalize upload).
     pub upload_id: String,
     /// Source format of the uploaded file. OPENHTF for OpenHTF JSON logs; WATS for Virinco WATS WSJF (JSON); WSXF for WATS WSXF (XML); ATML for IEEE 1671 ATML Test Results (XML); TESTSTAND for NI TestStand native XML reports; STDF for binary STDF V4 datalogs; ATDF for ATDF (the ASCII text form of STDF). For CSV/tabular files use the dedicated tabular import endpoint.
-    pub importer: ImportCreateFromFilesImporter,
+    pub importer: ImportStructuredImporter,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ImportCreateFromFilesRequest {
+pub struct ImportStructuredRequest {
     /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub items: Vec<ImportCreateFromFilesItems>,
+    pub items: Vec<ImportStructuredItems>,
 }
 
-impl ImportCreateFromFilesRequest {
+impl ImportStructuredRequest {
     /// Create a builder for this type.
-    pub fn builder() -> ImportCreateFromFilesRequestBuilder {
-        ImportCreateFromFilesRequestBuilder::default()
+    pub fn builder() -> ImportStructuredRequestBuilder {
+        ImportStructuredRequestBuilder::default()
     }
 }
 
-/// Builder for [`ImportCreateFromFilesRequest`].
+/// Builder for [`ImportStructuredRequest`].
 #[derive(Debug, Default)]
-pub struct ImportCreateFromFilesRequestBuilder {
-    items: Option<Vec<ImportCreateFromFilesItems>>,
+pub struct ImportStructuredRequestBuilder {
+    items: Option<Vec<ImportStructuredItems>>,
 }
 
-impl ImportCreateFromFilesRequestBuilder {
+impl ImportStructuredRequestBuilder {
     /// Set the `items` field.
     ///
     /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
-    pub fn items(mut self, value: impl Into<Vec<ImportCreateFromFilesItems>>) -> Self {
+    pub fn items(mut self, value: impl Into<Vec<ImportStructuredItems>>) -> Self {
         self.items = Some(value.into());
         self
     }
 
     /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<ImportCreateFromFilesRequest, String> {
-        Ok(ImportCreateFromFilesRequest {
+    pub fn build(self) -> std::result::Result<ImportStructuredRequest, String> {
+        Ok(ImportStructuredRequest {
             items: self.items.unwrap_or_default(),
         })
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ImportCreateFromFilesResults {
+pub struct ImportStructuredResults {
     /// Upload ID this result corresponds to.
     pub upload_id: String,
     /// Whether the file was imported successfully.
@@ -10345,16 +10345,16 @@ pub struct ImportCreateFromFilesResults {
     pub error: Option<String>,
 }
 
-impl ImportCreateFromFilesResults {
+impl ImportStructuredResults {
     /// Create a builder for this type.
-    pub fn builder() -> ImportCreateFromFilesResultsBuilder {
-        ImportCreateFromFilesResultsBuilder::default()
+    pub fn builder() -> ImportStructuredResultsBuilder {
+        ImportStructuredResultsBuilder::default()
     }
 }
 
-/// Builder for [`ImportCreateFromFilesResults`].
+/// Builder for [`ImportStructuredResults`].
 #[derive(Debug, Default)]
-pub struct ImportCreateFromFilesResultsBuilder {
+pub struct ImportStructuredResultsBuilder {
     upload_id: Option<String>,
     success: Option<bool>,
     id: Option<String>,
@@ -10362,7 +10362,7 @@ pub struct ImportCreateFromFilesResultsBuilder {
     error: Option<String>,
 }
 
-impl ImportCreateFromFilesResultsBuilder {
+impl ImportStructuredResultsBuilder {
     /// Set the `upload_id` field.
     ///
     /// Upload ID this result corresponds to.
@@ -10404,8 +10404,8 @@ impl ImportCreateFromFilesResultsBuilder {
     }
 
     /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<ImportCreateFromFilesResults, String> {
-        Ok(ImportCreateFromFilesResults {
+    pub fn build(self) -> std::result::Result<ImportStructuredResults, String> {
+        Ok(ImportStructuredResults {
             upload_id: self.upload_id
                 .ok_or_else(|| "missing required field: upload_id".to_string())?,
             success: self.success
@@ -10419,8 +10419,846 @@ impl ImportCreateFromFilesResultsBuilder {
 
 /// Run imported successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ImportCreateFromFilesResponse {
+pub struct ImportStructuredResponse {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub results: Vec<ImportCreateFromFilesResults>,
+    pub results: Vec<ImportStructuredResults>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularSerialNumber1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularSerialNumber2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularPartNumber1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularPartNumber2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularOutcome1 {
+    pub column: String,
+    #[serde(rename = "valueMap")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value_map: Option<std::collections::HashMap<String, RunGetOutcome>>,
+}
+
+impl ImportTabularOutcome1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularOutcome1Builder {
+        ImportTabularOutcome1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularOutcome1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularOutcome1Builder {
+    column: Option<String>,
+    value_map: Option<std::collections::HashMap<String, RunGetOutcome>>,
+}
+
+impl ImportTabularOutcome1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `valueMap` field.
+    pub fn value_map(mut self, value: impl Into<std::collections::HashMap<String, RunGetOutcome>>) -> Self {
+        self.value_map = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularOutcome1, String> {
+        Ok(ImportTabularOutcome1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            value_map: self.value_map,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularOutcome2 {
+    pub value: RunGetOutcome,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularStartedAt1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularStartedAt2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularEndedAt1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularEndedAt2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularRevisionNumber1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularRevisionNumber2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularBatchNumber1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularBatchNumber2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularOperatedBy1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularOperatedBy2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularDocstring1 {
+    pub column: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularDocstring2 {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularFields {
+    pub serial_number: serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub part_number: Option<serde_json::Value>,
+    pub outcome: serde_json::Value,
+    pub started_at: serde_json::Value,
+    pub ended_at: serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision_number: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub batch_number: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operated_by: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub docstring: Option<serde_json::Value>,
+}
+
+impl ImportTabularFields {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularFieldsBuilder {
+        ImportTabularFieldsBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularFields`].
+#[derive(Debug, Default)]
+pub struct ImportTabularFieldsBuilder {
+    serial_number: Option<serde_json::Value>,
+    part_number: Option<serde_json::Value>,
+    outcome: Option<serde_json::Value>,
+    started_at: Option<serde_json::Value>,
+    ended_at: Option<serde_json::Value>,
+    revision_number: Option<serde_json::Value>,
+    batch_number: Option<serde_json::Value>,
+    operated_by: Option<serde_json::Value>,
+    docstring: Option<serde_json::Value>,
+}
+
+impl ImportTabularFieldsBuilder {
+    /// Set the `serial_number` field.
+    pub fn serial_number(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `part_number` field.
+    pub fn part_number(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.part_number = Some(value.into());
+        self
+    }
+
+    /// Set the `outcome` field.
+    pub fn outcome(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.outcome = Some(value.into());
+        self
+    }
+
+    /// Set the `started_at` field.
+    pub fn started_at(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.started_at = Some(value.into());
+        self
+    }
+
+    /// Set the `ended_at` field.
+    pub fn ended_at(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.ended_at = Some(value.into());
+        self
+    }
+
+    /// Set the `revision_number` field.
+    pub fn revision_number(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.revision_number = Some(value.into());
+        self
+    }
+
+    /// Set the `batch_number` field.
+    pub fn batch_number(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.batch_number = Some(value.into());
+        self
+    }
+
+    /// Set the `operated_by` field.
+    pub fn operated_by(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.operated_by = Some(value.into());
+        self
+    }
+
+    /// Set the `docstring` field.
+    pub fn docstring(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.docstring = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularFields, String> {
+        Ok(ImportTabularFields {
+            serial_number: self.serial_number
+                .ok_or_else(|| "missing required field: serial_number".to_string())?,
+            part_number: self.part_number,
+            outcome: self.outcome
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
+            started_at: self.started_at
+                .ok_or_else(|| "missing required field: started_at".to_string())?,
+            ended_at: self.ended_at
+                .ok_or_else(|| "missing required field: ended_at".to_string())?,
+            revision_number: self.revision_number,
+            batch_number: self.batch_number,
+            operated_by: self.operated_by,
+            docstring: self.docstring,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularMeasurements1 {
+    pub layout: String,
+    #[serde(rename = "nameColumn")]
+    pub name_column: String,
+    #[serde(rename = "valueColumn")]
+    pub value_column: String,
+    #[serde(rename = "unitsColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub units_column: Option<String>,
+    #[serde(rename = "lowerColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lower_column: Option<String>,
+    #[serde(rename = "upperColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub upper_column: Option<String>,
+    #[serde(rename = "outcomeColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome_column: Option<String>,
+    #[serde(rename = "phaseColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phase_column: Option<String>,
+}
+
+impl ImportTabularMeasurements1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularMeasurements1Builder {
+        ImportTabularMeasurements1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularMeasurements1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularMeasurements1Builder {
+    layout: Option<String>,
+    name_column: Option<String>,
+    value_column: Option<String>,
+    units_column: Option<String>,
+    lower_column: Option<String>,
+    upper_column: Option<String>,
+    outcome_column: Option<String>,
+    phase_column: Option<String>,
+}
+
+impl ImportTabularMeasurements1Builder {
+    /// Set the `layout` field.
+    pub fn layout(mut self, value: impl Into<String>) -> Self {
+        self.layout = Some(value.into());
+        self
+    }
+
+    /// Set the `nameColumn` field.
+    pub fn name_column(mut self, value: impl Into<String>) -> Self {
+        self.name_column = Some(value.into());
+        self
+    }
+
+    /// Set the `valueColumn` field.
+    pub fn value_column(mut self, value: impl Into<String>) -> Self {
+        self.value_column = Some(value.into());
+        self
+    }
+
+    /// Set the `unitsColumn` field.
+    pub fn units_column(mut self, value: impl Into<String>) -> Self {
+        self.units_column = Some(value.into());
+        self
+    }
+
+    /// Set the `lowerColumn` field.
+    pub fn lower_column(mut self, value: impl Into<String>) -> Self {
+        self.lower_column = Some(value.into());
+        self
+    }
+
+    /// Set the `upperColumn` field.
+    pub fn upper_column(mut self, value: impl Into<String>) -> Self {
+        self.upper_column = Some(value.into());
+        self
+    }
+
+    /// Set the `outcomeColumn` field.
+    pub fn outcome_column(mut self, value: impl Into<String>) -> Self {
+        self.outcome_column = Some(value.into());
+        self
+    }
+
+    /// Set the `phaseColumn` field.
+    pub fn phase_column(mut self, value: impl Into<String>) -> Self {
+        self.phase_column = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularMeasurements1, String> {
+        Ok(ImportTabularMeasurements1 {
+            layout: self.layout
+                .ok_or_else(|| "missing required field: layout".to_string())?,
+            name_column: self.name_column
+                .ok_or_else(|| "missing required field: nameColumn".to_string())?,
+            value_column: self.value_column
+                .ok_or_else(|| "missing required field: valueColumn".to_string())?,
+            units_column: self.units_column,
+            lower_column: self.lower_column,
+            upper_column: self.upper_column,
+            outcome_column: self.outcome_column,
+            phase_column: self.phase_column,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularColumns {
+    pub column: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub units: Option<String>,
+    #[serde(rename = "lowerLimit")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lower_limit: Option<f64>,
+    #[serde(rename = "upperLimit")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub upper_limit: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
+}
+
+impl ImportTabularColumns {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularColumnsBuilder {
+        ImportTabularColumnsBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularColumns`].
+#[derive(Debug, Default)]
+pub struct ImportTabularColumnsBuilder {
+    column: Option<String>,
+    name: Option<String>,
+    units: Option<String>,
+    lower_limit: Option<f64>,
+    upper_limit: Option<f64>,
+    phase: Option<String>,
+}
+
+impl ImportTabularColumnsBuilder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `units` field.
+    pub fn units(mut self, value: impl Into<String>) -> Self {
+        self.units = Some(value.into());
+        self
+    }
+
+    /// Set the `lowerLimit` field.
+    pub fn lower_limit(mut self, value: impl Into<f64>) -> Self {
+        self.lower_limit = Some(value.into());
+        self
+    }
+
+    /// Set the `upperLimit` field.
+    pub fn upper_limit(mut self, value: impl Into<f64>) -> Self {
+        self.upper_limit = Some(value.into());
+        self
+    }
+
+    /// Set the `phase` field.
+    pub fn phase(mut self, value: impl Into<String>) -> Self {
+        self.phase = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularColumns, String> {
+        Ok(ImportTabularColumns {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            name: self.name,
+            units: self.units,
+            lower_limit: self.lower_limit,
+            upper_limit: self.upper_limit,
+            phase: self.phase,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularMeasurements2 {
+    pub layout: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub columns: Vec<ImportTabularColumns>,
+}
+
+impl ImportTabularMeasurements2 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularMeasurements2Builder {
+        ImportTabularMeasurements2Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularMeasurements2`].
+#[derive(Debug, Default)]
+pub struct ImportTabularMeasurements2Builder {
+    layout: Option<String>,
+    columns: Option<Vec<ImportTabularColumns>>,
+}
+
+impl ImportTabularMeasurements2Builder {
+    /// Set the `layout` field.
+    pub fn layout(mut self, value: impl Into<String>) -> Self {
+        self.layout = Some(value.into());
+        self
+    }
+
+    /// Set the `columns` field.
+    pub fn columns(mut self, value: impl Into<Vec<ImportTabularColumns>>) -> Self {
+        self.columns = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularMeasurements2, String> {
+        Ok(ImportTabularMeasurements2 {
+            layout: self.layout
+                .ok_or_else(|| "missing required field: layout".to_string())?,
+            columns: self.columns.unwrap_or_default(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularMeasurements3 {
+    pub layout: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularPhases {
+    #[serde(rename = "nameColumn")]
+    pub name_column: String,
+    #[serde(rename = "outcomeColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome_column: Option<String>,
+    #[serde(rename = "startedColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub started_column: Option<String>,
+    #[serde(rename = "endedColumn")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended_column: Option<String>,
+    #[serde(rename = "valueMap")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value_map: Option<std::collections::HashMap<String, RunGetPhasesOutcome>>,
+}
+
+impl ImportTabularPhases {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularPhasesBuilder {
+        ImportTabularPhasesBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularPhases`].
+#[derive(Debug, Default)]
+pub struct ImportTabularPhasesBuilder {
+    name_column: Option<String>,
+    outcome_column: Option<String>,
+    started_column: Option<String>,
+    ended_column: Option<String>,
+    value_map: Option<std::collections::HashMap<String, RunGetPhasesOutcome>>,
+}
+
+impl ImportTabularPhasesBuilder {
+    /// Set the `nameColumn` field.
+    pub fn name_column(mut self, value: impl Into<String>) -> Self {
+        self.name_column = Some(value.into());
+        self
+    }
+
+    /// Set the `outcomeColumn` field.
+    pub fn outcome_column(mut self, value: impl Into<String>) -> Self {
+        self.outcome_column = Some(value.into());
+        self
+    }
+
+    /// Set the `startedColumn` field.
+    pub fn started_column(mut self, value: impl Into<String>) -> Self {
+        self.started_column = Some(value.into());
+        self
+    }
+
+    /// Set the `endedColumn` field.
+    pub fn ended_column(mut self, value: impl Into<String>) -> Self {
+        self.ended_column = Some(value.into());
+        self
+    }
+
+    /// Set the `valueMap` field.
+    pub fn value_map(mut self, value: impl Into<std::collections::HashMap<String, RunGetPhasesOutcome>>) -> Self {
+        self.value_map = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularPhases, String> {
+        Ok(ImportTabularPhases {
+            name_column: self.name_column
+                .ok_or_else(|| "missing required field: nameColumn".to_string())?,
+            outcome_column: self.outcome_column,
+            started_column: self.started_column,
+            ended_column: self.ended_column,
+            value_map: self.value_map,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularMetadata {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub column: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    pub key: String,
+}
+
+impl ImportTabularMetadata {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularMetadataBuilder {
+        ImportTabularMetadataBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularMetadata`].
+#[derive(Debug, Default)]
+pub struct ImportTabularMetadataBuilder {
+    column: Option<String>,
+    value: Option<String>,
+    key: Option<String>,
+}
+
+impl ImportTabularMetadataBuilder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `value` field.
+    pub fn value(mut self, value: impl Into<String>) -> Self {
+        self.value = Some(value.into());
+        self
+    }
+
+    /// Set the `key` field.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularMetadata, String> {
+        Ok(ImportTabularMetadata {
+            column: self.column,
+            value: self.value,
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularUnitMetadata {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub column: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+    pub key: String,
+}
+
+impl ImportTabularUnitMetadata {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularUnitMetadataBuilder {
+        ImportTabularUnitMetadataBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularUnitMetadata`].
+#[derive(Debug, Default)]
+pub struct ImportTabularUnitMetadataBuilder {
+    column: Option<String>,
+    value: Option<String>,
+    key: Option<String>,
+}
+
+impl ImportTabularUnitMetadataBuilder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `value` field.
+    pub fn value(mut self, value: impl Into<String>) -> Self {
+        self.value = Some(value.into());
+        self
+    }
+
+    /// Set the `key` field.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularUnitMetadata, String> {
+        Ok(ImportTabularUnitMetadata {
+            column: self.column,
+            value: self.value,
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+        })
+    }
+}
+
+/// Inline column mapping describing how source columns feed TofuPilot fields. Provide this OR template_id, not both.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularMapping {
+    pub fields: ImportTabularFields,
+    pub measurements: serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phases: Option<ImportTabularPhases>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Vec<ImportTabularMetadata>>,
+    #[serde(rename = "unitMetadata")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unit_metadata: Option<Vec<ImportTabularUnitMetadata>>,
+}
+
+impl ImportTabularMapping {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularMappingBuilder {
+        ImportTabularMappingBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularMapping`].
+#[derive(Debug, Default)]
+pub struct ImportTabularMappingBuilder {
+    fields: Option<ImportTabularFields>,
+    measurements: Option<serde_json::Value>,
+    phases: Option<ImportTabularPhases>,
+    metadata: Option<Vec<ImportTabularMetadata>>,
+    unit_metadata: Option<Vec<ImportTabularUnitMetadata>>,
+}
+
+impl ImportTabularMappingBuilder {
+    /// Set the `fields` field.
+    pub fn fields(mut self, value: impl Into<ImportTabularFields>) -> Self {
+        self.fields = Some(value.into());
+        self
+    }
+
+    /// Set the `measurements` field.
+    pub fn measurements(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.measurements = Some(value.into());
+        self
+    }
+
+    /// Set the `phases` field.
+    pub fn phases(mut self, value: impl Into<ImportTabularPhases>) -> Self {
+        self.phases = Some(value.into());
+        self
+    }
+
+    /// Set the `metadata` field.
+    pub fn metadata(mut self, value: impl Into<Vec<ImportTabularMetadata>>) -> Self {
+        self.metadata = Some(value.into());
+        self
+    }
+
+    /// Set the `unitMetadata` field.
+    pub fn unit_metadata(mut self, value: impl Into<Vec<ImportTabularUnitMetadata>>) -> Self {
+        self.unit_metadata = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularMapping, String> {
+        Ok(ImportTabularMapping {
+            fields: self.fields
+                .ok_or_else(|| "missing required field: fields".to_string())?,
+            measurements: self.measurements
+                .ok_or_else(|| "missing required field: measurements".to_string())?,
+            phases: self.phases,
+            metadata: self.metadata,
+            unit_metadata: self.unit_metadata,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularRequest {
+    /// ID of a previously uploaded tabular file.
+    pub upload_id: String,
+    /// Procedure to attach the imported run to. Always overrides any procedure referenced in the file. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
+    pub procedure_id: String,
+    /// Inline column mapping describing how source columns feed TofuPilot fields. Provide this OR template_id, not both.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mapping: Option<ImportTabularMapping>,
+    /// ID of a saved mapping template to apply. Provide this OR mapping, not both.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<String>,
+}
+
+impl ImportTabularRequest {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularRequestBuilder {
+        ImportTabularRequestBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularRequest`].
+#[derive(Debug, Default)]
+pub struct ImportTabularRequestBuilder {
+    upload_id: Option<String>,
+    procedure_id: Option<String>,
+    mapping: Option<ImportTabularMapping>,
+    template_id: Option<String>,
+}
+
+impl ImportTabularRequestBuilder {
+    /// Set the `upload_id` field.
+    ///
+    /// ID of a previously uploaded tabular file.
+    pub fn upload_id(mut self, value: impl Into<String>) -> Self {
+        self.upload_id = Some(value.into());
+        self
+    }
+
+    /// Set the `procedure_id` field.
+    ///
+    /// Procedure to attach the imported run to. Always overrides any procedure referenced in the file. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
+    pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
+        self.procedure_id = Some(value.into());
+        self
+    }
+
+    /// Set the `mapping` field.
+    ///
+    /// Inline column mapping describing how source columns feed TofuPilot fields. Provide this OR template_id, not both.
+    pub fn mapping(mut self, value: impl Into<ImportTabularMapping>) -> Self {
+        self.mapping = Some(value.into());
+        self
+    }
+
+    /// Set the `template_id` field.
+    ///
+    /// ID of a saved mapping template to apply. Provide this OR mapping, not both.
+    pub fn template_id(mut self, value: impl Into<String>) -> Self {
+        self.template_id = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularRequest, String> {
+        Ok(ImportTabularRequest {
+            upload_id: self.upload_id
+                .ok_or_else(|| "missing required field: upload_id".to_string())?,
+            procedure_id: self.procedure_id
+                .ok_or_else(|| "missing required field: procedure_id".to_string())?,
+            mapping: self.mapping,
+            template_id: self.template_id,
+        })
+    }
+}
+
+/// Run imported successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularResponse {
+    /// ID of the created run.
+    pub id: String,
+    /// ID of the file import record that links this run to the uploaded file.
+    pub file_import_id: String,
 }
 

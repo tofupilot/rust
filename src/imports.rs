@@ -15,20 +15,27 @@ impl<'a> ImportsClient<'a> {
         Self { client }
     }
 
-    /// Import runs from files
+    /// Import runs from structured files
     ///
-    /// Import one or more previously uploaded files (OpenHTF, WATS WSJF/WSXF, ATML, NI TestStand, STDF, or ATDF) in a single call. Each file is parsed independently and its result returned per-item, so one bad file does not fail the others. A file that contains several units (a multi-part STDF/ATDF datalog or a multi-report WSXF/TestStand document) creates one run per unit; all run ids are returned in the item’s `ids`.
-    pub fn create_from_files(&self) -> CreateFromFilesBuilder<'a> {
-        CreateFromFilesBuilder::new(self.client)
+    /// Import one or more previously uploaded structured files (OpenHTF, WATS WSJF/WSXF, ATML, NI TestStand, STDF, or ATDF) in a single call. Each file is parsed independently and its result returned per-item, so one bad file does not fail the others. A file that contains several units (a multi-part STDF/ATDF datalog or a multi-report WSXF/TestStand document) creates one run per unit; all run ids are returned in the item’s `ids`.
+    pub fn structured(&self) -> StructuredBuilder<'a> {
+        StructuredBuilder::new(self.client)
+    }
+
+    /// Import a run from a tabular file
+    ///
+    /// Import a previously uploaded tabular file (CSV or Excel) by mapping its columns to TofuPilot fields. Provide exactly one of `mapping` (an inline column mapping) or `template_id` (a mapping template saved in the dashboard). The `procedure_id` is required and overrides any procedure referenced in the file.
+    pub fn tabular(&self) -> TabularBuilder<'a> {
+        TabularBuilder::new(self.client)
     }
 
 }
 
 // ---------------------------------------------------------------------------
-// CreateFromFilesBuilder
+// StructuredBuilder
 // ---------------------------------------------------------------------------
 
-/// Builder for [`ImportsClient::create_from_files`].
+/// Builder for [`ImportsClient::structured`].
 ///
 /// # Example
 ///
@@ -38,7 +45,7 @@ impl<'a> ImportsClient<'a> {
 /// # #[tokio::main]
 /// # async fn main() -> tofupilot::Result<()> {
 /// let client = TofuPilot::new("your-api-key");
-/// let response = client.imports().create_from_files()
+/// let response = client.imports().structured()
 ///     .items("value")
 ///     .send()
 ///     .await?;
@@ -46,14 +53,14 @@ impl<'a> ImportsClient<'a> {
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct CreateFromFilesBuilder<'a> {
+pub struct StructuredBuilder<'a> {
     client: &'a TofuPilot,
-    items: Option<Vec<ImportCreateFromFilesItems>>,
+    items: Option<Vec<ImportStructuredItems>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
 
-impl<'a> CreateFromFilesBuilder<'a> {
+impl<'a> StructuredBuilder<'a> {
     pub(crate) fn new(client: &'a TofuPilot) -> Self {
         Self {
             client,
@@ -66,13 +73,13 @@ impl<'a> CreateFromFilesBuilder<'a> {
     /// Set the `items` field.
     ///
     /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
-    pub fn items(mut self, value: impl Into<Vec<ImportCreateFromFilesItems>>) -> Self {
+    pub fn items(mut self, value: impl Into<Vec<ImportStructuredItems>>) -> Self {
         self.items = Some(value.into());
         self
     }
 
     /// Set the full request body (alternative to setting individual fields).
-    pub fn body(mut self, body: ImportCreateFromFilesRequest) -> Self {
+    pub fn body(mut self, body: ImportStructuredRequest) -> Self {
         self.items = Some(body.items);
         self
     }
@@ -90,13 +97,13 @@ impl<'a> CreateFromFilesBuilder<'a> {
     }
 
     /// Send the request.
-    pub async fn send(self) -> Result<ImportCreateFromFilesResponse> {
+    pub async fn send(self) -> Result<ImportStructuredResponse> {
 
         let base_url = self.server_url
             .as_deref()
             .unwrap_or(&self.client.config.base_url);
 
-        let url = format!("{}{}", base_url, "/v2/import");
+        let url = format!("{}{}", base_url, "/v2/imports/structured");
 
         let mut request = self.client.http.request(
             reqwest::Method::POST,
@@ -108,17 +115,163 @@ impl<'a> CreateFromFilesBuilder<'a> {
         }
 
 
-        let body = ImportCreateFromFilesRequest {
+        let body = ImportStructuredRequest {
             items: self.items.unwrap_or_default(),
         };
         request = request.json(&body);
 
         let response = self.client.execute(
             request,
-            "import-createFromFiles",
+            "import-structured",
             base_url,
         ).await?;
-        let result: ImportCreateFromFilesResponse = response.json().await?;
+        let result: ImportStructuredResponse = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TabularBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`ImportsClient::tabular`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.imports().tabular()
+///     .upload_id("value")
+///     .procedure_id("value")
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct TabularBuilder<'a> {
+    client: &'a TofuPilot,
+    upload_id: Option<String>,
+    procedure_id: Option<String>,
+    mapping: Option<ImportTabularMapping>,
+    template_id: Option<String>,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> TabularBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            upload_id: None,
+            procedure_id: None,
+            mapping: None,
+            template_id: None,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Set the `upload_id` field.
+    ///
+    /// ID of a previously uploaded tabular file.
+    pub fn upload_id(mut self, value: impl Into<String>) -> Self {
+        self.upload_id = Some(value.into());
+        self
+    }
+
+    /// Set the `procedure_id` field.
+    ///
+    /// Procedure to attach the imported run to. Always overrides any procedure referenced in the file. Create the procedure in the app first, then find the auto-generated ID on the procedure page.
+    pub fn procedure_id(mut self, value: impl Into<String>) -> Self {
+        self.procedure_id = Some(value.into());
+        self
+    }
+
+    /// Set the `mapping` field.
+    ///
+    /// Inline column mapping describing how source columns feed TofuPilot fields. Provide this OR template_id, not both.
+    pub fn mapping(mut self, value: impl Into<ImportTabularMapping>) -> Self {
+        self.mapping = Some(value.into());
+        self
+    }
+
+    /// Set the `template_id` field.
+    ///
+    /// ID of a saved mapping template to apply. Provide this OR mapping, not both.
+    pub fn template_id(mut self, value: impl Into<String>) -> Self {
+        self.template_id = Some(value.into());
+        self
+    }
+
+    /// Set the full request body (alternative to setting individual fields).
+    pub fn body(mut self, body: ImportTabularRequest) -> Self {
+        self.upload_id = Some(body.upload_id);
+        self.procedure_id = Some(body.procedure_id);
+        if body.mapping.is_some() {
+            self.mapping = body.mapping;
+        }
+        if body.template_id.is_some() {
+            self.template_id = body.template_id;
+        }
+        self
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<ImportTabularResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/imports/tabular");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::POST,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+        let body = ImportTabularRequest {
+            upload_id: self.upload_id
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: upload_id".to_string(),
+                ))?,
+            procedure_id: self.procedure_id
+                .ok_or_else(|| Error::Validation(
+                    "missing required field: procedure_id".to_string(),
+                ))?,
+            mapping: self.mapping,
+            template_id: self.template_id,
+        };
+        request = request.json(&body);
+
+        let response = self.client.execute(
+            request,
+            "import-tabular",
+            base_url,
+        ).await?;
+        let result: ImportTabularResponse = response.json().await?;
         Ok(result)
     }
 }
