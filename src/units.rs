@@ -620,7 +620,10 @@ impl<'a> ListBuilder<'a> {
             request = request.query(&[("sort_order", val.to_string())]);
         }
         if let Some(ref val) = self.metadata {
-            request = request.query(&[("metadata", val.to_string())]);
+            // Object/record query param: send as a single JSON-encoded string.
+            if let Ok(encoded) = serde_json::to_string(val) {
+                request = request.query(&[("metadata", encoded)]);
+            }
         }
         if let Some(ref val) = self.include_metadata {
             request = request.query(&[("include_metadata", val.to_string())]);
