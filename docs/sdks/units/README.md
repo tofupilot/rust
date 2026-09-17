@@ -126,6 +126,7 @@ async fn main() -> tofupilot::Result<()> {
 | Error Type | Status Code | Content Type |
 | --- | --- | --- |
 | `Error::Unauthorized` | 401 | application/json |
+| `Error::UnexpectedStatus(408)` | 408 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
@@ -211,6 +212,7 @@ async fn main() -> tofupilot::Result<()> {
 | `Error::BadRequest` | 400 | application/json |
 | `Error::Unauthorized` | 401 | application/json |
 | `Error::NotFound` | 404 | application/json |
+| `Error::UnexpectedStatus(408)` | 408 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
