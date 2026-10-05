@@ -139,7 +139,7 @@ impl<'a> ListBuilder<'a> {
 
     /// Set the `timestamp_after` query parameter.
     ///
-    /// Filter logs with timestamp after this date (inclusive).
+    /// Filter logs recorded at or after this timestamp.
     pub fn timestamp_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
         self.timestamp_after = Some(value.into());
         self
@@ -147,7 +147,7 @@ impl<'a> ListBuilder<'a> {
 
     /// Set the `timestamp_before` query parameter.
     ///
-    /// Filter logs with timestamp before this date (inclusive).
+    /// Filter logs recorded at or before this timestamp.
     pub fn timestamp_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
         self.timestamp_before = Some(value.into());
         self

@@ -394,7 +394,7 @@ impl std::fmt::Display for PhaseGetOutcome {
     }
 }
 
-/// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
+/// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Outcome {
     #[serde(rename = "PASS")]
@@ -887,7 +887,7 @@ impl ProcedureListMetaBuilder {
 /// Procedures retrieved successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ProcedureListResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<ProcedureListData>,
     pub meta: ProcedureListMeta,
 }
@@ -1068,10 +1068,10 @@ pub struct ProcedureGetResponse {
     /// Total number of runs for this procedure.
     pub runs_count: f64,
     /// List of recent runs for this procedure.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub recent_runs: Vec<ProcedureGetRecentRuns>,
     /// Stations linked to this procedure.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub stations: Vec<ProcedureGetStations>,
 }
 
@@ -1719,7 +1719,7 @@ impl RunCreateAggregationsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateXAxis {
     /// Array of numeric data points for this axis.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<f64>,
     /// Unit for this axis.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -2207,7 +2207,7 @@ impl RunCreateYAxisAggregationsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateYAxis {
     /// Array of numeric data points for this axis.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<f64>,
     /// Unit for this axis.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -2695,7 +2695,7 @@ impl RunCreateMeasurementsAggregationsBuilder {
 pub struct RunCreateMeasurements {
     /// Name identifier for the measurement. Each measurement should have a descriptive name that identifies the specific data point being captured. Analytics at measurement level are computed using this name as unique identifier.
     pub name: String,
-    /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
+    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
     pub outcome: Outcome,
     /// Data series with numeric data, unit, and optional validators/aggregations.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -2762,7 +2762,7 @@ impl RunCreateMeasurementsBuilder {
 
     /// Set the `outcome` field.
     ///
-    /// Result of the measurement validation. Use PASS when measurement meets all criteria, FAIL when measurement is outside acceptable limits or validation fails, UNSET when no validation was performed.
+    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
     pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self
@@ -4522,7 +4522,7 @@ impl RunListMetaBuilder {
 /// Paginated list of test runs matching the filter criteria.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<RunListData>,
     pub meta: RunListMeta,
 }
@@ -4530,7 +4530,7 @@ pub struct RunListResponse {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunDeleteRequest {
     /// Run IDs to delete.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub ids: Vec<String>,
 }
 
@@ -4568,7 +4568,7 @@ impl RunDeleteRequestBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunDeleteResponse {
     /// IDs of runs that were successfully deleted
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub id: Vec<String>,
 }
 
@@ -5708,7 +5708,7 @@ impl RunGetDataSeriesAggregationsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetDataSeries {
     /// Array of numeric data points for this series.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<f64>,
     /// Unit for this data series.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -5991,7 +5991,7 @@ pub struct RunGetPhases {
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
     /// Array of measurements taken during this phase.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub measurements: Vec<RunGetMeasurements>,
 }
 
@@ -7266,7 +7266,7 @@ pub struct UnitListData {
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub parent: NullableField<UnitListParent>,
     /// Child units assembled into this unit. Limited to 10 results; use Get Unit endpoint for complete list.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub children: Vec<UnitListChildren>,
     /// Part information with the specific revision this unit is built from.
     pub part: UnitListPart,
@@ -7505,7 +7505,7 @@ impl UnitListMetaBuilder {
 /// Units retrieved successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitListResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<UnitListData>,
     pub meta: UnitListMeta,
 }
@@ -7513,7 +7513,7 @@ pub struct UnitListResponse {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitDeleteRequest {
     /// Array of unit serial numbers to delete.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub serial_numbers: Vec<String>,
 }
 
@@ -7551,7 +7551,7 @@ impl UnitDeleteRequestBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitDeleteResponse {
     /// IDs of units that were successfully deleted
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub id: Vec<String>,
 }
 
@@ -8311,7 +8311,7 @@ pub struct UnitDeleteAttachmentRequest {
     /// Serial number of the unit. Matched case-insensitively.
     pub serial_number: String,
     /// Attachment IDs to delete
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub ids: Vec<String>,
 }
 
@@ -8360,7 +8360,7 @@ impl UnitDeleteAttachmentRequestBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UnitDeleteAttachmentResponse {
     /// IDs of attachments that were deleted
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub ids: Vec<String>,
 }
 
@@ -8709,7 +8709,7 @@ pub struct PartListData {
     /// Time at which the part was created.
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// List of revisions for this part.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub revisions: Vec<PartListRevisions>,
     /// Custom metadata key/value pairs on the part. Only present when the request sets `include_metadata=true`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -8855,7 +8855,7 @@ impl PartListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PartListResponse {
     /// List of parts matching the search criteria.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<PartListData>,
     /// Pagination metadata.
     pub meta: PartListMeta,
@@ -8955,7 +8955,7 @@ pub struct PartGetResponse {
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_station: NullableField<PartGetCreatedByStation>,
     /// List of revisions for this part.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub revisions: Vec<PartGetRevisions>,
     /// Custom metadata key/value pairs on the part.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -9058,7 +9058,7 @@ pub struct PartDeleteResponse {
     pub id: String,
     /// IDs of all revisions that were deleted with the part.
     #[serde(rename = "deletedRevisionIds")]
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub deleted_revision_ids: Vec<String>,
 }
 
@@ -9168,7 +9168,7 @@ pub struct PartGetRevisionResponse {
     /// Part associated with this revision.
     pub part: PartGetRevisionPart,
     /// List of units created with this revision.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub units: Vec<PartGetRevisionUnits>,
     /// Custom metadata key/value pairs on the revision.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -9449,7 +9449,7 @@ pub struct BatchGetResponse {
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub created_by_station: NullableField<BatchGetCreatedByStation>,
     /// Array of units in this batch. Empty array if no units.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub units: Vec<BatchGetUnits>,
 }
 
@@ -9462,7 +9462,7 @@ pub struct BatchDeleteRequest {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchDeleteResponse {
     /// IDs of successfully deleted batches
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub id: Vec<String>,
 }
 
@@ -9858,7 +9858,7 @@ impl BatchListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchListResponse {
     /// Array of batches matching the query.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<BatchListData>,
     /// Pagination metadata.
     pub meta: BatchListMeta,
@@ -10188,7 +10188,7 @@ pub struct StationListData {
     /// Name of the station
     pub name: String,
     /// Procedures linked to this station
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub procedures: Vec<StationListProcedures>,
     /// Total number of procedures linked to this station
     pub procedures_count: f64,
@@ -10338,7 +10338,7 @@ impl StationListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StationListResponse {
     /// List of stations matching the search criteria
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<StationListData>,
     /// Pagination metadata
     pub meta: StationListMeta,
@@ -10641,7 +10641,7 @@ pub struct StationGetCurrentResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
     /// Procedures linked to this station with recent run counts
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub procedures: Vec<StationGetCurrentProcedures>,
     /// Slug of the organization this station belongs to
     pub organization_slug: String,
@@ -10956,7 +10956,7 @@ pub struct StationGetResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
     /// Procedures linked to this station with recent run counts
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub procedures: Vec<StationGetProcedures>,
     /// Slug of the organization this station belongs to
     pub organization_slug: String,
@@ -11143,7 +11143,7 @@ pub struct ImportStructuredItems {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportStructuredRequest {
     /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub items: Vec<ImportStructuredItems>,
 }
 
@@ -11269,7 +11269,7 @@ impl ImportStructuredResultsBuilder {
 /// Run imported successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportStructuredResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub results: Vec<ImportStructuredResults>,
 }
 
@@ -11717,7 +11717,7 @@ impl ImportTabularColumnsBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularMeasurements2 {
     pub layout: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub columns: Vec<ImportTabularColumns>,
 }
 
@@ -12119,10 +12119,10 @@ pub struct LogListRequest {
     pub search_query: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub levels: Option<Vec<Level>>,
-    /// Filter logs with timestamp after this date (inclusive).
+    /// Filter logs recorded at or after this timestamp.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timestamp_after: Option<chrono::DateTime<chrono::Utc>>,
-    /// Filter logs with timestamp before this date (inclusive).
+    /// Filter logs recorded at or before this timestamp.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timestamp_before: Option<chrono::DateTime<chrono::Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -12219,7 +12219,7 @@ impl LogListRequestBuilder {
 
     /// Set the `timestamp_after` field.
     ///
-    /// Filter logs with timestamp after this date (inclusive).
+    /// Filter logs recorded at or after this timestamp.
     pub fn timestamp_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
         self.timestamp_after = Some(value.into());
         self
@@ -12227,7 +12227,7 @@ impl LogListRequestBuilder {
 
     /// Set the `timestamp_before` field.
     ///
-    /// Filter logs with timestamp before this date (inclusive).
+    /// Filter logs recorded at or before this timestamp.
     pub fn timestamp_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
         self.timestamp_before = Some(value.into());
         self
@@ -12704,7 +12704,7 @@ impl LogListMetaBuilder {
 /// Logs retrieved successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LogListResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<LogListData>,
     pub meta: LogListMeta,
 }
@@ -13348,7 +13348,7 @@ impl PhaseListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PhaseListResponse {
     /// The list of phases matching the request.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<PhaseListData>,
     /// Pagination metadata.
     pub meta: PhaseListMeta,
@@ -14110,7 +14110,7 @@ impl PhaseGetDataSeriesAggregationsBuilder {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PhaseGetDataSeries {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub units: Option<String>,
@@ -14416,7 +14416,7 @@ pub struct PhaseGetResponse {
     pub retry_count: i64,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub measurements: Vec<PhaseGetMeasurements>,
     pub run: PhaseGetRun,
     pub procedure: PhaseGetProcedure,
@@ -15199,7 +15199,7 @@ impl MeasurementListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MeasurementListResponse {
     /// The list of measurements matching the request.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<MeasurementListData>,
     /// Pagination metadata.
     pub meta: MeasurementListMeta,
@@ -15961,7 +15961,7 @@ impl MeasurementGetDataSeriesAggregationsBuilder {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MeasurementGetDataSeries {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub units: Option<String>,
@@ -16452,7 +16452,7 @@ pub struct DeploymentListData {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repository: Option<DeploymentListRepository>,
     /// Stations this deployment has been pushed to.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub stations: Vec<DeploymentListStations>,
 }
 
@@ -16657,7 +16657,7 @@ impl DeploymentListMetaBuilder {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeploymentListResponse {
     /// The list of deployments matching the request.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub data: Vec<DeploymentListData>,
     /// Pagination metadata.
     pub meta: DeploymentListMeta,
@@ -16973,10 +16973,10 @@ pub struct DeploymentGetResponse {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub commit: Option<DeploymentGetCommit>,
     /// Stations linked to the procedure, with per-station push state. pushed_at is null when this deployment has not been pushed to that station.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub stations: Vec<DeploymentGetStations>,
     /// Build log lines for this deployment, ordered by sequence. Empty if the build has not produced logs.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub build_logs: Vec<DeploymentGetBuildLogs>,
 }
 

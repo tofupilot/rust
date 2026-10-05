@@ -8,8 +8,8 @@
 | `procedure_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `search_query` | `Option<String>` | :heavy_minus_sign: | N/A |
 | `levels` | `Option<Vec<Level>>` | :heavy_minus_sign: | N/A |
-| `timestamp_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | Filter logs with timestamp after this date (inclusive). |
-| `timestamp_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | Filter logs with timestamp before this date (inclusive). |
+| `timestamp_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | Filter logs recorded at or after this timestamp. |
+| `timestamp_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | Filter logs recorded at or before this timestamp. |
 | `source_files` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `run_ids` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `run_outcomes` | `Option<Vec<LogGetOutcome>>` | :heavy_minus_sign: | N/A |
