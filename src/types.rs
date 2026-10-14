@@ -1387,7 +1387,7 @@ pub struct RunCreateValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -1446,7 +1446,7 @@ impl RunCreateValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self
@@ -1507,7 +1507,7 @@ pub struct RunCreateAggregationsValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -1566,7 +1566,7 @@ impl RunCreateAggregationsValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self
@@ -1875,7 +1875,7 @@ pub struct RunCreateYAxisValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -1934,7 +1934,7 @@ impl RunCreateYAxisValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self
@@ -1995,7 +1995,7 @@ pub struct RunCreateYAxisAggregationsValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -2054,7 +2054,7 @@ impl RunCreateYAxisAggregationsValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self
@@ -2363,7 +2363,7 @@ pub struct RunCreateMeasurementsValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -2422,7 +2422,7 @@ impl RunCreateMeasurementsValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self
@@ -2483,7 +2483,7 @@ pub struct RunCreateMeasurementsAggregationsValidators {
     /// Comparison operator: ">", ">=", "<", "<=", "==", "!=", "matches", "in", "range"
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub operator: NullableField<String>,
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub expected_value: NullableField<serde_json::Value>,
     /// Original expression string for display/audit purposes.
@@ -2542,7 +2542,7 @@ impl RunCreateMeasurementsAggregationsValidatorsBuilder {
 
     /// Set the `expected_value` field.
     ///
-    /// Expected value for comparison. Type depends on operator.
+    /// Expected value for comparison. A number, string, boolean, or a list of numbers or strings is stored structurally; an object or a mixed list is stored as the validator expression with the given outcome.
     pub fn expected_value(mut self, value: impl Into<serde_json::Value>) -> Self {
         self.expected_value = NullableField::Value(value.into());
         self

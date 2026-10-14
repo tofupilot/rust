@@ -90,7 +90,12 @@ impl std::fmt::Display for ApiError {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", issue.message)?;
+                let path = issue.path_string();
+                if path.is_empty() {
+                    write!(f, "{}", issue.message)?;
+                } else {
+                    write!(f, "{}: {}", path, issue.message)?;
+                }
             }
             write!(f, ")")?;
         }
@@ -103,6 +108,37 @@ impl std::fmt::Display for ApiError {
 pub struct ApiErrorIssue {
     /// Issue message
     pub message: String,
+    /// Where in the request body the issue sits, as the server's
+    /// validator reports it: object keys and array indices, root first
+    /// (`["phases", 2, "measurements", 4, "validators", 0, "expected_value"]`).
+    /// Empty when the server gave none.
+    #[serde(default)]
+    pub path: Vec<serde_json::Value>,
+}
+
+impl ApiErrorIssue {
+    /// The issue's path in dotted form, `phases[2].measurements[4].validators[0].expected_value`.
+    pub fn path_string(&self) -> String {
+        let mut out = String::new();
+        for segment in &self.path {
+            match segment {
+                serde_json::Value::Number(n) => out.push_str(&format!("[{n}]")),
+                serde_json::Value::String(s) => {
+                    if !out.is_empty() {
+                        out.push('.');
+                    }
+                    out.push_str(s);
+                }
+                other => {
+                    if !out.is_empty() {
+                        out.push('.');
+                    }
+                    out.push_str(&other.to_string());
+                }
+            }
+        }
+        out
+    }
 }
 
 impl Error {
@@ -141,5 +177,32 @@ impl Error {
             Error::UnexpectedStatus { status, .. } => *status == 429 || *status >= 500,
             _ => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod error_display_tests {
+    use super::*;
+
+    #[test]
+    fn a_validation_error_names_the_field() {
+        // The shape `trpc-rest` returns for a refused body: a generic
+        // message plus the validator's issues, each with its path.
+        let body = r#"{"message":"Input validation failed","code":"BAD_REQUEST","issues":[{"message":"Invalid input","path":["phases",2,"measurements",4,"validators",0,"expected_value"]}]}"#;
+        let err = Error::from_response(400, body);
+        let Error::BadRequest(api) = &err else {
+            panic!("expected BadRequest, got {err:?}");
+        };
+        assert_eq!(
+            api.to_string(),
+            "Input validation failed (phases[2].measurements[4].validators[0].expected_value: Invalid input)"
+        );
+    }
+
+    #[test]
+    fn an_issue_without_a_path_prints_its_message_alone() {
+        let body = r#"{"message":"Input validation failed","code":"BAD_REQUEST","issues":[{"message":"ended_at must be after started_at"}]}"#;
+        let Error::BadRequest(api) = Error::from_response(400, body) else { panic!() };
+        assert_eq!(api.to_string(), "Input validation failed (ended_at must be after started_at)");
     }
 }
