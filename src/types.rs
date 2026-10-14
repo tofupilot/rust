@@ -322,6 +322,24 @@ impl std::fmt::Display for DeploymentGetDeploymentMode {
     }
 }
 
+/// What the API key identifies: a station or a user. The matching object below is set, the other is null.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum IdentityWhoamiType {
+    #[serde(rename = "station")]
+    Station,
+    #[serde(rename = "user")]
+    User,
+}
+
+impl std::fmt::Display for IdentityWhoamiType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Station => write!(f, "station"),
+            Self::User => write!(f, "user"),
+        }
+    }
+}
+
 /// Git provider
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Provider {
@@ -11079,45 +11097,25 @@ pub struct StationRemoveResponse {
     pub id: String,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-pub struct UserListRequest {
-    /// If true, returns only the current authenticated user
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub current: Option<bool>,
-}
-
-impl UserListRequest {
-    /// Create a builder for this type.
-    pub fn builder() -> UserListRequestBuilder {
-        UserListRequestBuilder::default()
-    }
-}
-
-/// Builder for [`UserListRequest`].
-#[derive(Debug, Default)]
-pub struct UserListRequestBuilder {
-    current: Option<bool>,
-}
-
-impl UserListRequestBuilder {
-    /// Set the `current` field.
-    ///
-    /// If true, returns only the current authenticated user
-    pub fn current(mut self, value: impl Into<bool>) -> Self {
-        self.current = Some(value.into());
-        self
-    }
-
-    /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<UserListRequest, String> {
-        Ok(UserListRequest {
-            current: self.current,
-        })
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UserListResponse {
+    /// Unique identifier for the user.
+    pub id: String,
+    /// Email address of the user.
+    pub email: String,
+    /// Display name of the user.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Profile image URL for the user.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+    /// Whether the user is banned.
+    pub banned: bool,
+}
+
+/// Current user retrieved successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UserGetCurrentResponse {
     /// Unique identifier for the user.
     pub id: String,
     /// Email address of the user.
@@ -16978,5 +16976,105 @@ pub struct DeploymentGetResponse {
     /// Build log lines for this deployment, ordered by sequence. Empty if the build has not produced logs.
     #[serde(default)]
     pub build_logs: Vec<DeploymentGetBuildLogs>,
+}
+
+/// The station the request is authenticated as; null for a user key.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IdentityWhoamiStation {
+    /// Unique identifier for the station.
+    pub id: String,
+    /// Display name of the station.
+    pub name: String,
+}
+
+/// The user the request is authenticated as; null for a station key.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IdentityWhoamiUser {
+    /// Unique identifier for the user.
+    pub id: String,
+    /// Email address of the user.
+    pub email: String,
+    /// Display name of the user.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
+impl IdentityWhoamiUser {
+    /// Create a builder for this type.
+    pub fn builder() -> IdentityWhoamiUserBuilder {
+        IdentityWhoamiUserBuilder::default()
+    }
+}
+
+/// Builder for [`IdentityWhoamiUser`].
+#[derive(Debug, Default)]
+pub struct IdentityWhoamiUserBuilder {
+    id: Option<String>,
+    email: Option<String>,
+    name: Option<String>,
+}
+
+impl IdentityWhoamiUserBuilder {
+    /// Set the `id` field.
+    ///
+    /// Unique identifier for the user.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `email` field.
+    ///
+    /// Email address of the user.
+    pub fn email(mut self, value: impl Into<String>) -> Self {
+        self.email = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Display name of the user.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<IdentityWhoamiUser, String> {
+        Ok(IdentityWhoamiUser {
+            id: self.id
+                .ok_or_else(|| "missing required field: id".to_string())?,
+            email: self.email
+                .ok_or_else(|| "missing required field: email".to_string())?,
+            name: self.name,
+        })
+    }
+}
+
+/// The organization the key belongs to.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IdentityWhoamiOrganization {
+    /// Unique identifier for the organization.
+    pub id: String,
+    /// URL slug of the organization.
+    pub slug: String,
+    /// Display name of the organization.
+    pub name: String,
+}
+
+/// Identity retrieved successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IdentityWhoamiResponse {
+    /// What the API key identifies: a station or a user. The matching object below is set, the other is null.
+    #[serde(rename = "type")]
+    pub r#type: IdentityWhoamiType,
+    /// The station the request is authenticated as; null for a user key.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub station: Option<IdentityWhoamiStation>,
+    /// The user the request is authenticated as; null for a station key.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<IdentityWhoamiUser>,
+    /// The organization the key belongs to.
+    pub organization: IdentityWhoamiOrganization,
 }
 

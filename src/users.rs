@@ -17,9 +17,16 @@ impl<'a> UsersClient<'a> {
 
     /// List users
     ///
-    /// List users in your organization. Set `current=true` to return only the authenticated user.
+    /// List users in your organization. For the user behind the key, use GET /v2/users/current.
     pub fn list(&self) -> ListBuilder<'a> {
         ListBuilder::new(self.client)
+    }
+
+    /// Get current user
+    ///
+    /// Get the user the request is authenticated as. The mirror of GET /v2/stations/current: a station key is refused.
+    pub fn get_current(&self) -> GetCurrentBuilder<'a> {
+        GetCurrentBuilder::new(self.client)
     }
 
 }
@@ -47,7 +54,6 @@ impl<'a> UsersClient<'a> {
 #[derive(Debug)]
 pub struct ListBuilder<'a> {
     client: &'a TofuPilot,
-    current: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -56,18 +62,9 @@ impl<'a> ListBuilder<'a> {
     pub(crate) fn new(client: &'a TofuPilot) -> Self {
         Self {
             client,
-            current: None,
             server_url: None,
             timeout: None,
         }
-    }
-
-    /// Set the `current` query parameter.
-    ///
-    /// If true, returns only the current authenticated user
-    pub fn current(mut self, value: impl Into<bool>) -> Self {
-        self.current = Some(value.into());
-        self
     }
 
     /// Override the server URL for this request.
@@ -100,9 +97,6 @@ impl<'a> ListBuilder<'a> {
             request = request.timeout(timeout);
         }
 
-        if let Some(ref val) = self.current {
-            request = request.query(&[("current", val.to_string())]);
-        }
 
 
         let response = self.client.execute(
@@ -111,6 +105,84 @@ impl<'a> ListBuilder<'a> {
             base_url,
         ).await?;
         let result: Vec<UserListResponse> = response.json().await?;
+        Ok(result)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GetCurrentBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`UsersClient::get_current`].
+///
+/// # Example
+///
+/// ```no_run
+/// use tofupilot::TofuPilot;
+///
+/// # #[tokio::main]
+/// # async fn main() -> tofupilot::Result<()> {
+/// let client = TofuPilot::new("your-api-key");
+/// let response = client.users().get_current()
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct GetCurrentBuilder<'a> {
+    client: &'a TofuPilot,
+    server_url: Option<String>,
+    timeout: Option<std::time::Duration>,
+}
+
+impl<'a> GetCurrentBuilder<'a> {
+    pub(crate) fn new(client: &'a TofuPilot) -> Self {
+        Self {
+            client,
+            server_url: None,
+            timeout: None,
+        }
+    }
+
+    /// Override the server URL for this request.
+    pub fn server_url(mut self, url: impl Into<String>) -> Self {
+        self.server_url = Some(url.into());
+        self
+    }
+
+    /// Override the timeout for this request.
+    pub fn timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.timeout = Some(timeout);
+        self
+    }
+
+    /// Send the request.
+    pub async fn send(self) -> Result<UserGetCurrentResponse> {
+
+        let base_url = self.server_url
+            .as_deref()
+            .unwrap_or(&self.client.config.base_url);
+
+        let url = format!("{}{}", base_url, "/v2/users/current");
+
+        let mut request = self.client.http.request(
+            reqwest::Method::GET,
+            &url,
+        );
+
+        if let Some(timeout) = self.timeout {
+            request = request.timeout(timeout);
+        }
+
+
+
+        let response = self.client.execute(
+            request,
+            "user-getCurrent",
+            base_url,
+        ).await?;
+        let result: UserGetCurrentResponse = response.json().await?;
         Ok(result)
     }
 }
