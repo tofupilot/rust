@@ -412,7 +412,7 @@ impl std::fmt::Display for PhaseGetOutcome {
     }
 }
 
-/// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
+/// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when the value is empty and has no validators, or when a validator could not run (for example a numeric limit on a string). Otherwise use PASS, including for a recorded value with no validators.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Outcome {
     #[serde(rename = "PASS")]
@@ -2713,7 +2713,7 @@ impl RunCreateMeasurementsAggregationsBuilder {
 pub struct RunCreateMeasurements {
     /// Name identifier for the measurement. Each measurement should have a descriptive name that identifies the specific data point being captured. Analytics at measurement level are computed using this name as unique identifier.
     pub name: String,
-    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
+    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when the value is empty and has no validators, or when a validator could not run (for example a numeric limit on a string). Otherwise use PASS, including for a recorded value with no validators.
     pub outcome: Outcome,
     /// Data series with numeric data, unit, and optional validators/aggregations.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -2780,7 +2780,7 @@ impl RunCreateMeasurementsBuilder {
 
     /// Set the `outcome` field.
     ///
-    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when there are no validators or one could not run (for example a numeric limit on a string). Otherwise use PASS.
+    /// Result of the measurement validation, across the validators on the measurement, its aggregations and its axes. Use FAIL when any validator fails, including on an empty value. Otherwise use UNSET when the value is empty and has no validators, or when a validator could not run (for example a numeric limit on a string). Otherwise use PASS, including for a recorded value with no validators.
     pub fn outcome(mut self, value: impl Into<Outcome>) -> Self {
         self.outcome = Some(value.into());
         self

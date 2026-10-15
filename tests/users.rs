@@ -8,9 +8,8 @@ async fn list_users_returns_list() {
 }
 
 #[tokio::test]
-async fn list_users_current() {
-    let result = client().users().list().current(true).send().await.unwrap();
-    assert_eq!(1, result.len());
-    assert!(!result[0].id.is_empty());
-    assert!(!result[0].email.is_empty());
+async fn get_current_user() {
+    let me = client().users().get_current().send().await.unwrap();
+    assert!(!me.id.is_empty());
+    assert!(!me.email.is_empty());
 }
