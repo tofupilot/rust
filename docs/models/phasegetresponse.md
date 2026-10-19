@@ -13,6 +13,7 @@ Phase retrieved successfully
 | `ended_at` | `chrono::DateTime<chrono::Utc>` | :heavy_check_mark: | N/A |
 | `duration` | `String` | :heavy_check_mark: | N/A |
 | `retry_count` | `i64` | :heavy_check_mark: | N/A |
+| `sequence_path` | `Option<String>` | :heavy_minus_sign: | Path of the sequence call the phase ran in. Null for a phase written in the procedure itself. |
 | `docstring` | `NullableField<String>` | :heavy_minus_sign: | N/A |
 | `measurements` | `Vec<PhaseGetMeasurements>` | :heavy_check_mark: | N/A |
 | `run` | `PhaseGetRun` | :heavy_check_mark: | N/A |

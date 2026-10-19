@@ -433,6 +433,36 @@ impl std::fmt::Display for Outcome {
     }
 }
 
+/// Outcome of the sequence call, aggregated over its phases like a run outcome: ERROR, then ABORTED, then TIMEOUT, then FAIL, then PASS. SKIP when none of its phases ran.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SequencesOutcome {
+    #[serde(rename = "PASS")]
+    Pass,
+    #[serde(rename = "FAIL")]
+    Fail,
+    #[serde(rename = "ERROR")]
+    Error,
+    #[serde(rename = "TIMEOUT")]
+    Timeout,
+    #[serde(rename = "ABORTED")]
+    Aborted,
+    #[serde(rename = "SKIP")]
+    Skip,
+}
+
+impl std::fmt::Display for SequencesOutcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pass => write!(f, "PASS"),
+            Self::Fail => write!(f, "FAIL"),
+            Self::Error => write!(f, "ERROR"),
+            Self::Timeout => write!(f, "TIMEOUT"),
+            Self::Aborted => write!(f, "ABORTED"),
+            Self::Skip => write!(f, "SKIP"),
+        }
+    }
+}
+
 /// Severity level of the log message following standard system logging levels. Use DEBUG for detailed diagnostic information, INFO for general execution information, WARNING for unexpected events or potential issues, ERROR for serious problems that prevented function execution, CRITICAL for severe errors that may cause program termination.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Level {
@@ -2942,6 +2972,9 @@ pub struct RunCreatePhases {
     /// Zero-based retry attempt index for this phase. 0 = first attempt, 1 = first retry, etc. When a phase is retried, all attempts are stored with the same name and increasing retry_count.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retry_count: Option<i64>,
+    /// Path of the sequence call this phase ran in, matching the `path` of one entry of the run `sequences` array. Omit for a phase written in the procedure itself. Phase analytics identify a phase by its sequence path and its name together, so the same phase name inside two sequence calls counts as two phases.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub sequence_path: NullableField<String>,
 }
 
 impl RunCreatePhases {
@@ -2961,6 +2994,7 @@ pub struct RunCreatePhasesBuilder {
     docstring: NullableField<String>,
     measurements: NullableField<Vec<RunCreateMeasurements>>,
     retry_count: Option<i64>,
+    sequence_path: NullableField<String>,
 }
 
 impl RunCreatePhasesBuilder {
@@ -3032,6 +3066,20 @@ impl RunCreatePhasesBuilder {
         self
     }
 
+    /// Set the `sequence_path` field.
+    ///
+    /// Path of the sequence call this phase ran in, matching the `path` of one entry of the run `sequences` array. Omit for a phase written in the procedure itself. Phase analytics identify a phase by its sequence path and its name together, so the same phase name inside two sequence calls counts as two phases.
+    pub fn sequence_path(mut self, value: impl Into<String>) -> Self {
+        self.sequence_path = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `sequence_path` to null.
+    pub fn sequence_path_null(mut self) -> Self {
+        self.sequence_path = NullableField::Null;
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunCreatePhases, String> {
         Ok(RunCreatePhases {
@@ -3046,6 +3094,127 @@ impl RunCreatePhasesBuilder {
             docstring: self.docstring,
             measurements: self.measurements,
             retry_count: self.retry_count,
+            sequence_path: self.sequence_path,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateSequences {
+    /// Path of the sequence call: its instance key, prefixed by the keys of the calls it is nested in, joined by `/`. Unique within the run. A path with several segments requires its parent path (everything before the last `/`) to be present in the same array.
+    pub path: String,
+    /// Display name of the sequence call, as declared on the call or in the sequence file.
+    pub name: String,
+    /// The sequence reference as written in the procedure (`uses:`), kept for display.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub source: NullableField<String>,
+    /// Outcome of the sequence call, aggregated over its phases like a run outcome: ERROR, then ABORTED, then TIMEOUT, then FAIL, then PASS. SKIP when none of its phases ran.
+    pub outcome: SequencesOutcome,
+    /// ISO 8601 timestamp when the first phase of the call started. Omit for a skipped call.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub started_at: NullableField<chrono::DateTime<chrono::Utc>>,
+    /// ISO 8601 timestamp when the last phase of the call ended. Omit for a skipped call.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub ended_at: NullableField<chrono::DateTime<chrono::Utc>>,
+}
+
+impl RunCreateSequences {
+    /// Create a builder for this type.
+    pub fn builder() -> RunCreateSequencesBuilder {
+        RunCreateSequencesBuilder::default()
+    }
+}
+
+/// Builder for [`RunCreateSequences`].
+#[derive(Debug, Default)]
+pub struct RunCreateSequencesBuilder {
+    path: Option<String>,
+    name: Option<String>,
+    source: NullableField<String>,
+    outcome: Option<SequencesOutcome>,
+    started_at: NullableField<chrono::DateTime<chrono::Utc>>,
+    ended_at: NullableField<chrono::DateTime<chrono::Utc>>,
+}
+
+impl RunCreateSequencesBuilder {
+    /// Set the `path` field.
+    ///
+    /// Path of the sequence call: its instance key, prefixed by the keys of the calls it is nested in, joined by `/`. Unique within the run. A path with several segments requires its parent path (everything before the last `/`) to be present in the same array.
+    pub fn path(mut self, value: impl Into<String>) -> Self {
+        self.path = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Display name of the sequence call, as declared on the call or in the sequence file.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `source` field.
+    ///
+    /// The sequence reference as written in the procedure (`uses:`), kept for display.
+    pub fn source(mut self, value: impl Into<String>) -> Self {
+        self.source = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `source` to null.
+    pub fn source_null(mut self) -> Self {
+        self.source = NullableField::Null;
+        self
+    }
+
+    /// Set the `outcome` field.
+    ///
+    /// Outcome of the sequence call, aggregated over its phases like a run outcome: ERROR, then ABORTED, then TIMEOUT, then FAIL, then PASS. SKIP when none of its phases ran.
+    pub fn outcome(mut self, value: impl Into<SequencesOutcome>) -> Self {
+        self.outcome = Some(value.into());
+        self
+    }
+
+    /// Set the `started_at` field.
+    ///
+    /// ISO 8601 timestamp when the first phase of the call started. Omit for a skipped call.
+    pub fn started_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.started_at = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `started_at` to null.
+    pub fn started_at_null(mut self) -> Self {
+        self.started_at = NullableField::Null;
+        self
+    }
+
+    /// Set the `ended_at` field.
+    ///
+    /// ISO 8601 timestamp when the last phase of the call ended. Omit for a skipped call.
+    pub fn ended_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.ended_at = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `ended_at` to null.
+    pub fn ended_at_null(mut self) -> Self {
+        self.ended_at = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunCreateSequences, String> {
+        Ok(RunCreateSequences {
+            path: self.path
+                .ok_or_else(|| "missing required field: path".to_string())?,
+            name: self.name
+                .ok_or_else(|| "missing required field: name".to_string())?,
+            source: self.source,
+            outcome: self.outcome
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
+            started_at: self.started_at,
+            ended_at: self.ended_at,
         })
     }
 }
@@ -3115,6 +3284,9 @@ pub struct RunCreateRequest {
     /// Array of test phases with measurements and results. Each phase represents a distinct stage of the test execution with timing information, outcome status, and optional measurements. If no phases are specified, the run will be created without phase-level organization of test data.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phases: Option<Vec<RunCreatePhases>>,
+    /// Sequence calls of the run: the groups of phases the procedure composed with `uses:`, each with its own outcome. A phase joins its call through its `sequence_path` field, which must name one `path` of this array. A nested call (`calibration/dmm`) needs its parent path (`calibration`) in the same array, in any order. Omit for a procedure without sequences.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub sequences: NullableField<Vec<RunCreateSequences>>,
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub logs: Option<Vec<RunCreateLogs>>,
@@ -3154,6 +3326,7 @@ pub struct RunCreateRequestBuilder {
     sub_units: Option<Vec<String>>,
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
+    sequences: NullableField<Vec<RunCreateSequences>>,
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -3334,6 +3507,20 @@ impl RunCreateRequestBuilder {
         self
     }
 
+    /// Set the `sequences` field.
+    ///
+    /// Sequence calls of the run: the groups of phases the procedure composed with `uses:`, each with its own outcome. A phase joins its call through its `sequence_path` field, which must name one `path` of this array. A nested call (`calibration/dmm`) needs its parent path (`calibration`) in the same array, in any order. Omit for a procedure without sequences.
+    pub fn sequences(mut self, value: impl Into<Vec<RunCreateSequences>>) -> Self {
+        self.sequences = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `sequences` to null.
+    pub fn sequences_null(mut self) -> Self {
+        self.sequences = NullableField::Null;
+        self
+    }
+
     /// Set the `logs` field.
     ///
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
@@ -3384,6 +3571,7 @@ impl RunCreateRequestBuilder {
             sub_units: self.sub_units,
             docstring: self.docstring,
             phases: self.phases,
+            sequences: self.sequences,
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
@@ -3598,6 +3786,9 @@ pub struct RunListRequest {
     /// When true, includes the run metadata array in the response. Defaults to false to keep payloads small.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub include_metadata: Option<bool>,
+    /// When true, includes the top-level sequence calls of each run (the calls made in the procedure itself, not the calls nested in them). Defaults to false to keep payloads small.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_sequences: Option<bool>,
 }
 
 impl RunListRequest {
@@ -3643,6 +3834,7 @@ pub struct RunListRequestBuilder {
     sort_order: Option<ListSortOrder>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     include_metadata: Option<bool>,
+    include_sequences: Option<bool>,
 }
 
 impl RunListRequestBuilder {
@@ -3854,6 +4046,14 @@ impl RunListRequestBuilder {
         self
     }
 
+    /// Set the `include_sequences` field.
+    ///
+    /// When true, includes the top-level sequence calls of each run (the calls made in the procedure itself, not the calls nested in them). Defaults to false to keep payloads small.
+    pub fn include_sequences(mut self, value: impl Into<bool>) -> Self {
+        self.include_sequences = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunListRequest, String> {
         Ok(RunListRequest {
@@ -3890,6 +4090,7 @@ impl RunListRequestBuilder {
             sort_order: self.sort_order,
             metadata: self.metadata,
             include_metadata: self.include_metadata,
+            include_sequences: self.include_sequences,
         })
     }
 }
@@ -4232,6 +4433,148 @@ impl RunListUnitBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunListSequences {
+    pub id: String,
+    /// Instance keys of the call and of the calls it is nested in, joined by `/`. Unique within the run.
+    pub path: String,
+    /// The call's own instance key (last segment of `path`).
+    pub key: String,
+    /// Path of the enclosing call, null for a call made in the procedure itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_path: Option<String>,
+    pub name: String,
+    /// The sequence reference as written in the procedure (`uses:`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    /// Outcome of the call, aggregated over its phases like a run outcome. SKIP when none of them ran.
+    pub outcome: SequencesOutcome,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// ISO 8601 duration, null for a skipped call.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration: Option<String>,
+}
+
+impl RunListSequences {
+    /// Create a builder for this type.
+    pub fn builder() -> RunListSequencesBuilder {
+        RunListSequencesBuilder::default()
+    }
+}
+
+/// Builder for [`RunListSequences`].
+#[derive(Debug, Default)]
+pub struct RunListSequencesBuilder {
+    id: Option<String>,
+    path: Option<String>,
+    key: Option<String>,
+    parent_path: Option<String>,
+    name: Option<String>,
+    source: Option<String>,
+    outcome: Option<SequencesOutcome>,
+    started_at: Option<chrono::DateTime<chrono::Utc>>,
+    ended_at: Option<chrono::DateTime<chrono::Utc>>,
+    duration: Option<String>,
+}
+
+impl RunListSequencesBuilder {
+    /// Set the `id` field.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `path` field.
+    ///
+    /// Instance keys of the call and of the calls it is nested in, joined by `/`. Unique within the run.
+    pub fn path(mut self, value: impl Into<String>) -> Self {
+        self.path = Some(value.into());
+        self
+    }
+
+    /// Set the `key` field.
+    ///
+    /// The call's own instance key (last segment of `path`).
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `parent_path` field.
+    ///
+    /// Path of the enclosing call, null for a call made in the procedure itself.
+    pub fn parent_path(mut self, value: impl Into<String>) -> Self {
+        self.parent_path = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `source` field.
+    ///
+    /// The sequence reference as written in the procedure (`uses:`).
+    pub fn source(mut self, value: impl Into<String>) -> Self {
+        self.source = Some(value.into());
+        self
+    }
+
+    /// Set the `outcome` field.
+    ///
+    /// Outcome of the call, aggregated over its phases like a run outcome. SKIP when none of them ran.
+    pub fn outcome(mut self, value: impl Into<SequencesOutcome>) -> Self {
+        self.outcome = Some(value.into());
+        self
+    }
+
+    /// Set the `started_at` field.
+    pub fn started_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.started_at = Some(value.into());
+        self
+    }
+
+    /// Set the `ended_at` field.
+    pub fn ended_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.ended_at = Some(value.into());
+        self
+    }
+
+    /// Set the `duration` field.
+    ///
+    /// ISO 8601 duration, null for a skipped call.
+    pub fn duration(mut self, value: impl Into<String>) -> Self {
+        self.duration = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunListSequences, String> {
+        Ok(RunListSequences {
+            id: self.id
+                .ok_or_else(|| "missing required field: id".to_string())?,
+            path: self.path
+                .ok_or_else(|| "missing required field: path".to_string())?,
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            parent_path: self.parent_path,
+            name: self.name
+                .ok_or_else(|| "missing required field: name".to_string())?,
+            source: self.source,
+            outcome: self.outcome
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            duration: self.duration,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunListData {
     /// Unique identifier for the run.
     pub id: String,
@@ -4273,6 +4616,9 @@ pub struct RunListData {
     /// Custom metadata key/value pairs on the run. Only present when the request sets `include_metadata=true`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Top-level sequence calls of the run, ordered by start time. Only present when the request sets `include_sequences=true`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequences: Option<Vec<RunListSequences>>,
 }
 
 impl RunListData {
@@ -4301,6 +4647,7 @@ pub struct RunListDataBuilder {
     procedure: Option<RunListProcedure>,
     unit: Option<RunListUnit>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    sequences: Option<Vec<RunListSequences>>,
 }
 
 impl RunListDataBuilder {
@@ -4456,6 +4803,14 @@ impl RunListDataBuilder {
         self
     }
 
+    /// Set the `sequences` field.
+    ///
+    /// Top-level sequence calls of the run, ordered by start time. Only present when the request sets `include_sequences=true`.
+    pub fn sequences(mut self, value: impl Into<Vec<RunListSequences>>) -> Self {
+        self.sequences = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunListData, String> {
         Ok(RunListData {
@@ -4483,6 +4838,7 @@ impl RunListDataBuilder {
             unit: self.unit
                 .ok_or_else(|| "missing required field: unit".to_string())?,
             metadata: self.metadata,
+            sequences: self.sequences,
         })
     }
 }
@@ -6005,6 +6361,9 @@ pub struct RunGetPhases {
     pub duration: String,
     /// Zero-based retry attempt index. 0 = first attempt, 1 = first retry, etc.
     pub retry_count: i64,
+    /// Path of the sequence call this phase ran in, matching one `sequences[].path`. Null for a phase written in the procedure itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence_path: Option<String>,
     /// Phase documentation string.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
@@ -6030,6 +6389,7 @@ pub struct RunGetPhasesBuilder {
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     duration: Option<String>,
     retry_count: Option<i64>,
+    sequence_path: Option<String>,
     docstring: NullableField<String>,
     measurements: Option<Vec<RunGetMeasurements>>,
 }
@@ -6091,6 +6451,14 @@ impl RunGetPhasesBuilder {
         self
     }
 
+    /// Set the `sequence_path` field.
+    ///
+    /// Path of the sequence call this phase ran in, matching one `sequences[].path`. Null for a phase written in the procedure itself.
+    pub fn sequence_path(mut self, value: impl Into<String>) -> Self {
+        self.sequence_path = Some(value.into());
+        self
+    }
+
     /// Set the `docstring` field.
     ///
     /// Phase documentation string.
@@ -6130,8 +6498,151 @@ impl RunGetPhasesBuilder {
                 .ok_or_else(|| "missing required field: duration".to_string())?,
             retry_count: self.retry_count
                 .ok_or_else(|| "missing required field: retry_count".to_string())?,
+            sequence_path: self.sequence_path,
             docstring: self.docstring,
             measurements: self.measurements.unwrap_or_default(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunGetSequences {
+    pub id: String,
+    /// Instance keys of the call and of the calls it is nested in, joined by `/`. Unique within the run.
+    pub path: String,
+    /// The call's own instance key (last segment of `path`).
+    pub key: String,
+    /// Path of the enclosing call, null for a call made in the procedure itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_path: Option<String>,
+    pub name: String,
+    /// The sequence reference as written in the procedure (`uses:`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    /// Outcome of the call, aggregated over its phases like a run outcome. SKIP when none of them ran.
+    pub outcome: SequencesOutcome,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ended_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// ISO 8601 duration, null for a skipped call.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration: Option<String>,
+}
+
+impl RunGetSequences {
+    /// Create a builder for this type.
+    pub fn builder() -> RunGetSequencesBuilder {
+        RunGetSequencesBuilder::default()
+    }
+}
+
+/// Builder for [`RunGetSequences`].
+#[derive(Debug, Default)]
+pub struct RunGetSequencesBuilder {
+    id: Option<String>,
+    path: Option<String>,
+    key: Option<String>,
+    parent_path: Option<String>,
+    name: Option<String>,
+    source: Option<String>,
+    outcome: Option<SequencesOutcome>,
+    started_at: Option<chrono::DateTime<chrono::Utc>>,
+    ended_at: Option<chrono::DateTime<chrono::Utc>>,
+    duration: Option<String>,
+}
+
+impl RunGetSequencesBuilder {
+    /// Set the `id` field.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `path` field.
+    ///
+    /// Instance keys of the call and of the calls it is nested in, joined by `/`. Unique within the run.
+    pub fn path(mut self, value: impl Into<String>) -> Self {
+        self.path = Some(value.into());
+        self
+    }
+
+    /// Set the `key` field.
+    ///
+    /// The call's own instance key (last segment of `path`).
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `parent_path` field.
+    ///
+    /// Path of the enclosing call, null for a call made in the procedure itself.
+    pub fn parent_path(mut self, value: impl Into<String>) -> Self {
+        self.parent_path = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `source` field.
+    ///
+    /// The sequence reference as written in the procedure (`uses:`).
+    pub fn source(mut self, value: impl Into<String>) -> Self {
+        self.source = Some(value.into());
+        self
+    }
+
+    /// Set the `outcome` field.
+    ///
+    /// Outcome of the call, aggregated over its phases like a run outcome. SKIP when none of them ran.
+    pub fn outcome(mut self, value: impl Into<SequencesOutcome>) -> Self {
+        self.outcome = Some(value.into());
+        self
+    }
+
+    /// Set the `started_at` field.
+    pub fn started_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.started_at = Some(value.into());
+        self
+    }
+
+    /// Set the `ended_at` field.
+    pub fn ended_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.ended_at = Some(value.into());
+        self
+    }
+
+    /// Set the `duration` field.
+    ///
+    /// ISO 8601 duration, null for a skipped call.
+    pub fn duration(mut self, value: impl Into<String>) -> Self {
+        self.duration = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunGetSequences, String> {
+        Ok(RunGetSequences {
+            id: self.id
+                .ok_or_else(|| "missing required field: id".to_string())?,
+            path: self.path
+                .ok_or_else(|| "missing required field: path".to_string())?,
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            parent_path: self.parent_path,
+            name: self.name
+                .ok_or_else(|| "missing required field: name".to_string())?,
+            source: self.source,
+            outcome: self.outcome
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
+            started_at: self.started_at,
+            ended_at: self.ended_at,
+            duration: self.duration,
         })
     }
 }
@@ -6373,6 +6884,9 @@ pub struct RunGetResponse {
     /// Array of execution phases in this run, ordered by start time, then by name and retry attempt for phases that share one. Retry attempts of a phase therefore always appear in attempt order. Only returned if `all` or `phases` is included.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phases: Option<Vec<RunGetPhases>>,
+    /// Sequence calls of this run, parents before their nested calls. Each phase names its call through `sequence_path`. Returned together with `phases`, empty for a run without sequences.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequences: Option<Vec<RunGetSequences>>,
     /// Files attached to this run, including both regular attachments and test reports. Only returned if `all` or `attachments` is included.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attachments: Option<Vec<RunGetAttachments>>,
@@ -12860,6 +13374,8 @@ pub struct PhaseListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub outcomes: Option<Vec<PhaseGetOutcome>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence_paths: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_after: Option<chrono::DateTime<chrono::Utc>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_before: Option<chrono::DateTime<chrono::Utc>>,
@@ -12924,6 +13440,7 @@ pub struct PhaseListRequestBuilder {
     procedure_id: Option<String>,
     names: Option<Vec<String>>,
     outcomes: Option<Vec<PhaseGetOutcome>>,
+    sequence_paths: Option<Vec<String>>,
     started_after: Option<chrono::DateTime<chrono::Utc>>,
     started_before: Option<chrono::DateTime<chrono::Utc>>,
     exclude_retries: Option<bool>,
@@ -12967,6 +13484,12 @@ impl PhaseListRequestBuilder {
     /// Set the `outcomes` field.
     pub fn outcomes(mut self, value: impl Into<Vec<PhaseGetOutcome>>) -> Self {
         self.outcomes = Some(value.into());
+        self
+    }
+
+    /// Set the `sequence_paths` field.
+    pub fn sequence_paths(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.sequence_paths = Some(value.into());
         self
     }
 
@@ -13123,6 +13646,7 @@ impl PhaseListRequestBuilder {
                 .ok_or_else(|| "missing required field: procedure_id".to_string())?,
             names: self.names,
             outcomes: self.outcomes,
+            sequence_paths: self.sequence_paths,
             started_after: self.started_after,
             started_before: self.started_before,
             exclude_retries: self.exclude_retries,
@@ -13169,6 +13693,9 @@ pub struct PhaseListData {
     pub duration_ms: Option<i64>,
     /// Retry attempt number of the phase (0 for the first attempt).
     pub retry_count: i64,
+    /// Path of the sequence call the phase ran in. Null for a phase written in the procedure itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence_path: Option<String>,
     /// True when this is the final attempt of the phase.
     pub is_final_attempt: bool,
     /// ID of the run this phase belongs to.
@@ -13200,6 +13727,7 @@ pub struct PhaseListDataBuilder {
     ended_at: Option<chrono::DateTime<chrono::Utc>>,
     duration_ms: Option<i64>,
     retry_count: Option<i64>,
+    sequence_path: Option<String>,
     is_final_attempt: Option<bool>,
     run_id: Option<String>,
     run_outcome: Option<LogGetOutcome>,
@@ -13264,6 +13792,14 @@ impl PhaseListDataBuilder {
         self
     }
 
+    /// Set the `sequence_path` field.
+    ///
+    /// Path of the sequence call the phase ran in. Null for a phase written in the procedure itself.
+    pub fn sequence_path(mut self, value: impl Into<String>) -> Self {
+        self.sequence_path = Some(value.into());
+        self
+    }
+
     /// Set the `is_final_attempt` field.
     ///
     /// True when this is the final attempt of the phase.
@@ -13318,6 +13854,7 @@ impl PhaseListDataBuilder {
             duration_ms: self.duration_ms,
             retry_count: self.retry_count
                 .ok_or_else(|| "missing required field: retry_count".to_string())?,
+            sequence_path: self.sequence_path,
             is_final_attempt: self.is_final_attempt
                 .ok_or_else(|| "missing required field: is_final_attempt".to_string())?,
             run_id: self.run_id
@@ -14451,6 +14988,9 @@ pub struct PhaseGetResponse {
     pub ended_at: chrono::DateTime<chrono::Utc>,
     pub duration: String,
     pub retry_count: i64,
+    /// Path of the sequence call the phase ran in. Null for a phase written in the procedure itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence_path: Option<String>,
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub docstring: NullableField<String>,
     #[serde(default)]

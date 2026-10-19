@@ -12,6 +12,7 @@
 | `ended_at` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | ISO 8601 timestamp when the phase ended. |
 | `duration_ms` | `Option<i64>` | :heavy_minus_sign: | Phase duration in milliseconds. Null when start or end is missing. |
 | `retry_count` | `i64` | :heavy_check_mark: | Retry attempt number of the phase (0 for the first attempt). |
+| `sequence_path` | `Option<String>` | :heavy_minus_sign: | Path of the sequence call the phase ran in. Null for a phase written in the procedure itself. |
 | `is_final_attempt` | `bool` | :heavy_check_mark: | True when this is the final attempt of the phase. |
 | `run_id` | `String` | :heavy_check_mark: | ID of the run this phase belongs to. |
 | `run_outcome` | `LogGetOutcome` | :heavy_check_mark: | Outcome of the run this phase belongs to. |

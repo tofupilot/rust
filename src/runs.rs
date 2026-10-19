@@ -120,6 +120,7 @@ pub struct CreateBuilder<'a> {
     sub_units: Option<Vec<String>>,
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
+    sequences: Option<NullableField<Vec<RunCreateSequences>>>,
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -149,6 +150,7 @@ impl<'a> CreateBuilder<'a> {
             sub_units: None,
             docstring: None,
             phases: None,
+            sequences: None,
             logs: None,
             metadata: None,
             unit_metadata: None,
@@ -331,6 +333,20 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `sequences` field.
+    ///
+    /// Sequence calls of the run: the groups of phases the procedure composed with `uses:`, each with its own outcome. A phase joins its call through its `sequence_path` field, which must name one `path` of this array. A nested call (`calibration/dmm`) needs its parent path (`calibration`) in the same array, in any order. Omit for a procedure without sequences.
+    pub fn sequences(mut self, value: impl Into<Vec<RunCreateSequences>>) -> Self {
+        self.sequences = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `sequences` to null.
+    pub fn sequences_null(mut self) -> Self {
+        self.sequences = Some(NullableField::Null);
+        self
+    }
+
     /// Set the `logs` field.
     ///
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
@@ -391,6 +407,7 @@ impl<'a> CreateBuilder<'a> {
         if body.phases.is_some() {
             self.phases = body.phases;
         }
+        self.sequences = Some(body.sequences);
         if body.logs.is_some() {
             self.logs = body.logs;
         }
@@ -468,6 +485,7 @@ impl<'a> CreateBuilder<'a> {
             sub_units: self.sub_units,
             docstring: self.docstring,
             phases: self.phases,
+            sequences: self.sequences.unwrap_or(NullableField::Absent),
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
@@ -540,6 +558,7 @@ pub struct ListBuilder<'a> {
     sort_order: Option<ListSortOrder>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     include_metadata: Option<bool>,
+    include_sequences: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -581,6 +600,7 @@ impl<'a> ListBuilder<'a> {
             sort_order: None,
             metadata: None,
             include_metadata: None,
+            include_sequences: None,
             server_url: None,
             timeout: None,
         }
@@ -794,6 +814,14 @@ impl<'a> ListBuilder<'a> {
         self
     }
 
+    /// Set the `include_sequences` query parameter.
+    ///
+    /// When true, includes the top-level sequence calls of each run (the calls made in the procedure itself, not the calls nested in them). Defaults to false to keep payloads small.
+    pub fn include_sequences(mut self, value: impl Into<bool>) -> Self {
+        self.include_sequences = Some(value.into());
+        self
+    }
+
     /// Override the server URL for this request.
     pub fn server_url(mut self, url: impl Into<String>) -> Self {
         self.server_url = Some(url.into());
@@ -961,6 +989,9 @@ impl<'a> ListBuilder<'a> {
         }
         if let Some(ref val) = self.include_metadata {
             request = request.query(&[("include_metadata", val.to_string())]);
+        }
+        if let Some(ref val) = self.include_sequences {
+            request = request.query(&[("include_sequences", val.to_string())]);
         }
 
 

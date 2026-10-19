@@ -38,3 +38,4 @@
 | `sort_order` | `Option<ListSortOrder>` | :heavy_minus_sign: | Sort order direction. |
 | `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Filter runs by custom metadata. Supports up to 5 keys per request. Per-key operators: string `{in: [...]}`/`{contains: "..."}`, number `{gte, lte, gt, lt, eq}`, bool `{eq: true|false}`. |
 | `include_metadata` | `Option<bool>` | :heavy_minus_sign: | When true, includes the run metadata array in the response. Defaults to false to keep payloads small. |
+| `include_sequences` | `Option<bool>` | :heavy_minus_sign: | When true, includes the top-level sequence calls of each run (the calls made in the procedure itself, not the calls nested in them). Defaults to false to keep payloads small. |

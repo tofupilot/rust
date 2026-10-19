@@ -38,6 +38,7 @@ async fn main() -> tofupilot::Result<()> {
 | `procedure_id` | `String` | :heavy_check_mark: | Procedure to list phases for. Required: phases are scoped to a single procedure. |
 | `names` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `outcomes` | `Option<Vec<PhaseGetOutcome>>` | :heavy_minus_sign: | N/A |
+| `sequence_paths` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `started_after` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
 | `started_before` | `Option<chrono::DateTime<chrono::Utc>>` | :heavy_minus_sign: | N/A |
 | `exclude_retries` | `Option<bool>` | :heavy_minus_sign: | N/A |

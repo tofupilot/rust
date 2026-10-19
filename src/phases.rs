@@ -65,6 +65,7 @@ pub struct ListBuilder<'a> {
     procedure_id: Option<String>,
     names: Option<Vec<String>>,
     outcomes: Option<Vec<PhaseGetOutcome>>,
+    sequence_paths: Option<Vec<String>>,
     started_after: Option<chrono::DateTime<chrono::Utc>>,
     started_before: Option<chrono::DateTime<chrono::Utc>>,
     exclude_retries: Option<bool>,
@@ -99,6 +100,7 @@ impl<'a> ListBuilder<'a> {
             procedure_id: None,
             names: None,
             outcomes: None,
+            sequence_paths: None,
             started_after: None,
             started_before: None,
             exclude_retries: None,
@@ -144,6 +146,12 @@ impl<'a> ListBuilder<'a> {
     /// Set the `outcomes` query parameter.
     pub fn outcomes(mut self, value: impl Into<Vec<PhaseGetOutcome>>) -> Self {
         self.outcomes = Some(value.into());
+        self
+    }
+
+    /// Set the `sequence_paths` query parameter.
+    pub fn sequence_paths(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.sequence_paths = Some(value.into());
         self
     }
 
@@ -334,6 +342,11 @@ impl<'a> ListBuilder<'a> {
         if let Some(ref val) = self.outcomes {
             for item in val {
                 request = request.query(&[("outcomes", item.to_string())]);
+            }
+        }
+        if let Some(ref val) = self.sequence_paths {
+            for item in val {
+                request = request.query(&[("sequence_paths", item.to_string())]);
             }
         }
         if let Some(ref val) = self.started_after {

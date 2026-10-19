@@ -22,6 +22,7 @@ Single test run details.
 | `procedure` | `RunGetProcedure` | :heavy_check_mark: | Test procedure associated with this run. |
 | `unit` | `RunGetUnit` | :heavy_check_mark: | Unit under test information. |
 | `phases` | `Option<Vec<RunGetPhases>>` | :heavy_minus_sign: | Array of execution phases in this run, ordered by start time, then by name and retry attempt for phases that share one. Retry attempts of a phase therefore always appear in attempt order. Only returned if `all` or `phases` is included. |
+| `sequences` | `Option<Vec<RunGetSequences>>` | :heavy_minus_sign: | Sequence calls of this run, parents before their nested calls. Each phase names its call through `sequence_path`. Returned together with `phases`, empty for a run without sequences. |
 | `attachments` | `Option<Vec<RunGetAttachments>>` | :heavy_minus_sign: | Files attached to this run, including both regular attachments and test reports. Only returned if `all` or `attachments` is included. |
 | `logs` | `Option<Vec<RunGetLogs>>` | :heavy_minus_sign: | N/A |
 | `sub_units` | `Option<Vec<RunGetSubUnits>>` | :heavy_minus_sign: | Array of sub-units that had parent changes during this run. Only returned if `all` or `sub_units` is included. |
