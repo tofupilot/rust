@@ -11143,6 +11143,9 @@ pub struct ImportStructuredRequest {
     /// Files to import (1–100). Pass a single-item list to import one file. Each item is parsed independently; one failure does not abort the others.
     #[serde(default)]
     pub items: Vec<ImportStructuredItems>,
+    /// Import every file even if the same content was already imported. By default, a file whose exact content already has a run in your organization is not imported again: its result returns the existing run with `already_imported: true`. Set to true to import such files again as new runs, next to the existing ones.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub allow_duplicate: Option<bool>,
 }
 
 impl ImportStructuredRequest {
@@ -11156,6 +11159,7 @@ impl ImportStructuredRequest {
 #[derive(Debug, Default)]
 pub struct ImportStructuredRequestBuilder {
     items: Option<Vec<ImportStructuredItems>>,
+    allow_duplicate: Option<bool>,
 }
 
 impl ImportStructuredRequestBuilder {
@@ -11167,10 +11171,19 @@ impl ImportStructuredRequestBuilder {
         self
     }
 
+    /// Set the `allow_duplicate` field.
+    ///
+    /// Import every file even if the same content was already imported. By default, a file whose exact content already has a run in your organization is not imported again: its result returns the existing run with `already_imported: true`. Set to true to import such files again as new runs, next to the existing ones.
+    pub fn allow_duplicate(mut self, value: impl Into<bool>) -> Self {
+        self.allow_duplicate = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<ImportStructuredRequest, String> {
         Ok(ImportStructuredRequest {
             items: self.items.unwrap_or_default(),
+            allow_duplicate: self.allow_duplicate,
         })
     }
 }
@@ -11181,12 +11194,18 @@ pub struct ImportStructuredResults {
     pub upload_id: String,
     /// Whether the file was imported successfully.
     pub success: bool,
-    /// ID of the created run (present when success is true). For a multi-run file this is the first run; see `ids`.
+    /// ID of the run (present when success is true): the run created, or the existing run when the file was already imported. For a multi-run file this is one of its runs, see `ids`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    /// All run ids created from the file. Present when the file produced more than one run.
+    /// All run ids of the file: the runs created, or the existing runs when the file was already imported. Present when there is more than one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ids: Option<Vec<String>>,
+    /// Present when success is true. True when the same file content was already imported in your organization and at least one of its runs still exists: `id` and `ids` are those runs and nothing was created. A file whose earlier import created only some of its runs is not completed: delete its runs, then import it again. For a file with several runs, `ids` comes in no guaranteed order, so `id` may name another run of that file than the first import returned.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub already_imported: Option<bool>,
+    /// Non-fatal notes about this file, present when there are any: runs that failed while the others were imported, and how to create them later. They come only with the import that created the runs: a retry of the same file answers without them, so a client that lost that response should compare `ids` with the units it expects.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub warnings: Option<Vec<String>>,
     /// Error message (present when success is false).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -11206,6 +11225,8 @@ pub struct ImportStructuredResultsBuilder {
     success: Option<bool>,
     id: Option<String>,
     ids: Option<Vec<String>>,
+    already_imported: Option<bool>,
+    warnings: Option<Vec<String>>,
     error: Option<String>,
 }
 
@@ -11228,7 +11249,7 @@ impl ImportStructuredResultsBuilder {
 
     /// Set the `id` field.
     ///
-    /// ID of the created run (present when success is true). For a multi-run file this is the first run; see `ids`.
+    /// ID of the run (present when success is true): the run created, or the existing run when the file was already imported. For a multi-run file this is one of its runs, see `ids`.
     pub fn id(mut self, value: impl Into<String>) -> Self {
         self.id = Some(value.into());
         self
@@ -11236,9 +11257,25 @@ impl ImportStructuredResultsBuilder {
 
     /// Set the `ids` field.
     ///
-    /// All run ids created from the file. Present when the file produced more than one run.
+    /// All run ids of the file: the runs created, or the existing runs when the file was already imported. Present when there is more than one.
     pub fn ids(mut self, value: impl Into<Vec<String>>) -> Self {
         self.ids = Some(value.into());
+        self
+    }
+
+    /// Set the `already_imported` field.
+    ///
+    /// Present when success is true. True when the same file content was already imported in your organization and at least one of its runs still exists: `id` and `ids` are those runs and nothing was created. A file whose earlier import created only some of its runs is not completed: delete its runs, then import it again. For a file with several runs, `ids` comes in no guaranteed order, so `id` may name another run of that file than the first import returned.
+    pub fn already_imported(mut self, value: impl Into<bool>) -> Self {
+        self.already_imported = Some(value.into());
+        self
+    }
+
+    /// Set the `warnings` field.
+    ///
+    /// Non-fatal notes about this file, present when there are any: runs that failed while the others were imported, and how to create them later. They come only with the import that created the runs: a retry of the same file answers without them, so a client that lost that response should compare `ids` with the units it expects.
+    pub fn warnings(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.warnings = Some(value.into());
         self
     }
 
@@ -11259,6 +11296,8 @@ impl ImportStructuredResultsBuilder {
                 .ok_or_else(|| "missing required field: success".to_string())?,
             id: self.id,
             ids: self.ids,
+            already_imported: self.already_imported,
+            warnings: self.warnings,
             error: self.error,
         })
     }

@@ -17,7 +17,7 @@ impl<'a> ImportsClient<'a> {
 
     /// Import runs from structured files
     ///
-    /// Import one or more previously uploaded structured files (OpenHTF, WATS WSJF/WSXF, ATML, NI TestStand, STDF, or ATDF) in a single call. Each file is parsed independently and its result returned per-item, so one bad file does not fail the others. A file that contains several units (a multi-part STDF/ATDF datalog or a multi-report WSXF/TestStand document) creates one run per unit; all run ids are returned in the item’s `ids`.
+    /// Import one or more previously uploaded structured files (OpenHTF, WATS WSJF/WSXF, ATML, NI TestStand, STDF, or ATDF) in a single call. Each file is parsed independently and its result returned per-item, so one bad file does not fail the others. A file that contains several units (a multi-part STDF/ATDF datalog or a multi-report WSXF/TestStand document) creates one run per unit, and all run ids are returned in the item’s `ids`. A file whose exact content was already imported in your organization is not imported twice: its result returns the existing runs with `already_imported: true`, so retrying a batch is safe. A file whose earlier import created only some of its runs is not completed: the `warnings` of that first import say how to create the rest. Set `allow_duplicate` to import the file again as new runs, next to the existing ones.
     pub fn structured(&self) -> StructuredBuilder<'a> {
         StructuredBuilder::new(self.client)
     }
@@ -56,6 +56,7 @@ impl<'a> ImportsClient<'a> {
 pub struct StructuredBuilder<'a> {
     client: &'a TofuPilot,
     items: Option<Vec<ImportStructuredItems>>,
+    allow_duplicate: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -65,6 +66,7 @@ impl<'a> StructuredBuilder<'a> {
         Self {
             client,
             items: None,
+            allow_duplicate: None,
             server_url: None,
             timeout: None,
         }
@@ -78,9 +80,20 @@ impl<'a> StructuredBuilder<'a> {
         self
     }
 
+    /// Set the `allow_duplicate` field.
+    ///
+    /// Import every file even if the same content was already imported. By default, a file whose exact content already has a run in your organization is not imported again: its result returns the existing run with `already_imported: true`. Set to true to import such files again as new runs, next to the existing ones.
+    pub fn allow_duplicate(mut self, value: impl Into<bool>) -> Self {
+        self.allow_duplicate = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: ImportStructuredRequest) -> Self {
         self.items = Some(body.items);
+        if body.allow_duplicate.is_some() {
+            self.allow_duplicate = body.allow_duplicate;
+        }
         self
     }
 
@@ -117,6 +130,7 @@ impl<'a> StructuredBuilder<'a> {
 
         let body = ImportStructuredRequest {
             items: self.items.unwrap_or_default(),
+            allow_duplicate: self.allow_duplicate,
         };
         request = request.json(&body);
 
