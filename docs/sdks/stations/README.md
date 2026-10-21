@@ -40,6 +40,7 @@ async fn main() -> tofupilot::Result<()> {
 | --- | --- | --- | --- |
 | `name` | `String` | :heavy_check_mark: | Name of the station |
 | `procedure_id` | `Option<String>` | :heavy_minus_sign: | Optional procedure ID to link the station to |
+| `team_id` | `Option<String>` | :heavy_minus_sign: | Optional team to assign the station to. A user restricted to access groups must name one of their teams; with a single team it defaults to that team. |
 | `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to attach to the station (max 50 keys per station). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. Use it for descriptive fields such as location or asset tag — not for procedure configuration, which belongs to station config. |
 
 ### Response
@@ -50,8 +51,10 @@ async fn main() -> tofupilot::Result<()> {
 
 | Error Type | Status Code | Content Type |
 | --- | --- | --- |
+| `Error::BadRequest` | 400 | application/json |
 | `Error::Unauthorized` | 401 | application/json |
 | `Error::Forbidden` | 403 | application/json |
+| `Error::NotFound` | 404 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |
 
@@ -215,7 +218,7 @@ async fn main() -> tofupilot::Result<()> {
 | `id` | `String` | :heavy_check_mark: | Unique identifier of the station to update |
 | `name` | `Option<String>` | :heavy_minus_sign: | New name for the station |
 | `image_id` | `Option<String>` | :heavy_minus_sign: | Upload ID for the station image, or empty string to remove image |
-| `team_id` | `NullableField<String>` | :heavy_minus_sign: | Team ID to assign this station to, or null to unassign |
+| `team_id` | `NullableField<String>` | :heavy_minus_sign: | Team ID to assign this station to, or null to unassign. Unassigning a station or moving it to another team requires the Admin or Owner role: the team decides who may deploy to the station. |
 | `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to upsert on the station. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key. |
 
 ### Response
@@ -227,6 +230,7 @@ async fn main() -> tofupilot::Result<()> {
 | Error Type | Status Code | Content Type |
 | --- | --- | --- |
 | `Error::Unauthorized` | 401 | application/json |
+| `Error::Forbidden` | 403 | application/json |
 | `Error::NotFound` | 404 | application/json |
 | `Error::InternalServerError` | 500 | application/json |
 | `Error::UnexpectedStatus` | 4XX, 5XX | \*/\* |

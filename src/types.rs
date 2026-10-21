@@ -490,6 +490,39 @@ impl std::fmt::Display for Level {
     }
 }
 
+/// Where the value came from: the YAML `default:`, the shell environment, a `.env` file, the station process environment, or a value stored on the station, the procedure or the organization.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Source {
+    #[serde(rename = "default")]
+    Default,
+    #[serde(rename = "shell")]
+    Shell,
+    #[serde(rename = "dotenv")]
+    Dotenv,
+    #[serde(rename = "process")]
+    Process,
+    #[serde(rename = "station")]
+    Station,
+    #[serde(rename = "procedure")]
+    Procedure,
+    #[serde(rename = "organization")]
+    Organization,
+}
+
+impl std::fmt::Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Default => write!(f, "default"),
+            Self::Shell => write!(f, "shell"),
+            Self::Dotenv => write!(f, "dotenv"),
+            Self::Process => write!(f, "process"),
+            Self::Station => write!(f, "station"),
+            Self::Procedure => write!(f, "procedure"),
+            Self::Organization => write!(f, "organization"),
+        }
+    }
+}
+
 /// Deployment environment.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Environment {
@@ -3234,6 +3267,207 @@ pub struct RunCreateLogs {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateVars {
+    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    pub key: String,
+    /// Value the run used, in its declared type.
+    pub value: serde_json::Value,
+    /// ID of the stored value the station received, when it came from TofuPilot.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub variable_id: NullableField<String>,
+    /// Version of the stored value the station received.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub version: NullableField<i64>,
+    /// Where the value came from: the YAML `default:`, the shell environment, a `.env` file, the station process environment, or a value stored on the station, the procedure or the organization.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub source: NullableField<Source>,
+}
+
+impl RunCreateVars {
+    /// Create a builder for this type.
+    pub fn builder() -> RunCreateVarsBuilder {
+        RunCreateVarsBuilder::default()
+    }
+}
+
+/// Builder for [`RunCreateVars`].
+#[derive(Debug, Default)]
+pub struct RunCreateVarsBuilder {
+    key: Option<String>,
+    value: Option<serde_json::Value>,
+    variable_id: NullableField<String>,
+    version: NullableField<i64>,
+    source: NullableField<Source>,
+}
+
+impl RunCreateVarsBuilder {
+    /// Set the `key` field.
+    ///
+    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `value` field.
+    ///
+    /// Value the run used, in its declared type.
+    pub fn value(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.value = Some(value.into());
+        self
+    }
+
+    /// Set the `variable_id` field.
+    ///
+    /// ID of the stored value the station received, when it came from TofuPilot.
+    pub fn variable_id(mut self, value: impl Into<String>) -> Self {
+        self.variable_id = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `variable_id` to null.
+    pub fn variable_id_null(mut self) -> Self {
+        self.variable_id = NullableField::Null;
+        self
+    }
+
+    /// Set the `version` field.
+    ///
+    /// Version of the stored value the station received.
+    pub fn version(mut self, value: impl Into<i64>) -> Self {
+        self.version = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `version` to null.
+    pub fn version_null(mut self) -> Self {
+        self.version = NullableField::Null;
+        self
+    }
+
+    /// Set the `source` field.
+    ///
+    /// Where the value came from: the YAML `default:`, the shell environment, a `.env` file, the station process environment, or a value stored on the station, the procedure or the organization.
+    pub fn source(mut self, value: impl Into<Source>) -> Self {
+        self.source = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `source` to null.
+    pub fn source_null(mut self) -> Self {
+        self.source = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunCreateVars, String> {
+        Ok(RunCreateVars {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            value: self.value
+                .ok_or_else(|| "missing required field: value".to_string())?,
+            variable_id: self.variable_id,
+            version: self.version,
+            source: self.source,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreateSecrets {
+    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    pub key: String,
+    /// ID of the stored value the station received, when it came from TofuPilot.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub variable_id: NullableField<String>,
+    /// Version of the stored value the station received.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub version: NullableField<i64>,
+    /// Where the value came from: the YAML `default:`, the shell environment, a `.env` file, the station process environment, or a value stored on the station, the procedure or the organization.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub source: NullableField<Source>,
+}
+
+impl RunCreateSecrets {
+    /// Create a builder for this type.
+    pub fn builder() -> RunCreateSecretsBuilder {
+        RunCreateSecretsBuilder::default()
+    }
+}
+
+/// Builder for [`RunCreateSecrets`].
+#[derive(Debug, Default)]
+pub struct RunCreateSecretsBuilder {
+    key: Option<String>,
+    variable_id: NullableField<String>,
+    version: NullableField<i64>,
+    source: NullableField<Source>,
+}
+
+impl RunCreateSecretsBuilder {
+    /// Set the `key` field.
+    ///
+    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `variable_id` field.
+    ///
+    /// ID of the stored value the station received, when it came from TofuPilot.
+    pub fn variable_id(mut self, value: impl Into<String>) -> Self {
+        self.variable_id = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `variable_id` to null.
+    pub fn variable_id_null(mut self) -> Self {
+        self.variable_id = NullableField::Null;
+        self
+    }
+
+    /// Set the `version` field.
+    ///
+    /// Version of the stored value the station received.
+    pub fn version(mut self, value: impl Into<i64>) -> Self {
+        self.version = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `version` to null.
+    pub fn version_null(mut self) -> Self {
+        self.version = NullableField::Null;
+        self
+    }
+
+    /// Set the `source` field.
+    ///
+    /// Where the value came from: the YAML `default:`, the shell environment, a `.env` file, the station process environment, or a value stored on the station, the procedure or the organization.
+    pub fn source(mut self, value: impl Into<Source>) -> Self {
+        self.source = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `source` to null.
+    pub fn source_null(mut self) -> Self {
+        self.source = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunCreateSecrets, String> {
+        Ok(RunCreateSecrets {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            variable_id: self.variable_id,
+            version: self.version,
+            source: self.source,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateRequest {
     /// Overall test result. Use PASS when test succeeds, FAIL when test fails but script execution completed successfully, ERROR when script execution fails, TIMEOUT when test exceeds time limit, ABORTED for manual script interruption.
     pub outcome: LogGetOutcome,
@@ -3296,6 +3530,12 @@ pub struct RunCreateRequest {
     /// Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vars: Option<Vec<RunCreateVars>>,
+    /// Secrets the run used, identified by the stored value and version they came from. Never send a secret value: a `value` field is rejected.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secrets: Option<Vec<RunCreateSecrets>>,
 }
 
 impl RunCreateRequest {
@@ -3330,6 +3570,8 @@ pub struct RunCreateRequestBuilder {
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    vars: Option<Vec<RunCreateVars>>,
+    secrets: Option<Vec<RunCreateSecrets>>,
 }
 
 impl RunCreateRequestBuilder {
@@ -3545,6 +3787,22 @@ impl RunCreateRequestBuilder {
         self
     }
 
+    /// Set the `vars` field.
+    ///
+    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    pub fn vars(mut self, value: impl Into<Vec<RunCreateVars>>) -> Self {
+        self.vars = Some(value.into());
+        self
+    }
+
+    /// Set the `secrets` field.
+    ///
+    /// Secrets the run used, identified by the stored value and version they came from. Never send a secret value: a `value` field is rejected.
+    pub fn secrets(mut self, value: impl Into<Vec<RunCreateSecrets>>) -> Self {
+        self.secrets = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<RunCreateRequest, String> {
         Ok(RunCreateRequest {
@@ -3575,6 +3833,8 @@ impl RunCreateRequestBuilder {
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
+            vars: self.vars,
+            secrets: self.secrets,
         })
     }
 }
@@ -6841,6 +7101,144 @@ impl RunGetSubUnitsBuilder {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunGetVars {
+    pub key: String,
+    pub value: serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variable_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<Source>,
+}
+
+impl RunGetVars {
+    /// Create a builder for this type.
+    pub fn builder() -> RunGetVarsBuilder {
+        RunGetVarsBuilder::default()
+    }
+}
+
+/// Builder for [`RunGetVars`].
+#[derive(Debug, Default)]
+pub struct RunGetVarsBuilder {
+    key: Option<String>,
+    value: Option<serde_json::Value>,
+    variable_id: Option<String>,
+    version: Option<i64>,
+    source: Option<Source>,
+}
+
+impl RunGetVarsBuilder {
+    /// Set the `key` field.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `value` field.
+    pub fn value(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.value = Some(value.into());
+        self
+    }
+
+    /// Set the `variable_id` field.
+    pub fn variable_id(mut self, value: impl Into<String>) -> Self {
+        self.variable_id = Some(value.into());
+        self
+    }
+
+    /// Set the `version` field.
+    pub fn version(mut self, value: impl Into<i64>) -> Self {
+        self.version = Some(value.into());
+        self
+    }
+
+    /// Set the `source` field.
+    pub fn source(mut self, value: impl Into<Source>) -> Self {
+        self.source = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunGetVars, String> {
+        Ok(RunGetVars {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            value: self.value
+                .ok_or_else(|| "missing required field: value".to_string())?,
+            variable_id: self.variable_id,
+            version: self.version,
+            source: self.source,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunGetSecrets {
+    pub key: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variable_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<Source>,
+}
+
+impl RunGetSecrets {
+    /// Create a builder for this type.
+    pub fn builder() -> RunGetSecretsBuilder {
+        RunGetSecretsBuilder::default()
+    }
+}
+
+/// Builder for [`RunGetSecrets`].
+#[derive(Debug, Default)]
+pub struct RunGetSecretsBuilder {
+    key: Option<String>,
+    variable_id: Option<String>,
+    version: Option<i64>,
+    source: Option<Source>,
+}
+
+impl RunGetSecretsBuilder {
+    /// Set the `key` field.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `variable_id` field.
+    pub fn variable_id(mut self, value: impl Into<String>) -> Self {
+        self.variable_id = Some(value.into());
+        self
+    }
+
+    /// Set the `version` field.
+    pub fn version(mut self, value: impl Into<i64>) -> Self {
+        self.version = Some(value.into());
+        self
+    }
+
+    /// Set the `source` field.
+    pub fn source(mut self, value: impl Into<Source>) -> Self {
+        self.source = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunGetSecrets, String> {
+        Ok(RunGetSecrets {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            variable_id: self.variable_id,
+            version: self.version,
+            source: self.source,
+        })
+    }
+}
+
 /// Single test run details.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetResponse {
@@ -6898,6 +7296,12 @@ pub struct RunGetResponse {
     /// Custom metadata key/value pairs on the run.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Vars the run used, with their values. Empty when the run recorded none.
+    #[serde(default)]
+    pub vars: Vec<RunGetVars>,
+    /// Secrets the run used, by stored value and version. Never carries a value. Empty when the run recorded none.
+    #[serde(default)]
+    pub secrets: Vec<RunGetSecrets>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -10416,6 +10820,9 @@ pub struct StationCreateRequest {
     /// Optional procedure ID to link the station to
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub procedure_id: Option<String>,
+    /// Optional team to assign the station to. A user restricted to access groups must name one of their teams; with a single team it defaults to that team.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub team_id: Option<String>,
     /// Custom metadata to attach to the station (max 50 keys per station). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. Use it for descriptive fields such as location or asset tag — not for procedure configuration, which belongs to station config.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -10433,6 +10840,7 @@ impl StationCreateRequest {
 pub struct StationCreateRequestBuilder {
     name: Option<String>,
     procedure_id: Option<String>,
+    team_id: Option<String>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
@@ -10453,6 +10861,14 @@ impl StationCreateRequestBuilder {
         self
     }
 
+    /// Set the `team_id` field.
+    ///
+    /// Optional team to assign the station to. A user restricted to access groups must name one of their teams; with a single team it defaults to that team.
+    pub fn team_id(mut self, value: impl Into<String>) -> Self {
+        self.team_id = Some(value.into());
+        self
+    }
+
     /// Set the `metadata` field.
     ///
     /// Custom metadata to attach to the station (max 50 keys per station). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. Use it for descriptive fields such as location or asset tag — not for procedure configuration, which belongs to station config.
@@ -10467,6 +10883,7 @@ impl StationCreateRequestBuilder {
             name: self.name
                 .ok_or_else(|| "missing required field: name".to_string())?,
             procedure_id: self.procedure_id,
+            team_id: self.team_id,
             metadata: self.metadata,
         })
     }
@@ -11508,7 +11925,7 @@ pub struct StationUpdateRequestBody {
     /// Upload ID for the station image, or empty string to remove image
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub image_id: Option<String>,
-    /// Team ID to assign this station to, or null to unassign
+    /// Team ID to assign this station to, or null to unassign. Unassigning a station or moving it to another team requires the Admin or Owner role: the team decides who may deploy to the station.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub team_id: NullableField<String>,
     /// Custom metadata to upsert on the station. Plain object of key/value pairs. PATCH semantics: keys not present here are preserved. Pass `null` as a value to delete a key.
@@ -11551,7 +11968,7 @@ impl StationUpdateRequestBodyBuilder {
 
     /// Set the `team_id` field.
     ///
-    /// Team ID to assign this station to, or null to unassign
+    /// Team ID to assign this station to, or null to unassign. Unassigning a station or moving it to another team requires the Admin or Owner role: the team decides who may deploy to the station.
     pub fn team_id(mut self, value: impl Into<String>) -> Self {
         self.team_id = NullableField::Value(value.into());
         self

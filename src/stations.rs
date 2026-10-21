@@ -93,6 +93,7 @@ pub struct CreateBuilder<'a> {
     client: &'a TofuPilot,
     name: Option<String>,
     procedure_id: Option<String>,
+    team_id: Option<String>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
@@ -104,6 +105,7 @@ impl<'a> CreateBuilder<'a> {
             client,
             name: None,
             procedure_id: None,
+            team_id: None,
             metadata: None,
             server_url: None,
             timeout: None,
@@ -126,6 +128,14 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `team_id` field.
+    ///
+    /// Optional team to assign the station to. A user restricted to access groups must name one of their teams; with a single team it defaults to that team.
+    pub fn team_id(mut self, value: impl Into<String>) -> Self {
+        self.team_id = Some(value.into());
+        self
+    }
+
     /// Set the `metadata` field.
     ///
     /// Custom metadata to attach to the station (max 50 keys per station). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. Use it for descriptive fields such as location or asset tag — not for procedure configuration, which belongs to station config.
@@ -139,6 +149,9 @@ impl<'a> CreateBuilder<'a> {
         self.name = Some(body.name);
         if body.procedure_id.is_some() {
             self.procedure_id = body.procedure_id;
+        }
+        if body.team_id.is_some() {
+            self.team_id = body.team_id;
         }
         if body.metadata.is_some() {
             self.metadata = body.metadata;
@@ -183,6 +196,7 @@ impl<'a> CreateBuilder<'a> {
                     "missing required field: name".to_string(),
                 ))?,
             procedure_id: self.procedure_id,
+            team_id: self.team_id,
             metadata: self.metadata,
         };
         request = request.json(&body);
@@ -600,7 +614,7 @@ impl<'a> UpdateBuilder<'a> {
 
     /// Set the `team_id` field.
     ///
-    /// Team ID to assign this station to, or null to unassign
+    /// Team ID to assign this station to, or null to unassign. Unassigning a station or moving it to another team requires the Admin or Owner role: the team decides who may deploy to the station.
     pub fn team_id(mut self, value: impl Into<String>) -> Self {
         self.team_id = Some(NullableField::Value(value.into()));
         self

@@ -124,6 +124,8 @@ pub struct CreateBuilder<'a> {
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+    vars: Option<Vec<RunCreateVars>>,
+    secrets: Option<Vec<RunCreateSecrets>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -154,6 +156,8 @@ impl<'a> CreateBuilder<'a> {
             logs: None,
             metadata: None,
             unit_metadata: None,
+            vars: None,
+            secrets: None,
             server_url: None,
             timeout: None,
         }
@@ -371,6 +375,22 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `vars` field.
+    ///
+    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    pub fn vars(mut self, value: impl Into<Vec<RunCreateVars>>) -> Self {
+        self.vars = Some(value.into());
+        self
+    }
+
+    /// Set the `secrets` field.
+    ///
+    /// Secrets the run used, identified by the stored value and version they came from. Never send a secret value: a `value` field is rejected.
+    pub fn secrets(mut self, value: impl Into<Vec<RunCreateSecrets>>) -> Self {
+        self.secrets = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: RunCreateRequest) -> Self {
         self.outcome = Some(body.outcome);
@@ -416,6 +436,12 @@ impl<'a> CreateBuilder<'a> {
         }
         if body.unit_metadata.is_some() {
             self.unit_metadata = body.unit_metadata;
+        }
+        if body.vars.is_some() {
+            self.vars = body.vars;
+        }
+        if body.secrets.is_some() {
+            self.secrets = body.secrets;
         }
         self
     }
@@ -489,6 +515,8 @@ impl<'a> CreateBuilder<'a> {
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
+            vars: self.vars,
+            secrets: self.secrets,
         };
         request = request.json(&body);
 
