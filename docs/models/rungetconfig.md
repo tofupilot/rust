@@ -1,4 +1,4 @@
-# RunGetVars
+# RunGetConfig
 
 
 ## Fields

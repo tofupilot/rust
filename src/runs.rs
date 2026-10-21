@@ -124,7 +124,7 @@ pub struct CreateBuilder<'a> {
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    vars: Option<Vec<RunCreateVars>>,
+    config: Option<Vec<RunCreateConfig>>,
     secrets: Option<Vec<RunCreateSecrets>>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
@@ -156,7 +156,7 @@ impl<'a> CreateBuilder<'a> {
             logs: None,
             metadata: None,
             unit_metadata: None,
-            vars: None,
+            config: None,
             secrets: None,
             server_url: None,
             timeout: None,
@@ -375,11 +375,11 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
-    /// Set the `vars` field.
+    /// Set the `config` field.
     ///
-    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
-    pub fn vars(mut self, value: impl Into<Vec<RunCreateVars>>) -> Self {
-        self.vars = Some(value.into());
+    /// Config values the run used (declared under `config:` in procedure.yaml), with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    pub fn config(mut self, value: impl Into<Vec<RunCreateConfig>>) -> Self {
+        self.config = Some(value.into());
         self
     }
 
@@ -437,8 +437,8 @@ impl<'a> CreateBuilder<'a> {
         if body.unit_metadata.is_some() {
             self.unit_metadata = body.unit_metadata;
         }
-        if body.vars.is_some() {
-            self.vars = body.vars;
+        if body.config.is_some() {
+            self.config = body.config;
         }
         if body.secrets.is_some() {
             self.secrets = body.secrets;
@@ -515,7 +515,7 @@ impl<'a> CreateBuilder<'a> {
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
-            vars: self.vars,
+            config: self.config,
             secrets: self.secrets,
         };
         request = request.json(&body);

@@ -66,7 +66,7 @@ async fn main() -> tofupilot::Result<()> {
 | `logs` | `Option<Vec<RunCreateLogs>>` | :heavy_minus_sign: | Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries. |
 | `metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to attach to the run (max 50 keys). Plain object of key/value pairs; values can be string, number, or boolean. Type is detected from the value. |
 | `unit_metadata` | `Option<std::collections::HashMap<String, serde_json::Value>>` | :heavy_minus_sign: | Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit. |
-| `vars` | `Option<Vec<RunCreateVars>>` | :heavy_minus_sign: | Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset. |
+| `config` | `Option<Vec<RunCreateConfig>>` | :heavy_minus_sign: | Config values the run used (declared under `config:` in procedure.yaml), with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset. |
 | `secrets` | `Option<Vec<RunCreateSecrets>>` | :heavy_minus_sign: | Secrets the run used, identified by the stored value and version they came from. Never send a secret value: a `value` field is rejected. |
 
 ### Response

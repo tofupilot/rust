@@ -3267,8 +3267,8 @@ pub struct RunCreateLogs {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct RunCreateVars {
-    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+pub struct RunCreateConfig {
+    /// Key as declared under `config:` or `secrets:` in procedure.yaml.
     pub key: String,
     /// Value the run used, in its declared type.
     pub value: serde_json::Value,
@@ -3283,16 +3283,16 @@ pub struct RunCreateVars {
     pub source: NullableField<Source>,
 }
 
-impl RunCreateVars {
+impl RunCreateConfig {
     /// Create a builder for this type.
-    pub fn builder() -> RunCreateVarsBuilder {
-        RunCreateVarsBuilder::default()
+    pub fn builder() -> RunCreateConfigBuilder {
+        RunCreateConfigBuilder::default()
     }
 }
 
-/// Builder for [`RunCreateVars`].
+/// Builder for [`RunCreateConfig`].
 #[derive(Debug, Default)]
-pub struct RunCreateVarsBuilder {
+pub struct RunCreateConfigBuilder {
     key: Option<String>,
     value: Option<serde_json::Value>,
     variable_id: NullableField<String>,
@@ -3300,10 +3300,10 @@ pub struct RunCreateVarsBuilder {
     source: NullableField<Source>,
 }
 
-impl RunCreateVarsBuilder {
+impl RunCreateConfigBuilder {
     /// Set the `key` field.
     ///
-    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    /// Key as declared under `config:` or `secrets:` in procedure.yaml.
     pub fn key(mut self, value: impl Into<String>) -> Self {
         self.key = Some(value.into());
         self
@@ -3360,8 +3360,8 @@ impl RunCreateVarsBuilder {
     }
 
     /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<RunCreateVars, String> {
-        Ok(RunCreateVars {
+    pub fn build(self) -> std::result::Result<RunCreateConfig, String> {
+        Ok(RunCreateConfig {
             key: self.key
                 .ok_or_else(|| "missing required field: key".to_string())?,
             value: self.value
@@ -3375,7 +3375,7 @@ impl RunCreateVarsBuilder {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateSecrets {
-    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    /// Key as declared under `config:` or `secrets:` in procedure.yaml.
     pub key: String,
     /// ID of the stored value the station received, when it came from TofuPilot.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
@@ -3407,7 +3407,7 @@ pub struct RunCreateSecretsBuilder {
 impl RunCreateSecretsBuilder {
     /// Set the `key` field.
     ///
-    /// Key as declared under `vars:` or `secrets:` in procedure.yaml.
+    /// Key as declared under `config:` or `secrets:` in procedure.yaml.
     pub fn key(mut self, value: impl Into<String>) -> Self {
         self.key = Some(value.into());
         self
@@ -3530,9 +3530,9 @@ pub struct RunCreateRequest {
     /// Custom metadata to upsert on the unit under test (max 50 keys per unit). PATCH semantics: keys not present here are preserved on the unit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    /// Config values the run used (declared under `config:` in procedure.yaml), with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vars: Option<Vec<RunCreateVars>>,
+    pub config: Option<Vec<RunCreateConfig>>,
     /// Secrets the run used, identified by the stored value and version they came from. Never send a secret value: a `value` field is rejected.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub secrets: Option<Vec<RunCreateSecrets>>,
@@ -3570,7 +3570,7 @@ pub struct RunCreateRequestBuilder {
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    vars: Option<Vec<RunCreateVars>>,
+    config: Option<Vec<RunCreateConfig>>,
     secrets: Option<Vec<RunCreateSecrets>>,
 }
 
@@ -3787,11 +3787,11 @@ impl RunCreateRequestBuilder {
         self
     }
 
-    /// Set the `vars` field.
+    /// Set the `config` field.
     ///
-    /// Vars the run used, with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
-    pub fn vars(mut self, value: impl Into<Vec<RunCreateVars>>) -> Self {
-        self.vars = Some(value.into());
+    /// Config values the run used (declared under `config:` in procedure.yaml), with their values. Recorded with the run; identical sets are stored once. Any client can send them, e.g. a calibration offset.
+    pub fn config(mut self, value: impl Into<Vec<RunCreateConfig>>) -> Self {
+        self.config = Some(value.into());
         self
     }
 
@@ -3833,7 +3833,7 @@ impl RunCreateRequestBuilder {
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
-            vars: self.vars,
+            config: self.config,
             secrets: self.secrets,
         })
     }
@@ -7102,7 +7102,7 @@ impl RunGetSubUnitsBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct RunGetVars {
+pub struct RunGetConfig {
     pub key: String,
     pub value: serde_json::Value,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -7113,16 +7113,16 @@ pub struct RunGetVars {
     pub source: Option<Source>,
 }
 
-impl RunGetVars {
+impl RunGetConfig {
     /// Create a builder for this type.
-    pub fn builder() -> RunGetVarsBuilder {
-        RunGetVarsBuilder::default()
+    pub fn builder() -> RunGetConfigBuilder {
+        RunGetConfigBuilder::default()
     }
 }
 
-/// Builder for [`RunGetVars`].
+/// Builder for [`RunGetConfig`].
 #[derive(Debug, Default)]
-pub struct RunGetVarsBuilder {
+pub struct RunGetConfigBuilder {
     key: Option<String>,
     value: Option<serde_json::Value>,
     variable_id: Option<String>,
@@ -7130,7 +7130,7 @@ pub struct RunGetVarsBuilder {
     source: Option<Source>,
 }
 
-impl RunGetVarsBuilder {
+impl RunGetConfigBuilder {
     /// Set the `key` field.
     pub fn key(mut self, value: impl Into<String>) -> Self {
         self.key = Some(value.into());
@@ -7162,8 +7162,8 @@ impl RunGetVarsBuilder {
     }
 
     /// Build the struct. Returns an error message if required fields are missing.
-    pub fn build(self) -> std::result::Result<RunGetVars, String> {
-        Ok(RunGetVars {
+    pub fn build(self) -> std::result::Result<RunGetConfig, String> {
+        Ok(RunGetConfig {
             key: self.key
                 .ok_or_else(|| "missing required field: key".to_string())?,
             value: self.value
@@ -7296,9 +7296,9 @@ pub struct RunGetResponse {
     /// Custom metadata key/value pairs on the run.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
-    /// Vars the run used, with their values. Empty when the run recorded none.
+    /// Config values the run used (declared under `config:` in procedure.yaml), with their values. Empty when the run recorded none.
     #[serde(default)]
-    pub vars: Vec<RunGetVars>,
+    pub config: Vec<RunGetConfig>,
     /// Secrets the run used, by stored value and version. Never carries a value. Empty when the run recorded none.
     #[serde(default)]
     pub secrets: Vec<RunGetSecrets>,
