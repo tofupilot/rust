@@ -756,8 +756,9 @@ pub struct ProcedureListCreatedByUser {
     /// Name of the user who created the procedure.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    /// Email of the user who created the procedure.
-    pub email: String,
+    /// Email of the user who created the procedure. Null when the caller is a viewer restricted to access groups.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
 }
 
 impl ProcedureListCreatedByUser {
@@ -794,7 +795,7 @@ impl ProcedureListCreatedByUserBuilder {
 
     /// Set the `email` field.
     ///
-    /// Email of the user who created the procedure.
+    /// Email of the user who created the procedure. Null when the caller is a viewer restricted to access groups.
     pub fn email(mut self, value: impl Into<String>) -> Self {
         self.email = Some(value.into());
         self
@@ -806,8 +807,7 @@ impl ProcedureListCreatedByUserBuilder {
             id: self.id
                 .ok_or_else(|| "missing required field: id".to_string())?,
             name: self.name,
-            email: self.email
-                .ok_or_else(|| "missing required field: email".to_string())?,
+            email: self.email,
         })
     }
 }
@@ -12032,8 +12032,9 @@ pub struct StationRemoveResponse {
 pub struct UserListResponse {
     /// Unique identifier for the user.
     pub id: String,
-    /// Email address of the user.
-    pub email: String,
+    /// Email address of the user. Null for another member when the key belongs to a viewer restricted to access groups.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
     /// Display name of the user.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
