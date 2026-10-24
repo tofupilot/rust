@@ -295,7 +295,7 @@ pub struct ListBuilder<'a> {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
-    samples: Option<Vec<Sample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
@@ -449,7 +449,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `samples` query parameter.
-    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }

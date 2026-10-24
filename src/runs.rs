@@ -564,7 +564,7 @@ pub struct ListBuilder<'a> {
     slot_names: Option<Vec<String>>,
     environments: Option<Vec<Environment>>,
     serial_numbers: Option<Vec<String>>,
-    samples: Option<Vec<Sample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
@@ -701,7 +701,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `samples` query parameter.
-    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }

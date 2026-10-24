@@ -124,7 +124,7 @@ async fn main() -> tofupilot::Result<()> {
 | `slot_names` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `environments` | `Option<Vec<Environment>>` | :heavy_minus_sign: | N/A |
 | `serial_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
-| `samples` | `Option<Vec<Sample>>` | :heavy_minus_sign: | N/A |
+| `samples` | `Option<Vec<ListQueryParamSample>>` | :heavy_minus_sign: | N/A |
 | `part_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `revision_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |
 | `batch_numbers` | `Option<Vec<String>>` | :heavy_minus_sign: | N/A |

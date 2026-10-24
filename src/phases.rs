@@ -84,7 +84,7 @@ pub struct ListBuilder<'a> {
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
-    samples: Option<Vec<PhaseListQueryParamSample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     sort_by: Option<PhaseListSortBy>,
     sort_order: Option<ListSortOrder>,
     limit: Option<i64>,
@@ -264,7 +264,7 @@ impl<'a> ListBuilder<'a> {
     }
 
     /// Set the `samples` query parameter.
-    pub fn samples(mut self, value: impl Into<Vec<PhaseListQueryParamSample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }

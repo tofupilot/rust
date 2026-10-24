@@ -224,29 +224,6 @@ impl std::fmt::Display for LogListSortBy {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PhaseListQueryParamSample {
-    #[serde(rename = "production")]
-    Production,
-    #[serde(rename = "golden")]
-    Golden,
-    #[serde(rename = "failing")]
-    Failing,
-    #[serde(rename = "ignored")]
-    Ignored,
-}
-
-impl std::fmt::Display for PhaseListQueryParamSample {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Production => write!(f, "production"),
-            Self::Golden => write!(f, "golden"),
-            Self::Failing => write!(f, "failing"),
-            Self::Ignored => write!(f, "ignored"),
-        }
-    }
-}
-
 /// Field to sort results by.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PhaseListSortBy {
@@ -544,9 +521,10 @@ impl std::fmt::Display for Environment {
     }
 }
 
-/// Sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit; 'ignored' marks a bench-check unit excluded from analytics and alerts. All are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Sample {
+pub enum ListQueryParamSample {
+    #[serde(rename = "production")]
+    Production,
     #[serde(rename = "golden")]
     Golden,
     #[serde(rename = "failing")]
@@ -555,9 +533,10 @@ pub enum Sample {
     Ignored,
 }
 
-impl std::fmt::Display for Sample {
+impl std::fmt::Display for ListQueryParamSample {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Production => write!(f, "production"),
             Self::Golden => write!(f, "golden"),
             Self::Failing => write!(f, "failing"),
             Self::Ignored => write!(f, "ignored"),
@@ -579,6 +558,27 @@ impl std::fmt::Display for ListSortOrder {
         match self {
             Self::Asc => write!(f, "asc"),
             Self::Desc => write!(f, "desc"),
+        }
+    }
+}
+
+/// Sample classification. 'golden' marks a known-good reference unit; 'failing' marks a known-faulty reference unit; 'ignored' marks a bench-check unit excluded from analytics and alerts. All are excluded from production analytics aggregates (FPY, Cpk, throughput) by default. Omit or null for regular production units.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Sample {
+    #[serde(rename = "golden")]
+    Golden,
+    #[serde(rename = "failing")]
+    Failing,
+    #[serde(rename = "ignored")]
+    Ignored,
+}
+
+impl std::fmt::Display for Sample {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Golden => write!(f, "golden"),
+            Self::Failing => write!(f, "failing"),
+            Self::Ignored => write!(f, "ignored"),
         }
     }
 }
@@ -3998,7 +3998,7 @@ pub struct RunListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub samples: Option<Vec<Sample>>,
+    pub samples: Option<Vec<ListQueryParamSample>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub part_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -4072,7 +4072,7 @@ pub struct RunListRequestBuilder {
     slot_names: Option<Vec<String>>,
     environments: Option<Vec<Environment>>,
     serial_numbers: Option<Vec<String>>,
-    samples: Option<Vec<Sample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
@@ -4165,7 +4165,7 @@ impl RunListRequestBuilder {
     }
 
     /// Set the `samples` field.
-    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
@@ -7721,7 +7721,7 @@ pub struct UnitListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exclude_units_with_parent: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub samples: Option<Vec<Sample>>,
+    pub samples: Option<Vec<ListQueryParamSample>>,
     /// Maximum number of units to return.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<i64>,
@@ -7769,7 +7769,7 @@ pub struct UnitListRequestBuilder {
     created_by_user_ids: Option<Vec<String>>,
     created_by_station_ids: Option<Vec<String>>,
     exclude_units_with_parent: Option<bool>,
-    samples: Option<Vec<Sample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     limit: Option<i64>,
     cursor: Option<i64>,
     sort_by: Option<UnitListSortBy>,
@@ -7888,7 +7888,7 @@ impl UnitListRequestBuilder {
     }
 
     /// Set the `samples` field.
-    pub fn samples(mut self, value: impl Into<Vec<Sample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
@@ -13830,7 +13830,7 @@ pub struct PhaseListRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub batch_numbers: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub samples: Option<Vec<PhaseListQueryParamSample>>,
+    pub samples: Option<Vec<ListQueryParamSample>>,
     /// Field to sort results by.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sort_by: Option<PhaseListSortBy>,
@@ -13877,7 +13877,7 @@ pub struct PhaseListRequestBuilder {
     part_numbers: Option<Vec<String>>,
     revision_numbers: Option<Vec<String>>,
     batch_numbers: Option<Vec<String>>,
-    samples: Option<Vec<PhaseListQueryParamSample>>,
+    samples: Option<Vec<ListQueryParamSample>>,
     sort_by: Option<PhaseListSortBy>,
     sort_order: Option<ListSortOrder>,
     limit: Option<i64>,
@@ -14020,7 +14020,7 @@ impl PhaseListRequestBuilder {
     }
 
     /// Set the `samples` field.
-    pub fn samples(mut self, value: impl Into<Vec<PhaseListQueryParamSample>>) -> Self {
+    pub fn samples(mut self, value: impl Into<Vec<ListQueryParamSample>>) -> Self {
         self.samples = Some(value.into());
         self
     }
