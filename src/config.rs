@@ -16,6 +16,10 @@ pub struct ClientConfig {
     pub max_retries: u32,
     /// User agent string
     pub user_agent: String,
+    /// Client name sent as `x-client-type`, recorded on each API call
+    pub client_type: String,
+    /// Client version sent as `x-client-version`, recorded on each API call
+    pub client_version: String,
     /// Request lifecycle hooks
     pub hooks: Hooks,
     /// Additional root certificates, for self-hosted instances behind a private CA.
@@ -35,6 +39,8 @@ impl std::fmt::Debug for ClientConfig {
             .field("timeout", &self.timeout)
             .field("max_retries", &self.max_retries)
             .field("user_agent", &self.user_agent)
+            .field("client_type", &self.client_type)
+            .field("client_version", &self.client_version)
             .field("hooks", &self.hooks)
             .field("root_certificates", &format_args!("{} certificate(s)", self.root_certificates.len()))
             .finish()
@@ -50,6 +56,8 @@ impl ClientConfig {
             timeout: Duration::from_secs(30),
             max_retries: 3,
             user_agent: format!("tofupilot-rust/{}", env!("CARGO_PKG_VERSION")),
+            client_type: "rust".to_string(),
+            client_version: env!("CARGO_PKG_VERSION").to_string(),
             hooks: Hooks::new(),
             root_certificates: Vec::new(),
         }
@@ -77,6 +85,17 @@ impl ClientConfig {
     /// Set the maximum number of retries.
     pub fn max_retries(mut self, retries: u32) -> Self {
         self.max_retries = retries;
+        self
+    }
+
+    /// Identify the program calling the API, for tools built on this SDK.
+    ///
+    /// Defaults to `rust` and the SDK version. A tool that wraps the SDK sets
+    /// its own name and version, so the API activity shows which tool and
+    /// release made each call rather than the SDK underneath it.
+    pub fn client(mut self, client_type: impl Into<String>, version: impl Into<String>) -> Self {
+        self.client_type = client_type.into();
+        self.client_version = version.into();
         self
     }
 

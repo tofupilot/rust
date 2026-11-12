@@ -179,11 +179,13 @@ impl TofuPilot {
         );
         headers.insert(
             "x-client-type",
-            HeaderValue::from_static("rust"),
+            HeaderValue::from_str(&config.client_type).unwrap_or_else(|_| {
+                HeaderValue::from_static("rust")
+            }),
         );
         headers.insert(
             "x-client-version",
-            HeaderValue::from_str(env!("CARGO_PKG_VERSION")).unwrap_or_else(|_| {
+            HeaderValue::from_str(&config.client_version).unwrap_or_else(|_| {
                 HeaderValue::from_static("unknown")
             }),
         );
