@@ -105,6 +105,7 @@ pub struct CreateBuilder<'a> {
     outcome: Option<LogGetOutcome>,
     procedure_id: Option<String>,
     deployment_id: Option<NullableField<String>>,
+    deployment_digest: Option<String>,
     client_run_ref: Option<String>,
     execution_id: Option<NullableField<String>>,
     slot_key: Option<NullableField<String>>,
@@ -137,6 +138,7 @@ impl<'a> CreateBuilder<'a> {
             outcome: None,
             procedure_id: None,
             deployment_id: None,
+            deployment_digest: None,
             client_run_ref: None,
             execution_id: None,
             slot_key: None,
@@ -190,6 +192,14 @@ impl<'a> CreateBuilder<'a> {
     /// Explicitly set `deployment_id` to null.
     pub fn deployment_id_null(mut self) -> Self {
         self.deployment_id = Some(NullableField::Null);
+        self
+    }
+
+    /// Set the `deployment_digest` field.
+    ///
+    /// SHA-256 digest of the deployed sources the station checked before this run. Set by the CLI with `deployment_id` when it ran a pulled deployment whose files it verified against their install. The server compares it with the digest of that deployment's build and records whether they match. Read only from a station key; ignored otherwise. Omit it for ad-hoc or local runs.
+    pub fn deployment_digest(mut self, value: impl Into<String>) -> Self {
+        self.deployment_digest = Some(value.into());
         self
     }
 
@@ -396,6 +406,9 @@ impl<'a> CreateBuilder<'a> {
         self.outcome = Some(body.outcome);
         self.procedure_id = Some(body.procedure_id);
         self.deployment_id = Some(body.deployment_id);
+        if body.deployment_digest.is_some() {
+            self.deployment_digest = body.deployment_digest;
+        }
         if body.client_run_ref.is_some() {
             self.client_run_ref = body.client_run_ref;
         }
@@ -487,6 +500,7 @@ impl<'a> CreateBuilder<'a> {
                     "missing required field: procedure_id".to_string(),
                 ))?,
             deployment_id: self.deployment_id.unwrap_or(NullableField::Absent),
+            deployment_digest: self.deployment_digest,
             client_run_ref: self.client_run_ref,
             execution_id: self.execution_id.unwrap_or(NullableField::Absent),
             slot_key: self.slot_key.unwrap_or(NullableField::Absent),

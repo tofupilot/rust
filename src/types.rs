@@ -3476,6 +3476,9 @@ pub struct RunCreateRequest {
     /// Deployment ID this run was executed from. Set by the CLI when running a pulled deployment so the run is linked back to the exact build it ran. Validated against the procedure; left null for ad-hoc or local runs.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub deployment_id: NullableField<String>,
+    /// SHA-256 digest of the deployed sources the station checked before this run. Set by the CLI with `deployment_id` when it ran a pulled deployment whose files it verified against their install. The server compares it with the digest of that deployment's build and records whether they match. Read only from a station key; ignored otherwise. Omit it for ad-hoc or local runs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deployment_digest: Option<String>,
     /// Idempotency reference for this upload, minted and persisted by the caller BEFORE the request is sent. When a second request carries the same reference, it is recognised as a retry of the first and returns the run already created rather than creating another one. That is what makes an upload safe to retry after a lost or timed-out response. The reference must be unique per organization and must never be reused for different data: derive it from the credential id returned at login plus a counter persisted locally (the CLI sends `<credential id>_<counter>`), never from a timestamp alone, since a clock can go backwards. Omit the field and every request creates a new run, exactly as before.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_run_ref: Option<String>,
@@ -3551,6 +3554,7 @@ pub struct RunCreateRequestBuilder {
     outcome: Option<LogGetOutcome>,
     procedure_id: Option<String>,
     deployment_id: NullableField<String>,
+    deployment_digest: Option<String>,
     client_run_ref: Option<String>,
     execution_id: NullableField<String>,
     slot_key: NullableField<String>,
@@ -3602,6 +3606,14 @@ impl RunCreateRequestBuilder {
     /// Explicitly set `deployment_id` to null.
     pub fn deployment_id_null(mut self) -> Self {
         self.deployment_id = NullableField::Null;
+        self
+    }
+
+    /// Set the `deployment_digest` field.
+    ///
+    /// SHA-256 digest of the deployed sources the station checked before this run. Set by the CLI with `deployment_id` when it ran a pulled deployment whose files it verified against their install. The server compares it with the digest of that deployment's build and records whether they match. Read only from a station key; ignored otherwise. Omit it for ad-hoc or local runs.
+    pub fn deployment_digest(mut self, value: impl Into<String>) -> Self {
+        self.deployment_digest = Some(value.into());
         self
     }
 
@@ -3811,6 +3823,7 @@ impl RunCreateRequestBuilder {
             procedure_id: self.procedure_id
                 .ok_or_else(|| "missing required field: procedure_id".to_string())?,
             deployment_id: self.deployment_id,
+            deployment_digest: self.deployment_digest,
             client_run_ref: self.client_run_ref,
             execution_id: self.execution_id,
             slot_key: self.slot_key,
