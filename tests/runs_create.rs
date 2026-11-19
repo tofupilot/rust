@@ -125,6 +125,7 @@ async fn create_run_with_logs() {
                 message: "Test started successfully".to_string(),
                 source_file: "test_runner.rs".to_string(),
                 line_number: 42,
+                plug_key: Default::default(),
             },
             RunCreateLogs {
                 level: Level::Warning,
@@ -132,6 +133,7 @@ async fn create_run_with_logs() {
                 message: "Voltage slightly above nominal".to_string(),
                 source_file: "test_runner.rs".to_string(),
                 line_number: 88,
+                plug_key: Default::default(),
             },
         ])
         .send()
@@ -763,4 +765,101 @@ async fn create_run_multiple_phases_measurements() {
     assert_eq!(2, phases.len());
     assert_eq!(2, phases[0].measurements.len());
     assert_eq!(1, phases[1].measurements.len());
+}
+
+#[tokio::test]
+async fn create_run_with_plugs_round_trips_each_instrument() {
+    let uid_val = uid();
+    let now = chrono::Utc::now();
+    let proc_id = procedure_id().await;
+
+    let psu = RunCreatePlugs::builder()
+        .key("psu")
+        .name("Power Supply")
+        .python("instruments.psu:Psu")
+        .scope(Scope::Station)
+        .manufacturer("Keysight")
+        .model("E36312A")
+        .serial_number(format!("MY-{uid_val}"))
+        .firmware("2.1")
+        .build()
+        .unwrap();
+    let relays = RunCreatePlugs::builder()
+        .key("relays")
+        .name("Relays")
+        .build()
+        .unwrap();
+    let phase = RunCreatePhases::builder()
+        .name("rail")
+        .outcome(PhaseGetOutcome::Pass)
+        .started_at(now - chrono::Duration::minutes(4))
+        .ended_at(now - chrono::Duration::minutes(3))
+        .plug_keys(vec!["psu".to_string()])
+        .build()
+        .unwrap();
+
+    let created = client()
+        .runs()
+        .create()
+        .serial_number(format!("SN-{uid_val}"))
+        .procedure_id(proc_id)
+        .part_number(format!("PART-{uid_val}"))
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(LogGetOutcome::Pass)
+        .plugs(vec![psu, relays])
+        .phases(vec![phase])
+        .logs(vec![RunCreateLogs {
+            level: Level::Warning,
+            timestamp: now - chrono::Duration::minutes(4),
+            message: "Output protection tripped".to_string(),
+            source_file: "instruments/psu.py".to_string(),
+            line_number: 12,
+            plug_key: NullableField::Value("psu".to_string()),
+        }])
+        .send()
+        .await
+        .unwrap();
+
+    let fetched = client().runs().get().id(&created.id).send().await.unwrap();
+    let plugs = fetched.plugs.expect("plugs returned");
+    assert_eq!(plugs.len(), 2);
+    let psu = plugs.iter().find(|p| p.key == "psu").unwrap();
+    assert_eq!(
+        psu.serial_number.as_deref(),
+        Some(format!("MY-{uid_val}").as_str())
+    );
+    assert_eq!(psu.scope, Some(Scope::Station));
+    let relays = plugs.iter().find(|p| p.key == "relays").unwrap();
+    assert!(relays.serial_number.is_none() && relays.manufacturer.is_none());
+}
+
+#[tokio::test]
+async fn create_run_keeps_a_run_whose_phase_names_an_unknown_plug() {
+    let uid_val = uid();
+    let now = chrono::Utc::now();
+    let phase = RunCreatePhases::builder()
+        .name("rail")
+        .outcome(PhaseGetOutcome::Pass)
+        .started_at(now - chrono::Duration::minutes(4))
+        .ended_at(now - chrono::Duration::minutes(3))
+        .plug_keys(vec!["dmm".to_string()])
+        .build()
+        .unwrap();
+    let result = client()
+        .runs()
+        .create()
+        .serial_number(format!("SN-{uid_val}"))
+        .procedure_id(procedure_id().await)
+        .part_number(format!("PART-{uid_val}"))
+        .started_at(now - chrono::Duration::minutes(5))
+        .ended_at(now)
+        .outcome(LogGetOutcome::Pass)
+        .phases(vec![phase])
+        .send()
+        .await;
+    // The link is dropped, the run is kept: a run is never lost over a plug key.
+    let created = result.expect("a run with an unknown plug key is still stored");
+    let run = client().runs().get().id(&created.id).send().await.unwrap();
+    assert!(run.plugs.unwrap_or_default().is_empty());
 }

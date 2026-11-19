@@ -116,6 +116,7 @@ async fn get_run_includes_logs() {
                 message: "Initializing device".to_string(),
                 source_file: "device.rs".to_string(),
                 line_number: 10,
+                plug_key: Default::default(),
             },
             RunCreateLogs {
                 level: Level::Error,
@@ -123,6 +124,7 @@ async fn get_run_includes_logs() {
                 message: "Recovered from transient fault".to_string(),
                 source_file: "fault_handler.rs".to_string(),
                 line_number: 55,
+                plug_key: Default::default(),
             },
         ])
         .send()

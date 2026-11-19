@@ -440,6 +440,27 @@ impl std::fmt::Display for SequencesOutcome {
     }
 }
 
+/// Lifetime of the plug instance: one per slot, one per execution, or held by the station across runs.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Scope {
+    #[serde(rename = "slot")]
+    Slot,
+    #[serde(rename = "execution")]
+    Execution,
+    #[serde(rename = "station")]
+    Station,
+}
+
+impl std::fmt::Display for Scope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Slot => write!(f, "slot"),
+            Self::Execution => write!(f, "execution"),
+            Self::Station => write!(f, "station"),
+        }
+    }
+}
+
 /// Severity level of the log message following standard system logging levels. Use DEBUG for detailed diagnostic information, INFO for general execution information, WARNING for unexpected events or potential issues, ERROR for serious problems that prevented function execution, CRITICAL for severe errors that may cause program termination.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Level {
@@ -3005,6 +3026,9 @@ pub struct RunCreatePhases {
     /// Zero-based retry attempt index for this phase. 0 = first attempt, 1 = first retry, etc. When a phase is retried, all attempts are stored with the same name and increasing retry_count.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retry_count: Option<i64>,
+    /// Keys of the run `plugs` this phase received. Ties each of its measurements to the instruments that took them. Omit when unknown.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub plug_keys: NullableField<Vec<String>>,
     /// Path of the sequence call this phase ran in, matching the `path` of one entry of the run `sequences` array. Omit for a phase written in the procedure itself. Phase analytics identify a phase by its sequence path and its name together, so the same phase name inside two sequence calls counts as two phases.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub sequence_path: NullableField<String>,
@@ -3027,6 +3051,7 @@ pub struct RunCreatePhasesBuilder {
     docstring: NullableField<String>,
     measurements: NullableField<Vec<RunCreateMeasurements>>,
     retry_count: Option<i64>,
+    plug_keys: NullableField<Vec<String>>,
     sequence_path: NullableField<String>,
 }
 
@@ -3099,6 +3124,20 @@ impl RunCreatePhasesBuilder {
         self
     }
 
+    /// Set the `plug_keys` field.
+    ///
+    /// Keys of the run `plugs` this phase received. Ties each of its measurements to the instruments that took them. Omit when unknown.
+    pub fn plug_keys(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.plug_keys = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `plug_keys` to null.
+    pub fn plug_keys_null(mut self) -> Self {
+        self.plug_keys = NullableField::Null;
+        self
+    }
+
     /// Set the `sequence_path` field.
     ///
     /// Path of the sequence call this phase ran in, matching the `path` of one entry of the run `sequences` array. Omit for a phase written in the procedure itself. Phase analytics identify a phase by its sequence path and its name together, so the same phase name inside two sequence calls counts as two phases.
@@ -3127,6 +3166,7 @@ impl RunCreatePhasesBuilder {
             docstring: self.docstring,
             measurements: self.measurements,
             retry_count: self.retry_count,
+            plug_keys: self.plug_keys,
             sequence_path: self.sequence_path,
         })
     }
@@ -3253,6 +3293,170 @@ impl RunCreateSequencesBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunCreatePlugs {
+    /// Key of the plug in the procedure: the parameter name a phase receives it under. Unique within the run.
+    pub key: String,
+    /// Display name of the plug, as declared in the procedure.
+    pub name: String,
+    /// Class reference of the plug as written in the procedure (`python:`).
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub python: NullableField<String>,
+    /// Lifetime of the plug instance: one per slot, one per execution, or held by the station across runs.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub scope: NullableField<Scope>,
+    /// Maker of the instrument the plug opened, the first field of its *IDN? answer. Omit when the plug reported none.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub manufacturer: NullableField<String>,
+    /// Model of the instrument, the second field of *IDN?.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub model: NullableField<String>,
+    /// Serial number of the instrument, the third field of *IDN?.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub serial_number: NullableField<String>,
+    /// Firmware version of the instrument, the fourth field of *IDN?.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub firmware: NullableField<String>,
+}
+
+impl RunCreatePlugs {
+    /// Create a builder for this type.
+    pub fn builder() -> RunCreatePlugsBuilder {
+        RunCreatePlugsBuilder::default()
+    }
+}
+
+/// Builder for [`RunCreatePlugs`].
+#[derive(Debug, Default)]
+pub struct RunCreatePlugsBuilder {
+    key: Option<String>,
+    name: Option<String>,
+    python: NullableField<String>,
+    scope: NullableField<Scope>,
+    manufacturer: NullableField<String>,
+    model: NullableField<String>,
+    serial_number: NullableField<String>,
+    firmware: NullableField<String>,
+}
+
+impl RunCreatePlugsBuilder {
+    /// Set the `key` field.
+    ///
+    /// Key of the plug in the procedure: the parameter name a phase receives it under. Unique within the run.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Display name of the plug, as declared in the procedure.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `python` field.
+    ///
+    /// Class reference of the plug as written in the procedure (`python:`).
+    pub fn python(mut self, value: impl Into<String>) -> Self {
+        self.python = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `python` to null.
+    pub fn python_null(mut self) -> Self {
+        self.python = NullableField::Null;
+        self
+    }
+
+    /// Set the `scope` field.
+    ///
+    /// Lifetime of the plug instance: one per slot, one per execution, or held by the station across runs.
+    pub fn scope(mut self, value: impl Into<Scope>) -> Self {
+        self.scope = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `scope` to null.
+    pub fn scope_null(mut self) -> Self {
+        self.scope = NullableField::Null;
+        self
+    }
+
+    /// Set the `manufacturer` field.
+    ///
+    /// Maker of the instrument the plug opened, the first field of its *IDN? answer. Omit when the plug reported none.
+    pub fn manufacturer(mut self, value: impl Into<String>) -> Self {
+        self.manufacturer = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `manufacturer` to null.
+    pub fn manufacturer_null(mut self) -> Self {
+        self.manufacturer = NullableField::Null;
+        self
+    }
+
+    /// Set the `model` field.
+    ///
+    /// Model of the instrument, the second field of *IDN?.
+    pub fn model(mut self, value: impl Into<String>) -> Self {
+        self.model = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `model` to null.
+    pub fn model_null(mut self) -> Self {
+        self.model = NullableField::Null;
+        self
+    }
+
+    /// Set the `serial_number` field.
+    ///
+    /// Serial number of the instrument, the third field of *IDN?.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `serial_number` to null.
+    pub fn serial_number_null(mut self) -> Self {
+        self.serial_number = NullableField::Null;
+        self
+    }
+
+    /// Set the `firmware` field.
+    ///
+    /// Firmware version of the instrument, the fourth field of *IDN?.
+    pub fn firmware(mut self, value: impl Into<String>) -> Self {
+        self.firmware = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `firmware` to null.
+    pub fn firmware_null(mut self) -> Self {
+        self.firmware = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunCreatePlugs, String> {
+        Ok(RunCreatePlugs {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            name: self.name
+                .ok_or_else(|| "missing required field: name".to_string())?,
+            python: self.python,
+            scope: self.scope,
+            manufacturer: self.manufacturer,
+            model: self.model,
+            serial_number: self.serial_number,
+            firmware: self.firmware,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunCreateLogs {
     /// Severity level of the log message following standard system logging levels. Use DEBUG for detailed diagnostic information, INFO for general execution information, WARNING for unexpected events or potential issues, ERROR for serious problems that prevented function execution, CRITICAL for severe errors that may cause program termination.
     pub level: Level,
@@ -3264,6 +3468,100 @@ pub struct RunCreateLogs {
     pub source_file: String,
     /// Line number in the source file where the log message was generated. Used for debugging and tracing log origins.
     pub line_number: i64,
+    /// Key of the plug that wrote this line, one of the run `plugs`. Omit for a line of a phase or of the procedure.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub plug_key: NullableField<String>,
+}
+
+impl RunCreateLogs {
+    /// Create a builder for this type.
+    pub fn builder() -> RunCreateLogsBuilder {
+        RunCreateLogsBuilder::default()
+    }
+}
+
+/// Builder for [`RunCreateLogs`].
+#[derive(Debug, Default)]
+pub struct RunCreateLogsBuilder {
+    level: Option<Level>,
+    timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    message: Option<String>,
+    source_file: Option<String>,
+    line_number: Option<i64>,
+    plug_key: NullableField<String>,
+}
+
+impl RunCreateLogsBuilder {
+    /// Set the `level` field.
+    ///
+    /// Severity level of the log message following standard system logging levels. Use DEBUG for detailed diagnostic information, INFO for general execution information, WARNING for unexpected events or potential issues, ERROR for serious problems that prevented function execution, CRITICAL for severe errors that may cause program termination.
+    pub fn level(mut self, value: impl Into<Level>) -> Self {
+        self.level = Some(value.into());
+        self
+    }
+
+    /// Set the `timestamp` field.
+    ///
+    /// ISO 8601 timestamp when the log message was generated.
+    pub fn timestamp(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.timestamp = Some(value.into());
+        self
+    }
+
+    /// Set the `message` field.
+    ///
+    /// Content of the log message. Contains the actual log text describing the event, error, or information being logged. Messages longer than 10,000 characters will be truncated; empty messages become "(empty)".
+    pub fn message(mut self, value: impl Into<String>) -> Self {
+        self.message = Some(value.into());
+        self
+    }
+
+    /// Set the `source_file` field.
+    ///
+    /// Name or path of the source file where the log message originated. Helps identify the code location that generated the log entry. Paths longer than 200 characters keep the trailing 200 (leading characters are dropped); empty values become "unknown".
+    pub fn source_file(mut self, value: impl Into<String>) -> Self {
+        self.source_file = Some(value.into());
+        self
+    }
+
+    /// Set the `line_number` field.
+    ///
+    /// Line number in the source file where the log message was generated. Used for debugging and tracing log origins.
+    pub fn line_number(mut self, value: impl Into<i64>) -> Self {
+        self.line_number = Some(value.into());
+        self
+    }
+
+    /// Set the `plug_key` field.
+    ///
+    /// Key of the plug that wrote this line, one of the run `plugs`. Omit for a line of a phase or of the procedure.
+    pub fn plug_key(mut self, value: impl Into<String>) -> Self {
+        self.plug_key = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `plug_key` to null.
+    pub fn plug_key_null(mut self) -> Self {
+        self.plug_key = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunCreateLogs, String> {
+        Ok(RunCreateLogs {
+            level: self.level
+                .ok_or_else(|| "missing required field: level".to_string())?,
+            timestamp: self.timestamp
+                .ok_or_else(|| "missing required field: timestamp".to_string())?,
+            message: self.message
+                .ok_or_else(|| "missing required field: message".to_string())?,
+            source_file: self.source_file
+                .ok_or_else(|| "missing required field: source_file".to_string())?,
+            line_number: self.line_number
+                .ok_or_else(|| "missing required field: line_number".to_string())?,
+            plug_key: self.plug_key,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -3524,6 +3822,9 @@ pub struct RunCreateRequest {
     /// Sequence calls of the run: the groups of phases the procedure composed with `uses:`, each with its own outcome. A phase joins its call through its `sequence_path` field, which must name one `path` of this array. A nested call (`calibration/dmm`) needs its parent path (`calibration`) in the same array, in any order. Omit for a procedure without sequences.
     #[serde(default, skip_serializing_if = "nullable_is_absent")]
     pub sequences: NullableField<Vec<RunCreateSequences>>,
+    /// Plugs the run used: each instrument abstraction of the procedure, with the instrument it opened as the plug reported it (manufacturer, model, serial number, firmware). The TofuPilot CLI fills it from the plugs it opened. Omit for a run without plugs.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub plugs: NullableField<Vec<RunCreatePlugs>>,
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub logs: Option<Vec<RunCreateLogs>>,
@@ -3571,6 +3872,7 @@ pub struct RunCreateRequestBuilder {
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
     sequences: NullableField<Vec<RunCreateSequences>>,
+    plugs: NullableField<Vec<RunCreatePlugs>>,
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -3775,6 +4077,20 @@ impl RunCreateRequestBuilder {
         self
     }
 
+    /// Set the `plugs` field.
+    ///
+    /// Plugs the run used: each instrument abstraction of the procedure, with the instrument it opened as the plug reported it (manufacturer, model, serial number, firmware). The TofuPilot CLI fills it from the plugs it opened. Omit for a run without plugs.
+    pub fn plugs(mut self, value: impl Into<Vec<RunCreatePlugs>>) -> Self {
+        self.plugs = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `plugs` to null.
+    pub fn plugs_null(mut self) -> Self {
+        self.plugs = NullableField::Null;
+        self
+    }
+
     /// Set the `logs` field.
     ///
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
@@ -3843,6 +4159,7 @@ impl RunCreateRequestBuilder {
             docstring: self.docstring,
             phases: self.phases,
             sequences: self.sequences,
+            plugs: self.plugs,
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
@@ -6921,6 +7238,134 @@ impl RunGetSequencesBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunGetPlugs {
+    /// Key of the plug in the procedure.
+    pub key: String,
+    /// Display name of the plug.
+    pub name: String,
+    /// Class reference of the plug as written in the procedure.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub python: Option<String>,
+    /// Lifetime of the plug instance: slot, execution or station.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<Scope>,
+    /// Maker of the instrument.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manufacturer: Option<String>,
+    /// Model of the instrument.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// Serial number of the instrument.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub serial_number: Option<String>,
+    /// Firmware version of the instrument.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firmware: Option<String>,
+}
+
+impl RunGetPlugs {
+    /// Create a builder for this type.
+    pub fn builder() -> RunGetPlugsBuilder {
+        RunGetPlugsBuilder::default()
+    }
+}
+
+/// Builder for [`RunGetPlugs`].
+#[derive(Debug, Default)]
+pub struct RunGetPlugsBuilder {
+    key: Option<String>,
+    name: Option<String>,
+    python: Option<String>,
+    scope: Option<Scope>,
+    manufacturer: Option<String>,
+    model: Option<String>,
+    serial_number: Option<String>,
+    firmware: Option<String>,
+}
+
+impl RunGetPlugsBuilder {
+    /// Set the `key` field.
+    ///
+    /// Key of the plug in the procedure.
+    pub fn key(mut self, value: impl Into<String>) -> Self {
+        self.key = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Display name of the plug.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `python` field.
+    ///
+    /// Class reference of the plug as written in the procedure.
+    pub fn python(mut self, value: impl Into<String>) -> Self {
+        self.python = Some(value.into());
+        self
+    }
+
+    /// Set the `scope` field.
+    ///
+    /// Lifetime of the plug instance: slot, execution or station.
+    pub fn scope(mut self, value: impl Into<Scope>) -> Self {
+        self.scope = Some(value.into());
+        self
+    }
+
+    /// Set the `manufacturer` field.
+    ///
+    /// Maker of the instrument.
+    pub fn manufacturer(mut self, value: impl Into<String>) -> Self {
+        self.manufacturer = Some(value.into());
+        self
+    }
+
+    /// Set the `model` field.
+    ///
+    /// Model of the instrument.
+    pub fn model(mut self, value: impl Into<String>) -> Self {
+        self.model = Some(value.into());
+        self
+    }
+
+    /// Set the `serial_number` field.
+    ///
+    /// Serial number of the instrument.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `firmware` field.
+    ///
+    /// Firmware version of the instrument.
+    pub fn firmware(mut self, value: impl Into<String>) -> Self {
+        self.firmware = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<RunGetPlugs, String> {
+        Ok(RunGetPlugs {
+            key: self.key
+                .ok_or_else(|| "missing required field: key".to_string())?,
+            name: self.name
+                .ok_or_else(|| "missing required field: name".to_string())?,
+            python: self.python,
+            scope: self.scope,
+            manufacturer: self.manufacturer,
+            model: self.model,
+            serial_number: self.serial_number,
+            firmware: self.firmware,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RunGetAttachments {
     /// Attachment ID.
     pub id: String,
@@ -7298,6 +7743,9 @@ pub struct RunGetResponse {
     /// Sequence calls of this run, parents before their nested calls. Each phase names its call through `sequence_path`. Returned together with `phases`, empty for a run without sequences.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sequences: Option<Vec<RunGetSequences>>,
+    /// Plugs the run used, ordered by key: each instrument abstraction of the procedure with the instrument it opened, as the plug reported it. Empty for a run without plugs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plugs: Option<Vec<RunGetPlugs>>,
     /// Files attached to this run, including both regular attachments and test reports. Only returned if `all` or `attachments` is included.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attachments: Option<Vec<RunGetAttachments>>,

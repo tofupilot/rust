@@ -122,6 +122,7 @@ pub struct CreateBuilder<'a> {
     docstring: Option<String>,
     phases: Option<Vec<RunCreatePhases>>,
     sequences: Option<NullableField<Vec<RunCreateSequences>>>,
+    plugs: Option<NullableField<Vec<RunCreatePlugs>>>,
     logs: Option<Vec<RunCreateLogs>>,
     metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
     unit_metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
@@ -155,6 +156,7 @@ impl<'a> CreateBuilder<'a> {
             docstring: None,
             phases: None,
             sequences: None,
+            plugs: None,
             logs: None,
             metadata: None,
             unit_metadata: None,
@@ -361,6 +363,20 @@ impl<'a> CreateBuilder<'a> {
         self
     }
 
+    /// Set the `plugs` field.
+    ///
+    /// Plugs the run used: each instrument abstraction of the procedure, with the instrument it opened as the plug reported it (manufacturer, model, serial number, firmware). The TofuPilot CLI fills it from the plugs it opened. Omit for a run without plugs.
+    pub fn plugs(mut self, value: impl Into<Vec<RunCreatePlugs>>) -> Self {
+        self.plugs = Some(NullableField::Value(value.into()));
+        self
+    }
+
+    /// Explicitly set `plugs` to null.
+    pub fn plugs_null(mut self) -> Self {
+        self.plugs = Some(NullableField::Null);
+        self
+    }
+
     /// Set the `logs` field.
     ///
     /// Array of log messages generated during the test execution. Each log entry captures events, errors, and diagnostic information with severity levels and source code references. If no logs are specified, the run will be created without log entries.
@@ -441,6 +457,7 @@ impl<'a> CreateBuilder<'a> {
             self.phases = body.phases;
         }
         self.sequences = Some(body.sequences);
+        self.plugs = Some(body.plugs);
         if body.logs.is_some() {
             self.logs = body.logs;
         }
@@ -526,6 +543,7 @@ impl<'a> CreateBuilder<'a> {
             docstring: self.docstring,
             phases: self.phases,
             sequences: self.sequences.unwrap_or(NullableField::Absent),
+            plugs: self.plugs.unwrap_or(NullableField::Absent),
             logs: self.logs,
             metadata: self.metadata,
             unit_metadata: self.unit_metadata,
