@@ -23,6 +23,7 @@ pub mod phases;
 pub mod measurements;
 pub mod deployments;
 pub mod identity;
+pub mod audit_log;
 pub mod upload;
 
 pub use client::TofuPilot;

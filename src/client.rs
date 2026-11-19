@@ -24,6 +24,7 @@ use crate::phases::PhasesClient;
 use crate::measurements::MeasurementsClient;
 use crate::deployments::DeploymentsClient;
 use crate::identity::IdentityClient;
+use crate::audit_log::AuditLogClient;
 
 /// TofuPilot API client.
 ///
@@ -271,6 +272,11 @@ impl TofuPilot {
     /// Access the Identity API.
     pub fn identity(&self) -> IdentityClient<'_> {
         IdentityClient::new(self)
+    }
+
+    /// Access the AuditLog API.
+    pub fn audit_log(&self) -> AuditLogClient<'_> {
+        AuditLogClient::new(self)
     }
 
     /// Execute a request with retry logic and hooks.

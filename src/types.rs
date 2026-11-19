@@ -317,6 +317,27 @@ impl std::fmt::Display for IdentityWhoamiType {
     }
 }
 
+/// Who acted.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AuditListType {
+    #[serde(rename = "user")]
+    User,
+    #[serde(rename = "station")]
+    Station,
+    #[serde(rename = "system")]
+    System,
+}
+
+impl std::fmt::Display for AuditListType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::User => write!(f, "user"),
+            Self::Station => write!(f, "station"),
+            Self::System => write!(f, "system"),
+        }
+    }
+}
+
 /// Git provider
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Provider {
@@ -675,6 +696,48 @@ impl std::fmt::Display for Trigger {
             Self::Auto => write!(f, "auto"),
             Self::Manual => write!(f, "manual"),
             Self::Cli => write!(f, "cli"),
+        }
+    }
+}
+
+/// Surface the action came through.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Via {
+    #[serde(rename = "dashboard")]
+    Dashboard,
+    #[serde(rename = "api")]
+    Api,
+    #[serde(rename = "mcp")]
+    Mcp,
+    #[serde(rename = "system")]
+    System,
+}
+
+impl std::fmt::Display for Via {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Dashboard => write!(f, "dashboard"),
+            Self::Api => write!(f, "api"),
+            Self::Mcp => write!(f, "mcp"),
+            Self::System => write!(f, "system"),
+        }
+    }
+}
+
+/// Whether the action succeeded.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DataOutcome {
+    #[serde(rename = "success")]
+    Success,
+    #[serde(rename = "failure")]
+    Failure,
+}
+
+impl std::fmt::Display for DataOutcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Success => write!(f, "success"),
+            Self::Failure => write!(f, "failure"),
         }
     }
 }
@@ -18534,5 +18597,728 @@ pub struct IdentityWhoamiResponse {
     pub user: Option<IdentityWhoamiUser>,
     /// The organization the key belongs to.
     pub organization: IdentityWhoamiOrganization,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct AuditListRequest {
+    /// Only events that occurred at or after this time (ISO 8601).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub occurred_after: Option<chrono::DateTime<chrono::Utc>>,
+    /// Only events that occurred at or before this time (ISO 8601).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub occurred_before: Option<chrono::DateTime<chrono::Utc>>,
+    /// Filter by action, written resource.verb.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actions: Option<Vec<String>>,
+    /// Filter by the user or station that acted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actor_ids: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vias: Option<Vec<Via>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcomes: Option<Vec<DataOutcome>>,
+    /// Filter by the type of record acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_type: Option<String>,
+    /// Filter by the ID of the record acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_id: Option<String>,
+    /// Filter by request ID, to find the events one API request produced.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+    /// Match the actor name or email, the record name, or the action.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub search_query: Option<String>,
+    /// Maximum number of events to return.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i64>,
+    /// Opaque cursor of the next page: pass next_cursor from the previous response unchanged. A keyset cursor rather than an offset: paging is stable while new events arrive. An event is timestamped when its request starts and appears when it commits, so a poller re-reads the last 10 minutes and de-duplicates by id.
+    #[serde(default, skip_serializing_if = "nullable_is_absent")]
+    pub cursor: NullableField<serde_json::Value>,
+}
+
+impl AuditListRequest {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListRequestBuilder {
+        AuditListRequestBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListRequest`].
+#[derive(Debug, Default)]
+pub struct AuditListRequestBuilder {
+    occurred_after: Option<chrono::DateTime<chrono::Utc>>,
+    occurred_before: Option<chrono::DateTime<chrono::Utc>>,
+    actions: Option<Vec<String>>,
+    actor_ids: Option<Vec<String>>,
+    vias: Option<Vec<Via>>,
+    outcomes: Option<Vec<DataOutcome>>,
+    target_type: Option<String>,
+    target_id: Option<String>,
+    request_id: Option<String>,
+    search_query: Option<String>,
+    limit: Option<i64>,
+    cursor: NullableField<serde_json::Value>,
+}
+
+impl AuditListRequestBuilder {
+    /// Set the `occurred_after` field.
+    ///
+    /// Only events that occurred at or after this time (ISO 8601).
+    pub fn occurred_after(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.occurred_after = Some(value.into());
+        self
+    }
+
+    /// Set the `occurred_before` field.
+    ///
+    /// Only events that occurred at or before this time (ISO 8601).
+    pub fn occurred_before(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.occurred_before = Some(value.into());
+        self
+    }
+
+    /// Set the `actions` field.
+    ///
+    /// Filter by action, written resource.verb.
+    pub fn actions(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.actions = Some(value.into());
+        self
+    }
+
+    /// Set the `actor_ids` field.
+    ///
+    /// Filter by the user or station that acted.
+    pub fn actor_ids(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.actor_ids = Some(value.into());
+        self
+    }
+
+    /// Set the `vias` field.
+    pub fn vias(mut self, value: impl Into<Vec<Via>>) -> Self {
+        self.vias = Some(value.into());
+        self
+    }
+
+    /// Set the `outcomes` field.
+    pub fn outcomes(mut self, value: impl Into<Vec<DataOutcome>>) -> Self {
+        self.outcomes = Some(value.into());
+        self
+    }
+
+    /// Set the `target_type` field.
+    ///
+    /// Filter by the type of record acted on.
+    pub fn target_type(mut self, value: impl Into<String>) -> Self {
+        self.target_type = Some(value.into());
+        self
+    }
+
+    /// Set the `target_id` field.
+    ///
+    /// Filter by the ID of the record acted on.
+    pub fn target_id(mut self, value: impl Into<String>) -> Self {
+        self.target_id = Some(value.into());
+        self
+    }
+
+    /// Set the `request_id` field.
+    ///
+    /// Filter by request ID, to find the events one API request produced.
+    pub fn request_id(mut self, value: impl Into<String>) -> Self {
+        self.request_id = Some(value.into());
+        self
+    }
+
+    /// Set the `search_query` field.
+    ///
+    /// Match the actor name or email, the record name, or the action.
+    pub fn search_query(mut self, value: impl Into<String>) -> Self {
+        self.search_query = Some(value.into());
+        self
+    }
+
+    /// Set the `limit` field.
+    ///
+    /// Maximum number of events to return.
+    pub fn limit(mut self, value: impl Into<i64>) -> Self {
+        self.limit = Some(value.into());
+        self
+    }
+
+    /// Set the `cursor` field.
+    ///
+    /// Opaque cursor of the next page: pass next_cursor from the previous response unchanged. A keyset cursor rather than an offset: paging is stable while new events arrive. An event is timestamped when its request starts and appears when it commits, so a poller re-reads the last 10 minutes and de-duplicates by id.
+    pub fn cursor(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.cursor = NullableField::Value(value.into());
+        self
+    }
+
+    /// Explicitly set `cursor` to null.
+    pub fn cursor_null(mut self) -> Self {
+        self.cursor = NullableField::Null;
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListRequest, String> {
+        Ok(AuditListRequest {
+            occurred_after: self.occurred_after,
+            occurred_before: self.occurred_before,
+            actions: self.actions,
+            actor_ids: self.actor_ids,
+            vias: self.vias,
+            outcomes: self.outcomes,
+            target_type: self.target_type,
+            target_id: self.target_id,
+            request_id: self.request_id,
+            search_query: self.search_query,
+            limit: self.limit,
+            cursor: self.cursor,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListActor {
+    /// Who acted.
+    #[serde(rename = "type")]
+    pub r#type: AuditListType,
+    /// ID of the user or station. Null for the system.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Name of the actor at the time of the event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Email of the user at the time of the event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+}
+
+impl AuditListActor {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListActorBuilder {
+        AuditListActorBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListActor`].
+#[derive(Debug, Default)]
+pub struct AuditListActorBuilder {
+    r#type: Option<AuditListType>,
+    id: Option<String>,
+    name: Option<String>,
+    email: Option<String>,
+}
+
+impl AuditListActorBuilder {
+    /// Set the `type` field.
+    ///
+    /// Who acted.
+    pub fn r#type(mut self, value: impl Into<AuditListType>) -> Self {
+        self.r#type = Some(value.into());
+        self
+    }
+
+    /// Set the `id` field.
+    ///
+    /// ID of the user or station. Null for the system.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    ///
+    /// Name of the actor at the time of the event.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `email` field.
+    ///
+    /// Email of the user at the time of the event.
+    pub fn email(mut self, value: impl Into<String>) -> Self {
+        self.email = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListActor, String> {
+        Ok(AuditListActor {
+            r#type: self.r#type
+                .ok_or_else(|| "missing required field: type".to_string())?,
+            id: self.id,
+            name: self.name,
+            email: self.email,
+        })
+    }
+}
+
+/// The member a TofuPilot staff member acted as, when the actor was impersonating them. Null otherwise.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListOnBehalfOf {
+    /// ID of the member.
+    pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+}
+
+impl AuditListOnBehalfOf {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListOnBehalfOfBuilder {
+        AuditListOnBehalfOfBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListOnBehalfOf`].
+#[derive(Debug, Default)]
+pub struct AuditListOnBehalfOfBuilder {
+    id: Option<String>,
+    name: Option<String>,
+    email: Option<String>,
+}
+
+impl AuditListOnBehalfOfBuilder {
+    /// Set the `id` field.
+    ///
+    /// ID of the member.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `name` field.
+    pub fn name(mut self, value: impl Into<String>) -> Self {
+        self.name = Some(value.into());
+        self
+    }
+
+    /// Set the `email` field.
+    pub fn email(mut self, value: impl Into<String>) -> Self {
+        self.email = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListOnBehalfOf, String> {
+        Ok(AuditListOnBehalfOf {
+            id: self.id
+                .ok_or_else(|| "missing required field: id".to_string())?,
+            name: self.name,
+            email: self.email,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListTarget {
+    /// Type of the record acted on.
+    #[serde(rename = "type")]
+    pub r#type: String,
+    /// ID of the record acted on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Name of the record at the time of the event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
+impl AuditListTarget {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListTargetBuilder {
+        AuditListTargetBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListTarget`].
+#[derive(Debug, Default)]
+pub struct AuditListTargetBuilder {
+    r#type: Option<String>,
+    id: Option<String>,
+    label: Option<String>,
+}
+
+impl AuditListTargetBuilder {
+    /// Set the `type` field.
+    ///
+    /// Type of the record acted on.
+    pub fn r#type(mut self, value: impl Into<String>) -> Self {
+        self.r#type = Some(value.into());
+        self
+    }
+
+    /// Set the `id` field.
+    ///
+    /// ID of the record acted on.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `label` field.
+    ///
+    /// Name of the record at the time of the event.
+    pub fn label(mut self, value: impl Into<String>) -> Self {
+        self.label = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListTarget, String> {
+        Ok(AuditListTarget {
+            r#type: self.r#type
+                .ok_or_else(|| "missing required field: type".to_string())?,
+            id: self.id,
+            label: self.label,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListChanges {
+    pub field: String,
+    /// Value before the action.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub previous: Option<serde_json::Value>,
+    /// Value after the action.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next: Option<serde_json::Value>,
+}
+
+impl AuditListChanges {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListChangesBuilder {
+        AuditListChangesBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListChanges`].
+#[derive(Debug, Default)]
+pub struct AuditListChangesBuilder {
+    field: Option<String>,
+    previous: Option<serde_json::Value>,
+    next: Option<serde_json::Value>,
+}
+
+impl AuditListChangesBuilder {
+    /// Set the `field` field.
+    pub fn field(mut self, value: impl Into<String>) -> Self {
+        self.field = Some(value.into());
+        self
+    }
+
+    /// Set the `previous` field.
+    ///
+    /// Value before the action.
+    pub fn previous(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.previous = Some(value.into());
+        self
+    }
+
+    /// Set the `next` field.
+    ///
+    /// Value after the action.
+    pub fn next(mut self, value: impl Into<serde_json::Value>) -> Self {
+        self.next = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListChanges, String> {
+        Ok(AuditListChanges {
+            field: self.field
+                .ok_or_else(|| "missing required field: field".to_string())?,
+            previous: self.previous,
+            next: self.next,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListData {
+    /// Unique ID of the event. Stable: use it to de-duplicate.
+    pub id: String,
+    /// When the event occurred, in UTC, from the database clock.
+    pub occurred_at: chrono::DateTime<chrono::Utc>,
+    /// What was done, written resource.verb.
+    pub action: String,
+    /// Whether the action succeeded.
+    pub outcome: DataOutcome,
+    pub actor: AuditListActor,
+    /// The member a TofuPilot staff member acted as, when the actor was impersonating them. Null otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub on_behalf_of: Option<AuditListOnBehalfOf>,
+    /// Surface the action came through.
+    pub via: Via,
+    /// SDK, CLI or MCP client that made the request, when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client: Option<String>,
+    /// ID of the API key used, when the request used one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_key_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<AuditListTarget>,
+    /// Values the action replaced, and the columns of deleted records. Empty when not recorded.
+    #[serde(default)]
+    pub changes: Vec<AuditListChanges>,
+    /// Request input, with credentials replaced by [redacted]. Large inputs keep their top-level fields only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub input: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Error message of a failed action.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    /// ID of the request that produced the event.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+    /// IP address the request came from.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ip_address: Option<String>,
+    /// User agent of the request.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user_agent: Option<String>,
+}
+
+impl AuditListData {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListDataBuilder {
+        AuditListDataBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListData`].
+#[derive(Debug, Default)]
+pub struct AuditListDataBuilder {
+    id: Option<String>,
+    occurred_at: Option<chrono::DateTime<chrono::Utc>>,
+    action: Option<String>,
+    outcome: Option<DataOutcome>,
+    actor: Option<AuditListActor>,
+    on_behalf_of: Option<AuditListOnBehalfOf>,
+    via: Option<Via>,
+    client: Option<String>,
+    api_key_id: Option<String>,
+    target: Option<AuditListTarget>,
+    changes: Option<Vec<AuditListChanges>>,
+    input: Option<std::collections::HashMap<String, serde_json::Value>>,
+    error: Option<String>,
+    request_id: Option<String>,
+    ip_address: Option<String>,
+    user_agent: Option<String>,
+}
+
+impl AuditListDataBuilder {
+    /// Set the `id` field.
+    ///
+    /// Unique ID of the event. Stable: use it to de-duplicate.
+    pub fn id(mut self, value: impl Into<String>) -> Self {
+        self.id = Some(value.into());
+        self
+    }
+
+    /// Set the `occurred_at` field.
+    ///
+    /// When the event occurred, in UTC, from the database clock.
+    pub fn occurred_at(mut self, value: impl Into<chrono::DateTime<chrono::Utc>>) -> Self {
+        self.occurred_at = Some(value.into());
+        self
+    }
+
+    /// Set the `action` field.
+    ///
+    /// What was done, written resource.verb.
+    pub fn action(mut self, value: impl Into<String>) -> Self {
+        self.action = Some(value.into());
+        self
+    }
+
+    /// Set the `outcome` field.
+    ///
+    /// Whether the action succeeded.
+    pub fn outcome(mut self, value: impl Into<DataOutcome>) -> Self {
+        self.outcome = Some(value.into());
+        self
+    }
+
+    /// Set the `actor` field.
+    pub fn actor(mut self, value: impl Into<AuditListActor>) -> Self {
+        self.actor = Some(value.into());
+        self
+    }
+
+    /// Set the `on_behalf_of` field.
+    ///
+    /// The member a TofuPilot staff member acted as, when the actor was impersonating them. Null otherwise.
+    pub fn on_behalf_of(mut self, value: impl Into<AuditListOnBehalfOf>) -> Self {
+        self.on_behalf_of = Some(value.into());
+        self
+    }
+
+    /// Set the `via` field.
+    ///
+    /// Surface the action came through.
+    pub fn via(mut self, value: impl Into<Via>) -> Self {
+        self.via = Some(value.into());
+        self
+    }
+
+    /// Set the `client` field.
+    ///
+    /// SDK, CLI or MCP client that made the request, when known.
+    pub fn client(mut self, value: impl Into<String>) -> Self {
+        self.client = Some(value.into());
+        self
+    }
+
+    /// Set the `api_key_id` field.
+    ///
+    /// ID of the API key used, when the request used one.
+    pub fn api_key_id(mut self, value: impl Into<String>) -> Self {
+        self.api_key_id = Some(value.into());
+        self
+    }
+
+    /// Set the `target` field.
+    pub fn target(mut self, value: impl Into<AuditListTarget>) -> Self {
+        self.target = Some(value.into());
+        self
+    }
+
+    /// Set the `changes` field.
+    ///
+    /// Values the action replaced, and the columns of deleted records. Empty when not recorded.
+    pub fn changes(mut self, value: impl Into<Vec<AuditListChanges>>) -> Self {
+        self.changes = Some(value.into());
+        self
+    }
+
+    /// Set the `input` field.
+    ///
+    /// Request input, with credentials replaced by [redacted]. Large inputs keep their top-level fields only.
+    pub fn input(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.input = Some(value.into());
+        self
+    }
+
+    /// Set the `error` field.
+    ///
+    /// Error message of a failed action.
+    pub fn error(mut self, value: impl Into<String>) -> Self {
+        self.error = Some(value.into());
+        self
+    }
+
+    /// Set the `request_id` field.
+    ///
+    /// ID of the request that produced the event.
+    pub fn request_id(mut self, value: impl Into<String>) -> Self {
+        self.request_id = Some(value.into());
+        self
+    }
+
+    /// Set the `ip_address` field.
+    ///
+    /// IP address the request came from.
+    pub fn ip_address(mut self, value: impl Into<String>) -> Self {
+        self.ip_address = Some(value.into());
+        self
+    }
+
+    /// Set the `user_agent` field.
+    ///
+    /// User agent of the request.
+    pub fn user_agent(mut self, value: impl Into<String>) -> Self {
+        self.user_agent = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListData, String> {
+        Ok(AuditListData {
+            id: self.id
+                .ok_or_else(|| "missing required field: id".to_string())?,
+            occurred_at: self.occurred_at
+                .ok_or_else(|| "missing required field: occurred_at".to_string())?,
+            action: self.action
+                .ok_or_else(|| "missing required field: action".to_string())?,
+            outcome: self.outcome
+                .ok_or_else(|| "missing required field: outcome".to_string())?,
+            actor: self.actor
+                .ok_or_else(|| "missing required field: actor".to_string())?,
+            on_behalf_of: self.on_behalf_of,
+            via: self.via
+                .ok_or_else(|| "missing required field: via".to_string())?,
+            client: self.client,
+            api_key_id: self.api_key_id,
+            target: self.target,
+            changes: self.changes.unwrap_or_default(),
+            input: self.input,
+            error: self.error,
+            request_id: self.request_id,
+            ip_address: self.ip_address,
+            user_agent: self.user_agent,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListMeta {
+    /// Whether more events are available.
+    pub has_more: bool,
+    /// Pass as cursor to fetch the next page. Null when there are no more events.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next_cursor: Option<String>,
+}
+
+impl AuditListMeta {
+    /// Create a builder for this type.
+    pub fn builder() -> AuditListMetaBuilder {
+        AuditListMetaBuilder::default()
+    }
+}
+
+/// Builder for [`AuditListMeta`].
+#[derive(Debug, Default)]
+pub struct AuditListMetaBuilder {
+    has_more: Option<bool>,
+    next_cursor: Option<String>,
+}
+
+impl AuditListMetaBuilder {
+    /// Set the `has_more` field.
+    ///
+    /// Whether more events are available.
+    pub fn has_more(mut self, value: impl Into<bool>) -> Self {
+        self.has_more = Some(value.into());
+        self
+    }
+
+    /// Set the `next_cursor` field.
+    ///
+    /// Pass as cursor to fetch the next page. Null when there are no more events.
+    pub fn next_cursor(mut self, value: impl Into<String>) -> Self {
+        self.next_cursor = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<AuditListMeta, String> {
+        Ok(AuditListMeta {
+            has_more: self.has_more
+                .ok_or_else(|| "missing required field: has_more".to_string())?,
+            next_cursor: self.next_cursor,
+        })
+    }
+}
+
+/// Audit events retrieved successfully
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AuditListResponse {
+    #[serde(default)]
+    pub data: Vec<AuditListData>,
+    pub meta: AuditListMeta,
 }
 
