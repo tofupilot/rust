@@ -13594,7 +13594,7 @@ pub struct ImportTabularRequest {
     /// ID of a saved mapping template to apply. Provide this OR mapping, not both.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub template_id: Option<String>,
-    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 1000 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 100 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_offset: Option<i64>,
     /// With a mapping that makes several runs (`runsPer` `row` or `serial`): import the file even if the same content was already imported. By default a request with the same file content, `run_offset`, mapping and procedure as an earlier one whose runs still exist is not imported again: the response returns the existing runs with `already_imported: true`, so retrying a request is safe. A one-run-per-file mapping is never deduplicated.
@@ -13655,7 +13655,7 @@ impl ImportTabularRequestBuilder {
 
     /// Set the `run_offset` field.
     ///
-    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 1000 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 100 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
     pub fn run_offset(mut self, value: impl Into<i64>) -> Self {
         self.run_offset = Some(value.into());
         self
