@@ -5,7 +5,7 @@
 ### Available Operations
 
 * [structured](#structured) - Import runs from structured files
-* [tabular](#tabular) - Import a run from a tabular file
+* [tabular](#tabular) - Import runs from a tabular file
 
 ## structured
 
@@ -54,7 +54,7 @@ async fn main() -> tofupilot::Result<()> {
 
 ## tabular
 
-Import a previously uploaded tabular file (CSV or Excel) by mapping its columns to TofuPilot fields. Provide exactly one of `mapping` (an inline column mapping) or `template_id` (a mapping template saved in the dashboard). The `procedure_id` is required and overrides any procedure referenced in the file.
+Import a previously uploaded tabular file (CSV or Excel) by mapping its columns to TofuPilot fields. Provide exactly one of `mapping` (an inline column mapping) or `template_id` (a mapping template saved in the dashboard). The `procedure_id` is required and overrides any procedure referenced in the file. By default the whole file is one run and must hold a single serial number. Set `mapping.runsPer` to `row` for a log with one run per row (retests included), or to `serial` to group the rows of each serial into one run: each row is mapped and created on its own, so a bad row is reported in `row_errors` and the other rows are imported. A request whose every row fails is refused with the rows named; send `run_offset` set to the end of the refused range to go on, or the same file and mapping again once the cause is fixed elsewhere (sub-units imported first): the requests already imported are skipped. One request creates at most 1000 runs: while `next_run_offset` is in the response, send the same request with `run_offset` set to it. A request is not imported twice: a retry with the same file, `run_offset`, mapping and procedure returns the existing runs with `already_imported: true`, unless `allow_duplicate` is set. Timestamps without an offset, and dates alone, are read in `mapping.timeZone` (UTC by default). `mapping.subUnitColumns` links sub-units that already exist.
 
 ### Example Usage
 
@@ -85,6 +85,8 @@ async fn main() -> tofupilot::Result<()> {
 | `procedure_id` | `String` | :heavy_check_mark: | Procedure to attach the imported run to. Always overrides any procedure referenced in the file. Create the procedure in the app first, then find the auto-generated ID on the procedure page. |
 | `mapping` | `Option<ImportTabularMapping>` | :heavy_minus_sign: | Inline column mapping describing how source columns feed TofuPilot fields. Provide this OR template_id, not both. |
 | `template_id` | `Option<String>` | :heavy_minus_sign: | ID of a saved mapping template to apply. Provide this OR mapping, not both. |
+| `run_offset` | `Option<i64>` | :heavy_minus_sign: | With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 1000 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0. |
+| `allow_duplicate` | `Option<bool>` | :heavy_minus_sign: | With a mapping that makes several runs (`runsPer` `row` or `serial`): import the file even if the same content was already imported. By default a request with the same file content, `run_offset`, mapping and procedure as an earlier one whose runs still exist is not imported again: the response returns the existing runs with `already_imported: true`, so retrying a request is safe. A one-run-per-file mapping is never deduplicated. |
 
 ### Response
 

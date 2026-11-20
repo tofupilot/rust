@@ -22,9 +22,9 @@ impl<'a> ImportsClient<'a> {
         StructuredBuilder::new(self.client)
     }
 
-    /// Import a run from a tabular file
+    /// Import runs from a tabular file
     ///
-    /// Import a previously uploaded tabular file (CSV or Excel) by mapping its columns to TofuPilot fields. Provide exactly one of `mapping` (an inline column mapping) or `template_id` (a mapping template saved in the dashboard). The `procedure_id` is required and overrides any procedure referenced in the file.
+    /// Import a previously uploaded tabular file (CSV or Excel) by mapping its columns to TofuPilot fields. Provide exactly one of `mapping` (an inline column mapping) or `template_id` (a mapping template saved in the dashboard). The `procedure_id` is required and overrides any procedure referenced in the file. By default the whole file is one run and must hold a single serial number. Set `mapping.runsPer` to `row` for a log with one run per row (retests included), or to `serial` to group the rows of each serial into one run: each row is mapped and created on its own, so a bad row is reported in `row_errors` and the other rows are imported. A request whose every row fails is refused with the rows named; send `run_offset` set to the end of the refused range to go on, or the same file and mapping again once the cause is fixed elsewhere (sub-units imported first): the requests already imported are skipped. One request creates at most 1000 runs: while `next_run_offset` is in the response, send the same request with `run_offset` set to it. A request is not imported twice: a retry with the same file, `run_offset`, mapping and procedure returns the existing runs with `already_imported: true`, unless `allow_duplicate` is set. Timestamps without an offset, and dates alone, are read in `mapping.timeZone` (UTC by default). `mapping.subUnitColumns` links sub-units that already exist.
     pub fn tabular(&self) -> TabularBuilder<'a> {
         TabularBuilder::new(self.client)
     }
@@ -173,6 +173,8 @@ pub struct TabularBuilder<'a> {
     procedure_id: Option<String>,
     mapping: Option<ImportTabularMapping>,
     template_id: Option<String>,
+    run_offset: Option<i64>,
+    allow_duplicate: Option<bool>,
     server_url: Option<String>,
     timeout: Option<std::time::Duration>,
 }
@@ -185,6 +187,8 @@ impl<'a> TabularBuilder<'a> {
             procedure_id: None,
             mapping: None,
             template_id: None,
+            run_offset: None,
+            allow_duplicate: None,
             server_url: None,
             timeout: None,
         }
@@ -222,6 +226,22 @@ impl<'a> TabularBuilder<'a> {
         self
     }
 
+    /// Set the `run_offset` field.
+    ///
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 1000 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
+    pub fn run_offset(mut self, value: impl Into<i64>) -> Self {
+        self.run_offset = Some(value.into());
+        self
+    }
+
+    /// Set the `allow_duplicate` field.
+    ///
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): import the file even if the same content was already imported. By default a request with the same file content, `run_offset`, mapping and procedure as an earlier one whose runs still exist is not imported again: the response returns the existing runs with `already_imported: true`, so retrying a request is safe. A one-run-per-file mapping is never deduplicated.
+    pub fn allow_duplicate(mut self, value: impl Into<bool>) -> Self {
+        self.allow_duplicate = Some(value.into());
+        self
+    }
+
     /// Set the full request body (alternative to setting individual fields).
     pub fn body(mut self, body: ImportTabularRequest) -> Self {
         self.upload_id = Some(body.upload_id);
@@ -231,6 +251,12 @@ impl<'a> TabularBuilder<'a> {
         }
         if body.template_id.is_some() {
             self.template_id = body.template_id;
+        }
+        if body.run_offset.is_some() {
+            self.run_offset = body.run_offset;
+        }
+        if body.allow_duplicate.is_some() {
+            self.allow_duplicate = body.allow_duplicate;
         }
         self
     }
@@ -277,6 +303,8 @@ impl<'a> TabularBuilder<'a> {
                 ))?,
             mapping: self.mapping,
             template_id: self.template_id,
+            run_offset: self.run_offset,
+            allow_duplicate: self.allow_duplicate,
         };
         request = request.json(&body);
 
