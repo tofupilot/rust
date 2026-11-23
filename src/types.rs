@@ -221,6 +221,24 @@ impl std::fmt::Display for ImportTabularRunsPer {
     }
 }
 
+/// `already_imported`: the row is unchanged. `changed`: the `runKeyColumns` match an imported run but other cells differ, a row edited after its import. The existing run is kept as it is: delete it and import again to replace it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImportTabularReason {
+    #[serde(rename = "already_imported")]
+    AlreadyImported,
+    #[serde(rename = "changed")]
+    Changed,
+}
+
+impl std::fmt::Display for ImportTabularReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AlreadyImported => write!(f, "already_imported"),
+            Self::Changed => write!(f, "changed"),
+        }
+    }
+}
+
 /// Field to sort results by.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LogListSortBy {
@@ -13484,6 +13502,10 @@ pub struct ImportTabularMapping {
     #[serde(rename = "subUnitColumns")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sub_unit_columns: Option<Vec<String>>,
+    /// Columns that identify a run when the same file is imported again, for a log that grows by appending rows. A run whose key was already imported into the procedure is skipped, and reported as `changed` when its cells differ. Defaults to every cell of the row (`runsPer: row`) or the serial number (`runsPer: serial`). Applies to `row` and `serial` only.
+    #[serde(rename = "runKeyColumns")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run_key_columns: Option<Vec<String>>,
     /// IANA time zone for timestamps without an offset, such as `2026-07-08T15:49:48.349659`, `2026-07-08 15:49:48` or the date-only `2025-03-10` (read as midnight). Defaults to UTC. Timestamps with an offset or `Z`, and epoch numbers, are read as written.
     #[serde(rename = "timeZone")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -13511,6 +13533,7 @@ pub struct ImportTabularMappingBuilder {
     unit_metadata: Option<Vec<ImportTabularUnitMetadata>>,
     runs_per: Option<ImportTabularRunsPer>,
     sub_unit_columns: Option<Vec<String>>,
+    run_key_columns: Option<Vec<String>>,
     time_zone: Option<String>,
     ignore_missing_columns: Option<bool>,
 }
@@ -13562,6 +13585,14 @@ impl ImportTabularMappingBuilder {
         self
     }
 
+    /// Set the `runKeyColumns` field.
+    ///
+    /// Columns that identify a run when the same file is imported again, for a log that grows by appending rows. A run whose key was already imported into the procedure is skipped, and reported as `changed` when its cells differ. Defaults to every cell of the row (`runsPer: row`) or the serial number (`runsPer: serial`). Applies to `row` and `serial` only.
+    pub fn run_key_columns(mut self, value: impl Into<Vec<String>>) -> Self {
+        self.run_key_columns = Some(value.into());
+        self
+    }
+
     /// Set the `timeZone` field.
     ///
     /// IANA time zone for timestamps without an offset, such as `2026-07-08T15:49:48.349659`, `2026-07-08 15:49:48` or the date-only `2025-03-10` (read as midnight). Defaults to UTC. Timestamps with an offset or `Z`, and epoch numbers, are read as written.
@@ -13590,6 +13621,7 @@ impl ImportTabularMappingBuilder {
             unit_metadata: self.unit_metadata,
             runs_per: self.runs_per,
             sub_unit_columns: self.sub_unit_columns,
+            run_key_columns: self.run_key_columns,
             time_zone: self.time_zone,
             ignore_missing_columns: self.ignore_missing_columns,
         })
@@ -13611,7 +13643,7 @@ pub struct ImportTabularRequest {
     /// With a mapping that makes several runs (`runsPer` `row` or `serial`): the position, in the file’s run order, of the first run to import. One request creates at most 100 runs; when runs remain, the response carries `next_run_offset`: send the same request again with it until it is absent. Defaults to 0.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_offset: Option<i64>,
-    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): import the file even if the same content was already imported. By default a request with the same file content, `run_offset`, mapping and procedure as an earlier one whose runs still exist is not imported again: the response returns the existing runs with `already_imported: true`, so retrying a request is safe. A one-run-per-file mapping is never deduplicated.
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): create every run of the file, even those an earlier import created. By default a run an earlier import into the same procedure created is skipped and listed in `skipped_rows`, whatever the mapping and even when rows were appended to the file since: a run is recognized by its cells, or by the mapping’s `runKeyColumns`. Retrying a request is therefore safe, and so is importing a log again after it grew. A one-run-per-file mapping is never deduplicated.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub allow_duplicate: Option<bool>,
 }
@@ -13677,7 +13709,7 @@ impl ImportTabularRequestBuilder {
 
     /// Set the `allow_duplicate` field.
     ///
-    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): import the file even if the same content was already imported. By default a request with the same file content, `run_offset`, mapping and procedure as an earlier one whose runs still exist is not imported again: the response returns the existing runs with `already_imported: true`, so retrying a request is safe. A one-run-per-file mapping is never deduplicated.
+    /// With a mapping that makes several runs (`runsPer` `row` or `serial`): create every run of the file, even those an earlier import created. By default a run an earlier import into the same procedure created is skipped and listed in `skipped_rows`, whatever the mapping and even when rows were appended to the file since: a run is recognized by its cells, or by the mapping’s `runKeyColumns`. Retrying a request is therefore safe, and so is importing a log again after it grew. A one-run-per-file mapping is never deduplicated.
     pub fn allow_duplicate(mut self, value: impl Into<bool>) -> Self {
         self.allow_duplicate = Some(value.into());
         self
@@ -13761,6 +13793,82 @@ impl ImportTabularRowErrorsBuilder {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportTabularSkippedRows {
+    /// 1-based position of the data row in the file, as in `row_errors`.
+    pub row: i64,
+    /// Serial number read from the row, when it has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub serial_number: Option<String>,
+    /// The run an earlier import created for this row.
+    pub run_id: String,
+    /// `already_imported`: the row is unchanged. `changed`: the `runKeyColumns` match an imported run but other cells differ, a row edited after its import. The existing run is kept as it is: delete it and import again to replace it.
+    pub reason: ImportTabularReason,
+}
+
+impl ImportTabularSkippedRows {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularSkippedRowsBuilder {
+        ImportTabularSkippedRowsBuilder::default()
+    }
+}
+
+/// Builder for [`ImportTabularSkippedRows`].
+#[derive(Debug, Default)]
+pub struct ImportTabularSkippedRowsBuilder {
+    row: Option<i64>,
+    serial_number: Option<String>,
+    run_id: Option<String>,
+    reason: Option<ImportTabularReason>,
+}
+
+impl ImportTabularSkippedRowsBuilder {
+    /// Set the `row` field.
+    ///
+    /// 1-based position of the data row in the file, as in `row_errors`.
+    pub fn row(mut self, value: impl Into<i64>) -> Self {
+        self.row = Some(value.into());
+        self
+    }
+
+    /// Set the `serial_number` field.
+    ///
+    /// Serial number read from the row, when it has one.
+    pub fn serial_number(mut self, value: impl Into<String>) -> Self {
+        self.serial_number = Some(value.into());
+        self
+    }
+
+    /// Set the `run_id` field.
+    ///
+    /// The run an earlier import created for this row.
+    pub fn run_id(mut self, value: impl Into<String>) -> Self {
+        self.run_id = Some(value.into());
+        self
+    }
+
+    /// Set the `reason` field.
+    ///
+    /// `already_imported`: the row is unchanged. `changed`: the `runKeyColumns` match an imported run but other cells differ, a row edited after its import. The existing run is kept as it is: delete it and import again to replace it.
+    pub fn reason(mut self, value: impl Into<ImportTabularReason>) -> Self {
+        self.reason = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularSkippedRows, String> {
+        Ok(ImportTabularSkippedRows {
+            row: self.row
+                .ok_or_else(|| "missing required field: row".to_string())?,
+            serial_number: self.serial_number,
+            run_id: self.run_id
+                .ok_or_else(|| "missing required field: run_id".to_string())?,
+            reason: self.reason
+                .ok_or_else(|| "missing required field: reason".to_string())?,
+        })
+    }
+}
+
 /// Run imported successfully
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularResponse {
@@ -13768,10 +13876,10 @@ pub struct ImportTabularResponse {
     pub id: String,
     /// ID of the file import record that links the runs to the uploaded file.
     pub file_import_id: String,
-    /// Present with a mapping that makes several runs (`runsPer` `row` or `serial`): every run id created by this request, in file order, rows that failed skipped. When `already_imported` is true, the existing runs in no guaranteed order.
+    /// Present with a mapping that makes several runs (`runsPer` `row` or `serial`): every run id created by this request, in file order, rows that failed or were skipped left out. When `already_imported` is true, the existing runs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ids: Option<Vec<String>>,
-    /// Present with a mapping that makes several runs. True when the same file content was already imported in your organization and some of its runs still exist: `id` and `ids` are those runs and nothing was created.
+    /// Present with a mapping that makes several runs. True when every run of this request already existed (see `skipped_rows`): `id` and `ids` are those runs and nothing was created.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub already_imported: Option<bool>,
     /// Present with a mapping that makes several runs: the rows of this request that created no run and why, at most 1000 (see `failed_row_count`). The other rows are imported.
@@ -13780,6 +13888,12 @@ pub struct ImportTabularResponse {
     /// Present with a mapping that makes several runs: how many runs of this request failed, including any not listed in `row_errors`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failed_row_count: Option<i64>,
+    /// Present with a mapping that makes several runs: the rows of this request an earlier import already created, at most 1000 (see `skipped_row_count`). They create no run.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skipped_rows: Option<Vec<ImportTabularSkippedRows>>,
+    /// Present with a mapping that makes several runs: how many runs of this request were skipped because an earlier import created them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skipped_row_count: Option<i64>,
     /// Present with a mapping that makes several runs: how many runs the whole file makes (rows for `runsPer: row`, distinct serials for `runsPer: serial`), failed ones included.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub total_runs: Option<i64>,
