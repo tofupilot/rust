@@ -13488,6 +13488,10 @@ pub struct ImportTabularMapping {
     #[serde(rename = "timeZone")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub time_zone: Option<String>,
+    /// Skip mapped columns the file does not have instead of failing the file, so one mapping covers files whose optional columns vary. The serial number, outcome and time columns, and the name and value columns of the long layout, stay required.
+    #[serde(rename = "ignoreMissingColumns")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ignore_missing_columns: Option<bool>,
 }
 
 impl ImportTabularMapping {
@@ -13508,6 +13512,7 @@ pub struct ImportTabularMappingBuilder {
     runs_per: Option<ImportTabularRunsPer>,
     sub_unit_columns: Option<Vec<String>>,
     time_zone: Option<String>,
+    ignore_missing_columns: Option<bool>,
 }
 
 impl ImportTabularMappingBuilder {
@@ -13565,6 +13570,14 @@ impl ImportTabularMappingBuilder {
         self
     }
 
+    /// Set the `ignoreMissingColumns` field.
+    ///
+    /// Skip mapped columns the file does not have instead of failing the file, so one mapping covers files whose optional columns vary. The serial number, outcome and time columns, and the name and value columns of the long layout, stay required.
+    pub fn ignore_missing_columns(mut self, value: impl Into<bool>) -> Self {
+        self.ignore_missing_columns = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<ImportTabularMapping, String> {
         Ok(ImportTabularMapping {
@@ -13578,6 +13591,7 @@ impl ImportTabularMappingBuilder {
             runs_per: self.runs_per,
             sub_unit_columns: self.sub_unit_columns,
             time_zone: self.time_zone,
+            ignore_missing_columns: self.ignore_missing_columns,
         })
     }
 }
