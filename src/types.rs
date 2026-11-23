@@ -12808,6 +12808,48 @@ pub struct ImportStructuredResponse {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularSerialNumber1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularSerialNumber1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularSerialNumber1Builder {
+        ImportTabularSerialNumber1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularSerialNumber1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularSerialNumber1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularSerialNumber1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularSerialNumber1, String> {
+        Ok(ImportTabularSerialNumber1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12818,6 +12860,48 @@ pub struct ImportTabularSerialNumber2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularPartNumber1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularPartNumber1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularPartNumber1Builder {
+        ImportTabularPartNumber1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularPartNumber1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularPartNumber1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularPartNumber1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularPartNumber1, String> {
+        Ok(ImportTabularPartNumber1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12878,6 +12962,48 @@ pub struct ImportTabularOutcome2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularStartedAt1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularStartedAt1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularStartedAt1Builder {
+        ImportTabularStartedAt1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularStartedAt1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularStartedAt1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularStartedAt1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularStartedAt1, String> {
+        Ok(ImportTabularStartedAt1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12888,6 +13014,48 @@ pub struct ImportTabularStartedAt2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularEndedAt1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularEndedAt1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularEndedAt1Builder {
+        ImportTabularEndedAt1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularEndedAt1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularEndedAt1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularEndedAt1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularEndedAt1, String> {
+        Ok(ImportTabularEndedAt1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12898,6 +13066,48 @@ pub struct ImportTabularEndedAt2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularRevisionNumber1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularRevisionNumber1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularRevisionNumber1Builder {
+        ImportTabularRevisionNumber1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularRevisionNumber1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularRevisionNumber1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularRevisionNumber1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularRevisionNumber1, String> {
+        Ok(ImportTabularRevisionNumber1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12908,6 +13118,48 @@ pub struct ImportTabularRevisionNumber2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularBatchNumber1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularBatchNumber1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularBatchNumber1Builder {
+        ImportTabularBatchNumber1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularBatchNumber1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularBatchNumber1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularBatchNumber1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularBatchNumber1, String> {
+        Ok(ImportTabularBatchNumber1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12918,6 +13170,48 @@ pub struct ImportTabularBatchNumber2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularOperatedBy1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularOperatedBy1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularOperatedBy1Builder {
+        ImportTabularOperatedBy1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularOperatedBy1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularOperatedBy1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularOperatedBy1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularOperatedBy1, String> {
+        Ok(ImportTabularOperatedBy1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -12928,6 +13222,48 @@ pub struct ImportTabularOperatedBy2 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImportTabularDocstring1 {
     pub column: String,
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extract: Option<String>,
+}
+
+impl ImportTabularDocstring1 {
+    /// Create a builder for this type.
+    pub fn builder() -> ImportTabularDocstring1Builder {
+        ImportTabularDocstring1Builder::default()
+    }
+}
+
+/// Builder for [`ImportTabularDocstring1`].
+#[derive(Debug, Default)]
+pub struct ImportTabularDocstring1Builder {
+    column: Option<String>,
+    extract: Option<String>,
+}
+
+impl ImportTabularDocstring1Builder {
+    /// Set the `column` field.
+    pub fn column(mut self, value: impl Into<String>) -> Self {
+        self.column = Some(value.into());
+        self
+    }
+
+    /// Set the `extract` field.
+    ///
+    /// Regular expression applied to the cell before it is used: the first capture group is kept, or the whole match when the pattern has no group. A cell the pattern does not match is used as written. For example `(\\S+)$` keeps the last word of `LINE 2 TRAY 16S2P 2026C13-TR-001`.
+    pub fn extract(mut self, value: impl Into<String>) -> Self {
+        self.extract = Some(value.into());
+        self
+    }
+
+    /// Build the struct. Returns an error message if required fields are missing.
+    pub fn build(self) -> std::result::Result<ImportTabularDocstring1, String> {
+        Ok(ImportTabularDocstring1 {
+            column: self.column
+                .ok_or_else(|| "missing required field: column".to_string())?,
+            extract: self.extract,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -13502,6 +13838,10 @@ pub struct ImportTabularMapping {
     #[serde(rename = "subUnitColumns")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sub_unit_columns: Option<Vec<String>>,
+    /// Create the run when a sub-unit serial matches no unit, without that link, instead of failing the row with `Sub-unit not found`. The left-out serials are reported in `warnings`.
+    #[serde(rename = "skipMissingSubUnits")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skip_missing_sub_units: Option<bool>,
     /// Columns that identify a run when the same file is imported again, for a log that grows by appending rows. A run whose key was already imported into the procedure is skipped, and reported as `changed` when its cells differ. Defaults to every cell of the row (`runsPer: row`) or the serial number (`runsPer: serial`). Applies to `row` and `serial` only.
     #[serde(rename = "runKeyColumns")]
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -13533,6 +13873,7 @@ pub struct ImportTabularMappingBuilder {
     unit_metadata: Option<Vec<ImportTabularUnitMetadata>>,
     runs_per: Option<ImportTabularRunsPer>,
     sub_unit_columns: Option<Vec<String>>,
+    skip_missing_sub_units: Option<bool>,
     run_key_columns: Option<Vec<String>>,
     time_zone: Option<String>,
     ignore_missing_columns: Option<bool>,
@@ -13585,6 +13926,14 @@ impl ImportTabularMappingBuilder {
         self
     }
 
+    /// Set the `skipMissingSubUnits` field.
+    ///
+    /// Create the run when a sub-unit serial matches no unit, without that link, instead of failing the row with `Sub-unit not found`. The left-out serials are reported in `warnings`.
+    pub fn skip_missing_sub_units(mut self, value: impl Into<bool>) -> Self {
+        self.skip_missing_sub_units = Some(value.into());
+        self
+    }
+
     /// Set the `runKeyColumns` field.
     ///
     /// Columns that identify a run when the same file is imported again, for a log that grows by appending rows. A run whose key was already imported into the procedure is skipped, and reported as `changed` when its cells differ. Defaults to every cell of the row (`runsPer: row`) or the serial number (`runsPer: serial`). Applies to `row` and `serial` only.
@@ -13621,6 +13970,7 @@ impl ImportTabularMappingBuilder {
             unit_metadata: self.unit_metadata,
             runs_per: self.runs_per,
             sub_unit_columns: self.sub_unit_columns,
+            skip_missing_sub_units: self.skip_missing_sub_units,
             run_key_columns: self.run_key_columns,
             time_zone: self.time_zone,
             ignore_missing_columns: self.ignore_missing_columns,
