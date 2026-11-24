@@ -13511,6 +13511,10 @@ pub struct ImportTabularColumns {
     pub upper_limit: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phase: Option<String>,
+    /// Turns the column into a step result: each cell value maps to the measurement outcome (`PASS`, `FAIL`, `UNSET`), or to `null` to leave that cell out, such as `NOT_RUN`. A failed measurement fails its phase. A value with no entry fails the row.
+    #[serde(rename = "outcomeMap")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome_map: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl ImportTabularColumns {
@@ -13529,6 +13533,7 @@ pub struct ImportTabularColumnsBuilder {
     lower_limit: Option<f64>,
     upper_limit: Option<f64>,
     phase: Option<String>,
+    outcome_map: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl ImportTabularColumnsBuilder {
@@ -13568,6 +13573,14 @@ impl ImportTabularColumnsBuilder {
         self
     }
 
+    /// Set the `outcomeMap` field.
+    ///
+    /// Turns the column into a step result: each cell value maps to the measurement outcome (`PASS`, `FAIL`, `UNSET`), or to `null` to leave that cell out, such as `NOT_RUN`. A failed measurement fails its phase. A value with no entry fails the row.
+    pub fn outcome_map(mut self, value: impl Into<std::collections::HashMap<String, serde_json::Value>>) -> Self {
+        self.outcome_map = Some(value.into());
+        self
+    }
+
     /// Build the struct. Returns an error message if required fields are missing.
     pub fn build(self) -> std::result::Result<ImportTabularColumns, String> {
         Ok(ImportTabularColumns {
@@ -13578,6 +13591,7 @@ impl ImportTabularColumnsBuilder {
             lower_limit: self.lower_limit,
             upper_limit: self.upper_limit,
             phase: self.phase,
+            outcome_map: self.outcome_map,
         })
     }
 }
